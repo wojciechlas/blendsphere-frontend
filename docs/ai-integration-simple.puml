@@ -1,0 +1,25 @@
+@startuml "AI Integration"
+
+' Simple class diagram
+class AIService {
+  +generateFlashcards()
+  +processContent()
+  +validateResponse()
+}
+
+class Prompt {
+  +id
+  +content
+  +type
+}
+
+class Response {
+  +id
+  +content
+  +status
+}
+
+AIService --> Prompt : uses
+AIService --> Response : generates
+
+@enduml
