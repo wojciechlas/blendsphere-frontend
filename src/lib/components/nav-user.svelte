@@ -10,11 +10,18 @@
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { authStore } from '$lib/stores/auth.store';
+	import { goto } from '$app/navigation';
 
-	let props = $props<{ user: { name: string; email: string; avatar: string } }>();
-	const user = props.user;
+	let { user } = $props<{ user: { name: string; email: string; avatar: string } }>();
 
 	const sidebar = Sidebar.useSidebar();
+
+	// Handle logout functionality
+	const handleLogout = async () => {
+		authStore.logout();
+		await goto('/login');
+	};
 </script>
 
 <Sidebar.Menu>
@@ -96,7 +103,7 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item onclick={handleLogout}>
 					<LogoutIcon />
 					<span>Log out</span>
 				</DropdownMenu.Item>

@@ -66,6 +66,24 @@ BlendSphere combines the power of spaced repetition learning with artificial int
   </div>
   
   <div class="doc-card">
+    <h3><a href="template-system-requirements">Template System</a></h3>
+    <p>Comprehensive requirements and specifications for the flashcard template system with AI integration.</p>
+    <a href="template-system-requirements">📋 Template Requirements</a>
+  </div>
+  
+  <div class="doc-card">
+    <h3><a href="template-system-behavior">Template Behavior</a></h3>
+    <p>Detailed behavioral specification for template creation, editing, and usage workflows.</p>
+    <a href="template-system-behavior">⚙️ Template Behavior</a>
+  </div>
+  
+  <div class="doc-card">
+    <h3><a href="template-system-user-stories">Template User Stories</a></h3>
+    <p>User stories and acceptance criteria for all template system functionality.</p>
+    <a href="template-system-user-stories">📖 User Stories</a>
+  </div>
+  
+  <div class="doc-card">
     <h3><a href="srs-algorithm">SRS Algorithm Lifecycle</a></h3>
     <p>The lifecycle of flashcards through the Spaced Repetition System.</p>
     <a href="srs-algorithm"><img src="images/SRS%20Algorithm%20-%20Flashcard%20Lifecycle.png" alt="SRS Algorithm Lifecycle" /></a>

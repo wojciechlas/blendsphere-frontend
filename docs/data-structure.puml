@@ -48,9 +48,9 @@ class Templates {
   +nativeLanguage: Language
   +learningLanguage: Language
   +languageLevel: LanguageLevel
-  +styles: string
-  +front: string
-  +back: string
+  +frontLayout: string
+  +backLayout: string
+  +styles: JSON
   +created: DateTime
   +updated: DateTime
   +isPublic: boolean

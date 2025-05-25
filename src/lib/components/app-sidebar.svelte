@@ -16,14 +16,10 @@
 	import NavSecondary from './nav-secondary.svelte';
 	import NavUser from './nav-user.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
+	import { user } from '$lib/stores/auth.store';
 	import type { ComponentProps } from 'svelte';
 
 	const data = {
-		user: {
-			name: 'User',
-			email: 'user@example.com',
-			avatar: '/avatars/default.jpg'
-		},
 		navMain: [
 			{
 				title: 'Daily Review',
@@ -115,6 +111,14 @@
 		<NavSecondary items={data.navSecondary} class="mt-auto" />
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={data.user} />
+		{#if $user}
+			<NavUser
+				user={{
+					name: $user.name || 'User',
+					email: $user.email || '',
+					avatar: $user.avatar || '/avatars/default.jpg'
+				}}
+			/>
+		{/if}
 	</Sidebar.Footer>
 </Sidebar.Root>

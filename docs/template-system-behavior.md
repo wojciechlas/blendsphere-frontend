@@ -1,0 +1,396 @@
+# Template System Behavior Specification
+
+## 1. Template Lifecycle
+
+### 1.1 Template Creation Process
+
+#### User Journey: Creating a New Template
+```
+1. User clicks "Create Template" button
+2. System displays template creation wizard
+3. User selects template type:
+   - "Start from scratch"
+   - "Use starter template" (shows available starter templates)
+   - "Clone existing template" (shows user's templates)
+4. User fills basic information:
+   - Template name (validated for uniqueness)
+   - Description (optional, with helpful suggestions)
+   - Language pair (dropdown with supported combinations)
+   - Language level (CEFR selector)
+5. System creates template with default layout and basic fields
+6. User is redirected to Template Editor
+```
+
+#### Template Editor Behavior
+```
+Layout:
+┌─────────────────┬─────────────────┬─────────────────┐
+│   Template      │   Layout        │    Preview      │
+│   Settings      │   Editor        │    Panel        │
+│                 │                 │                 │
+│ • Basic Info    │ Front Layout:   │ [Live Preview]  │
+│ • Fields Mgmt   │ [Rich Editor]   │                 │
+│ • Style Options │                 │ Flip to Back    │
+│                 │ Back Layout:    │                 │
+│                 │ [Rich Editor]   │ [Sample Data]   │
+└─────────────────┼─────────────────┼─────────────────┤
+│               Field Management Panel                │
+│ [+ Add Field] [Reorder] [Delete] [Duplicate]       │
+└─────────────────────────────────────────────────────┘
+```
+
+### 1.2 Field Management Behavior
+
+#### Adding a New Field
+```
+1. User clicks "Add Field" button
+2. System displays field configuration modal:
+   ┌─────────────────────────────────────┐
+   │ Field Configuration                 │
+   ├─────────────────────────────────────┤
+   │ Label: [____________] *required     │
+   │ Type: [TEXT ▼] [IMAGE] [AUDIO]      │
+   │ Language: [English ▼] *required     │
+   │ Input Field: [✓] [User provides]    │
+   │             [ ] [AI generates]      │
+   │ Description: [_______________]      │
+   │ Example: [___________________]      │
+   │ Placeholder: [_______________]      │
+   │                                     │
+   │ [Cancel] [Add Field]                │
+   └─────────────────────────────────────┘
+3. System validates required fields
+4. Field is added to template with next display order
+5. Field appears in field list and layout editor placeholders
+```
+
+#### Field Validation Rules
+```
+Input Validation:
+- Label: 1-50 characters, alphanumeric + spaces
+- Type: Must be TEXT, IMAGE, or AUDIO
+- Language: Must be from supported list
+- IsInput: Required boolean selection
+- Description: 0-500 characters
+- Example: 0-200 characters
+- Placeholder: 0-100 characters
+
+Business Rules:
+- At least one input field required per template
+- At least one output (AI-generated) field recommended
+- Maximum 20 fields per template
+- Field labels must be unique within template
+```
+
+### 1.3 Layout Editor Behavior
+
+#### Rich Text Editor Features
+```
+Toolbar:
+[B] [I] [U] | [≡] [≢] [≣] | [🎨] [🔗] | [{{}}] [👁]
+Bold Italic Under | Left Center Right | Color Link | Placeholder Preview
+
+Placeholder Insertion:
+1. User places cursor in editor
+2. User clicks placeholder button {{}}
+3. Dropdown shows available fields:
+   ┌─────────────────────┐
+   │ Available Fields    │
+   ├─────────────────────┤
+   │ {{word}}           │
+   │ {{translation}}    │
+   │ {{example}}        │
+   │ {{pronunciation}}  │
+   └─────────────────────┘
+4. User selects field
+5. Placeholder inserted at cursor position
+```
+
+#### Layout Validation
+```
+Real-time Validation:
+- Check for orphaned placeholders (no matching field)
+- Highlight unused fields (field exists but no placeholder)
+- Validate HTML structure
+- Check for required placeholders (at least one per side)
+
+Validation Messages:
+- Warning: "Field 'translation' has no placeholder"
+- Error: "Placeholder {{unknown}} has no matching field"
+- Info: "Front side has no placeholders"
+```
+
+### 1.4 Style Customization Behavior
+
+#### Theme Selection
+```
+Theme Picker:
+┌─────────────────────────────────────┐
+│ [Default] [Modern] [Classic] [Minimal] │
+├─────────────────────────────────────┤
+│ Live Preview Updates:               │
+│ • Colors applied immediately        │
+│ • Typography changes in real-time   │
+│ • Layout adjusts automatically      │
+└─────────────────────────────────────┘
+```
+
+#### Color Customization
+```
+Color Controls:
+Primary:    [#3B82F6] [🎨] ──→ Color Picker
+Secondary:  [#6B7280] [🎨]
+Background: [#FFFFFF] [🎨]
+Text:       [#1F2937] [🎨]
+Accent:     [#F59E0B] [🎨]
+
+Color Picker Behavior:
+- Show color wheel with current color selected
+- Allow hex input (#RRGGBB)
+- Provide preset color palette
+- Show accessibility contrast warnings
+- Live preview updates as user drags
+```
+
+## 2. Template Usage Behavior
+
+### 2.1 Flashcard Creation with Templates
+
+#### Template Selection
+```
+1. User creating new flashcard selects template:
+   ┌─────────────────────────────────────┐
+   │ Choose Template                     │
+   ├─────────────────────────────────────┤
+   │ [Search templates...]               │
+   │                                     │
+   │ My Templates:                       │
+   │ ┌─────────┐ ┌─────────┐            │
+   │ │Basic    │ │Advanced │            │
+   │ │Vocab    │ │Grammar  │            │
+   │ └─────────┘ └─────────┘            │
+   │                                     │
+   │ System Templates:                   │
+   │ ┌─────────┐ ┌─────────┐            │
+   │ │Spanish  │ │French   │            │
+   │ │Basics   │ │Verbs    │            │
+   │ └─────────┘ └─────────┘            │
+   └─────────────────────────────────────┘
+2. Template details shown on hover/click
+3. User confirms selection
+```
+
+#### Data Input Form
+```
+Based on template fields, system generates form:
+┌─────────────────────────────────────┐
+│ Create Flashcard: Spanish Basics    │
+├─────────────────────────────────────┤
+│ Word (Spanish): [____________] *    │
+│ Context: [___________________]      │
+│                                     │
+│ AI will generate:                   │
+│ • Translation (English)             │
+│ • Example sentence (Spanish)        │
+│ • Pronunciation guide               │
+│                                     │
+│ [Generate AI Content] [Create]      │
+└─────────────────────────────────────┘
+
+Form Behavior:
+- Only input fields shown as editable
+- Output fields listed as "will be generated"
+- Real-time validation of required fields
+- Character counters for text fields
+- File upload for image/audio fields
+```
+
+### 2.2 AI Generation Process
+
+#### AI Content Generation Flow
+```
+1. User fills input fields and clicks "Generate AI Content"
+2. System shows loading state:
+   ┌─────────────────────────────────────┐
+   │ Generating content...               │
+   │ [████████████████████████] 100%     │
+   │                                     │
+   │ ✓ Translation complete              │
+   │ ✓ Example sentence complete         │
+   │ ⏳ Generating pronunciation...       │
+   └─────────────────────────────────────┘
+3. Generated content appears in editable fields
+4. User can review and modify before saving
+```
+
+#### AI Prompt Construction
+```
+System automatically builds prompts:
+
+Template Description: "Basic Spanish vocabulary with translations"
++ Field Description: "English translation of the Spanish word"
++ Context: "Learning level: A1, Word: 'hola', Context: greeting"
+→ Final Prompt: "Provide an English translation for the Spanish word 'hola' in the context of a greeting. This is for A1 level Spanish learners."
+```
+
+### 2.3 Template Preview Behavior
+
+#### Live Preview Updates
+```
+Preview Panel Updates:
+- Instant when typing in layout editor
+- Instant when changing styles
+- Placeholder data shown when no sample data
+- Real flashcard flip animation
+- Responsive preview (desktop/mobile)
+
+Sample Data:
+- Uses example values from field definitions
+- Falls back to placeholder text
+- Shows "{{field}}" if no example available
+- Updates when field examples change
+```
+
+## 3. Error Handling and Validation
+
+### 3.1 Template Validation
+
+#### Save Validation
+```
+Before saving template, system checks:
+1. Required fields completed
+2. At least one input field exists
+3. Layout contains valid HTML
+4. All placeholders have matching fields
+5. No duplicate field labels
+6. Style values are valid
+
+Error Display:
+┌─────────────────────────────────────┐
+│ ⚠️ Cannot save template             │
+├─────────────────────────────────────┤
+│ Please fix the following issues:    │
+│                                     │
+│ • Field "word" label is required    │
+│ • Placeholder {{unknown}} not found │
+│ • Front layout cannot be empty      │
+│                                     │
+│ [Fix Issues]                        │
+└─────────────────────────────────────┘
+```
+
+### 3.2 Field Validation
+
+#### Real-time Field Validation
+```
+Field Input Validation:
+- Label: Show character count (50 max)
+- Type: Visual selection, cannot be invalid
+- Language: Dropdown, cannot be invalid
+- Description: Character count (500 max)
+- Placeholder: Character count (100 max)
+
+Validation States:
+- Valid: Green border, checkmark icon
+- Invalid: Red border, error message
+- Warning: Yellow border, warning icon
+```
+
+### 3.3 AI Generation Error Handling
+
+#### AI Service Failures
+```
+Error Types and Responses:
+1. Network Error:
+   "Unable to connect to AI service. Please check your connection."
+   [Retry] [Save as Draft]
+
+2. Rate Limit:
+   "AI generation temporarily unavailable. Please try again in 5 minutes."
+   [Try Again Later] [Manual Input]
+
+3. Content Filter:
+   "Generated content was filtered. Please modify your input and try again."
+   [Modify Input] [Manual Input]
+
+4. Invalid Response:
+   "AI generated invalid content. Please try again or enter manually."
+   [Retry] [Manual Input]
+```
+
+## 4. Performance and UX Optimizations
+
+### 4.1 Editor Performance
+
+#### Optimization Strategies
+```
+1. Debounced Preview Updates:
+   - 300ms delay after user stops typing
+   - Immediate updates for style changes
+   - Cached renders for repeated content
+
+2. Lazy Loading:
+   - Template thumbnails load on scroll
+   - Preview images loaded on demand
+   - Field validation runs on blur
+
+3. Auto-save:
+   - Save draft every 30 seconds
+   - Save on field changes
+   - Restore from draft on page load
+```
+
+### 4.2 User Experience Enhancements
+
+#### Intuitive Interactions
+```
+1. Contextual Help:
+   - Tooltip hints on hover
+   - Example values for each field type
+   - Progressive disclosure of advanced options
+
+2. Keyboard Shortcuts:
+   - Ctrl+S: Save template
+   - Ctrl+P: Toggle preview
+   - Ctrl+Z: Undo last change
+   - Tab: Navigate between fields
+
+3. Visual Feedback:
+   - Loading states for all operations
+   - Success animations
+   - Error highlighting
+   - Progress indicators for multi-step processes
+```
+
+## 5. Accessibility and Responsive Design
+
+### 5.1 Accessibility Features
+
+```
+Screen Reader Support:
+- All form labels properly associated
+- ARIA attributes for dynamic content
+- Focus management in modals
+- Keyboard navigation support
+
+Visual Accessibility:
+- High contrast mode toggle
+- Scalable text (up to 200%)
+- Color-blind friendly palette
+- Clear focus indicators
+```
+
+### 5.2 Responsive Behavior
+
+```
+Breakpoints:
+- Mobile (< 768px): Stack panels vertically
+- Tablet (768px - 1024px): Side-by-side editing
+- Desktop (> 1024px): Full three-panel layout
+
+Mobile Adaptations:
+- Collapsible panels
+- Touch-friendly controls
+- Simplified preview mode
+- Bottom navigation
+```

@@ -19,7 +19,7 @@ These instructions are designed to guide developers (and a coding copilot) worki
 
 **2.1. Functional Requirements:**
 
-- **User Authentication:** Sign-up/login via email/OTP, phone number/OTP, Google, and Facebook. Minimal user data collection for GDPR compliance.
+- **User Authentication:** Sign-up/login via email/password, Google, and Facebook. Minimal user data collection for GDPR compliance.
 - **Deck/Class Management:** Create, edit, delete, and share flashcard decks. Teachers can create classes and manage student access.
 - **Flashcard Creation:** Create flashcards using templates. AI-assisted flashcard generation from input data.
 - **Spaced Repetition System (SRS):** Daily flashcard review based on an algorithm. User rating of card recall to adjust review intervals.
