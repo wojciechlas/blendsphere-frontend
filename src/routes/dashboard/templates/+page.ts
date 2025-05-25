@@ -1,14 +1,10 @@
-import { redirect } from '@sveltejs/kit';
+import { requireAuth } from '$lib/utils/auth-guards';
 import type { PageLoad } from './$types';
-import { pb } from '$lib/pocketbase';
 
-export const load: PageLoad = async () => {
-    // Check if user is authenticated
-    if (!pb.authStore.isValid || !pb.authStore.model) {
-        throw redirect(302, '/login');
-    }
+export const load: PageLoad = async ({ url }) => {
+    requireAuth(url);
 
     return {
-        user: pb.authStore.model
+        title: 'Templates - BlendSphere'
     };
 };

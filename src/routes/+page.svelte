@@ -7,16 +7,7 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import { isAuthenticated } from '$lib/stores/auth.store';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-
-	// Redirect authenticated users to dashboard
-	onMount(() => {
-		if ($isAuthenticated) {
-			goto('/dashboard');
-		}
-	});
 </script>
 
 <svelte:head>

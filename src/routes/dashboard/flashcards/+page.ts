@@ -5,6 +5,6 @@ export const load: PageLoad = async ({ url }) => {
     requireAuth(url);
 
     return {
-        title: 'Create Template - BlendSphere'
+        title: 'Flashcards - BlendSphere'
     };
 };

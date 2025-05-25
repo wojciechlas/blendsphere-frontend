@@ -110,15 +110,52 @@ logSecurityEvent('password_reset_requested', { email: sanitizedEmail });
 - **Protected Routes**: Dashboard and user-specific pages require authentication
 - **Guest Routes**: Login/signup redirect authenticated users
 - **Redirect Handling**: Secure redirect to prevent open redirect attacks
+- **Standardized Implementation**: All routes use consistent authentication guards
+- **Server-side Protection**: Authentication checks performed in `+page.ts` files for security
+
+### Protected Routes
+All dashboard routes are protected with server-side authentication:
+- `/dashboard/*` - All dashboard pages and sub-routes
+- `/dashboard/templates/*` - Template management pages
+- `/dashboard/classes/*` - Class management pages
+- `/dashboard/flashcards/*` - Flashcard study pages
+- `/dashboard/decks/*` - Deck management pages
+- `/dashboard/settings/*` - User settings pages
+- `/dashboard/progress/*` - Progress tracking pages
+- `/dashboard/help/*` - Help and support pages
+
+### Guest Routes
+Authentication pages redirect logged-in users:
+- `/` - Landing page (redirects to dashboard if authenticated)
+- `/login` - Login page
+- `/signup` - Registration page
+- `/forgot-password` - Password reset page
 
 ### Implementation
 ```typescript
-// Route protection
+// Route protection - standardized across all routes
 export function requireAuth(url: URL) {
-    if (!pb.authStore.isValid) {
-        throw redirect(302, `/login?redirectTo=${encodeURIComponent(url.pathname)}`);
+    if (!pb.authStore.isValid || !pb.authStore.model) {
+        throw redirect(302, `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`);
     }
 }
+
+export function requireGuest() {
+    if (pb.authStore.isValid && pb.authStore.model) {
+        throw redirect(302, '/dashboard');
+    }
+}
+
+// Usage in page load functions
+export const load: PageLoad = async ({ url }) => {
+    requireAuth(url); // For protected routes
+    // or
+    requireGuest();   // For authentication pages
+    
+    return {
+        title: 'Page Title - BlendSphere'
+    };
+};
 ```
 
 ## Environment Security
