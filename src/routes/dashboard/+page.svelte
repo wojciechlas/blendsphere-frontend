@@ -10,6 +10,18 @@
 	import { user } from '$lib/stores/auth.store';
 	import { SidebarTrigger } from '$lib/components/ui/sidebar/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import { goto } from '$app/navigation';
+	import PlusIcon from '@tabler/icons-svelte/icons/plus';
+	import TemplateIcon from '@tabler/icons-svelte/icons/template';
+	import EyeIcon from '@tabler/icons-svelte/icons/eye';
+
+	function handleCreateTemplate() {
+		goto('/dashboard/templates/create');
+	}
+
+	function handleViewTemplates() {
+		goto('/dashboard/templates');
+	}
 </script>
 
 <svelte:head>
@@ -101,12 +113,24 @@
 				<Card>
 					<CardHeader>
 						<CardTitle>Quick Actions</CardTitle>
+						<CardDescription>Get started with your learning journey</CardDescription>
 					</CardHeader>
-					<CardContent class="space-y-2">
-						<Button class="w-full" variant="outline" disabled>Create Flashcard Deck</Button>
-						<Button class="w-full" variant="outline" disabled>Join a Class</Button>
-						<Button class="w-full" variant="outline" disabled>Start Learning</Button>
-						<p class="text-muted-foreground mt-2 text-xs">Features coming soon!</p>
+					<CardContent class="space-y-3">
+						<Button class="w-full justify-start" variant="outline" onclick={handleCreateTemplate}>
+							<PlusIcon class="mr-2 h-4 w-4" />
+							Create Template
+						</Button>
+						<Button class="w-full justify-start" variant="outline" onclick={handleViewTemplates}>
+							<EyeIcon class="mr-2 h-4 w-4" />
+							View Templates
+						</Button>
+						<Button class="w-full justify-start" variant="outline" disabled>
+							<TemplateIcon class="mr-2 h-4 w-4" />
+							Create Flashcard Deck
+						</Button>
+						<div class="border-t pt-2">
+							<p class="text-muted-foreground text-xs">Some features coming soon!</p>
+						</div>
 					</CardContent>
 				</Card>
 

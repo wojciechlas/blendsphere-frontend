@@ -33,17 +33,17 @@
 			},
 			{
 				title: 'My Decks',
-				url: '/decks',
+				url: '/dashboard/decks',
 				icon: LayersIntersect
 			},
 			{
 				title: 'Flashcards',
-				url: '/flashcards',
+				url: '/dashboard/flashcards',
 				icon: CardsFilled
 			},
 			{
 				title: 'Classes',
-				url: '/classes',
+				url: '/dashboard/classes',
 				icon: UsersIcon
 			}
 		],
@@ -51,23 +51,23 @@
 			{
 				title: 'Templates',
 				icon: TemplateIcon,
-				url: '/templates'
+				url: '/dashboard/templates'
 			},
 			{
 				title: 'Progress',
 				icon: ChartLineIcon,
-				url: '/progress'
+				url: '/dashboard/progress'
 			}
 		],
 		navSecondary: [
 			{
 				title: 'Settings',
-				url: '/settings',
+				url: '/dashboard/settings',
 				icon: SettingsIcon
 			},
 			{
 				title: 'Help',
-				url: '/help',
+				url: '/dashboard/help',
 				icon: HelpIcon
 			},
 			{
@@ -116,7 +116,7 @@
 				user={{
 					name: $user.name || 'User',
 					email: $user.email || '',
-					avatar: $user.avatar || '/avatars/default.jpg'
+					avatar: $user.avatar || '/avatars/default.svg'
 				}}
 			/>
 		{/if}

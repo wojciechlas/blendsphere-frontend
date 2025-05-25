@@ -12,15 +12,15 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import {
-		Select,
-		SelectContent,
-		SelectItem,
-		SelectTrigger,
-		SelectValue
-	} from '$lib/components/ui/select';
+	import * as Select from '$lib/components/ui/select';
 	import { templateService, type Template } from '$lib/services/template.service';
-	import { Plus, Search, Filter, Eye, Edit, Copy, Trash2 } from 'lucide-svelte';
+	import PlusIcon from '@tabler/icons-svelte/icons/plus';
+	import SearchIcon from '@tabler/icons-svelte/icons/search';
+	import FilterIcon from '@tabler/icons-svelte/icons/filter';
+	import EyeIcon from '@tabler/icons-svelte/icons/eye';
+	import EditIcon from '@tabler/icons-svelte/icons/edit';
+	import CopyIcon from '@tabler/icons-svelte/icons/copy';
+	import TrashIcon from '@tabler/icons-svelte/icons/trash';
 
 	let templates: Template[] = [];
 	let loading = true;
@@ -84,11 +84,11 @@
 	}
 
 	function handleEditTemplate(templateId: string) {
-		goto(`/dashboard/templates/edit/${templateId}`);
+		goto(`/dashboard/templates/${templateId}`);
 	}
 
 	function handleViewTemplate(templateId: string) {
-		goto(`/dashboard/templates/view/${templateId}`);
+		goto(`/dashboard/templates/${templateId}`);
 	}
 
 	async function handleCloneTemplate(template: Template) {
@@ -119,8 +119,10 @@
 		return `${template.nativeLanguage} → ${template.learningLanguage}`;
 	}
 
-	function getLevelBadgeVariant(level: string) {
-		const variants: Record<string, string> = {
+	function getLevelBadgeVariant(
+		level: string
+	): 'default' | 'destructive' | 'outline' | 'secondary' {
+		const variants: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
 			A1: 'default',
 			A2: 'secondary',
 			B1: 'outline',
@@ -161,8 +163,8 @@
 			<h1 class="text-3xl font-bold tracking-tight">Templates</h1>
 			<p class="text-muted-foreground">Create and manage your flashcard templates</p>
 		</div>
-		<Button on:click={handleCreateTemplate} class="w-fit">
-			<Plus class="mr-2 h-4 w-4" />
+		<Button onclick={handleCreateTemplate} class="w-fit">
+			<PlusIcon class="mr-2 h-4 w-4" />
 			Create Template
 		</Button>
 	</div>
@@ -170,32 +172,32 @@
 	<!-- Filters and Search -->
 	<div class="flex flex-col gap-4 md:flex-row">
 		<div class="relative flex-1">
-			<Search
+			<SearchIcon
 				class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform"
 			/>
 			<Input bind:value={searchQuery} placeholder="Search templates..." class="pl-10" />
 		</div>
 		<div class="flex gap-2">
-			<Select bind:value={languageFilter}>
-				<SelectTrigger class="w-[180px]">
-					<SelectValue placeholder="Language" />
-				</SelectTrigger>
-				<SelectContent>
+			<Select.Root type="single" bind:value={languageFilter}>
+				<Select.Trigger class="w-[180px]">
+					{languages.find((l) => l.value === languageFilter)?.label || 'Language'}
+				</Select.Trigger>
+				<Select.Content>
 					{#each languages as language}
-						<SelectItem value={language.value}>{language.label}</SelectItem>
+						<Select.Item value={language.value}>{language.label}</Select.Item>
 					{/each}
-				</SelectContent>
-			</Select>
-			<Select bind:value={levelFilter}>
-				<SelectTrigger class="w-[180px]">
-					<SelectValue placeholder="Level" />
-				</SelectTrigger>
-				<SelectContent>
+				</Select.Content>
+			</Select.Root>
+			<Select.Root type="single" bind:value={levelFilter}>
+				<Select.Trigger class="w-[180px]">
+					{levels.find((l) => l.value === levelFilter)?.label || 'Level'}
+				</Select.Trigger>
+				<Select.Content>
 					{#each levels as level}
-						<SelectItem value={level.value}>{level.label}</SelectItem>
+						<Select.Item value={level.value}>{level.label}</Select.Item>
 					{/each}
-				</SelectContent>
-			</Select>
+				</Select.Content>
+			</Select.Root>
 		</div>
 	</div>
 
@@ -227,7 +229,7 @@
 	{:else if filteredTemplates.length === 0}
 		<div class="py-12 text-center">
 			<div class="text-muted-foreground mx-auto mb-4 h-12 w-12">
-				<Filter class="h-full w-full" />
+				<FilterIcon class="h-full w-full" />
 			</div>
 			<h3 class="mb-2 text-lg font-semibold">No templates found</h3>
 			<p class="text-muted-foreground mb-4">
@@ -236,8 +238,8 @@
 					: 'Create your first template to get started'}
 			</p>
 			{#if !searchQuery && languageFilter === 'all' && levelFilter === 'all'}
-				<Button on:click={handleCreateTemplate}>
-					<Plus class="mr-2 h-4 w-4" />
+				<Button onclick={handleCreateTemplate}>
+					<PlusIcon class="mr-2 h-4 w-4" />
 					Create Your First Template
 				</Button>
 			{/if}
@@ -271,22 +273,22 @@
 						</div>
 					</CardContent>
 					<CardFooter class="flex gap-2">
-						<Button variant="outline" size="sm" on:click={() => handleViewTemplate(template.id)}>
-							<Eye class="h-4 w-4" />
+						<Button variant="outline" size="sm" onclick={() => handleViewTemplate(template.id)}>
+							<EyeIcon class="h-4 w-4" />
 						</Button>
-						<Button variant="outline" size="sm" on:click={() => handleEditTemplate(template.id)}>
-							<Edit class="h-4 w-4" />
+						<Button variant="outline" size="sm" onclick={() => handleEditTemplate(template.id)}>
+							<EditIcon class="h-4 w-4" />
 						</Button>
-						<Button variant="outline" size="sm" on:click={() => handleCloneTemplate(template)}>
-							<Copy class="h-4 w-4" />
+						<Button variant="outline" size="sm" onclick={() => handleCloneTemplate(template)}>
+							<CopyIcon class="h-4 w-4" />
 						</Button>
 						<Button
 							variant="outline"
 							size="sm"
-							on:click={() => handleDeleteTemplate(template.id)}
+							onclick={() => handleDeleteTemplate(template.id)}
 							class="text-destructive hover:text-destructive"
 						>
-							<Trash2 class="h-4 w-4" />
+							<TrashIcon class="h-4 w-4" />
 						</Button>
 					</CardFooter>
 				</Card>
@@ -307,7 +309,7 @@
 						variant="outline"
 						size="sm"
 						disabled={currentPage <= 1}
-						on:click={() => {
+						onclick={() => {
 							currentPage--;
 							loadTemplates();
 						}}
@@ -318,7 +320,7 @@
 						variant="outline"
 						size="sm"
 						disabled={currentPage >= totalPages}
-						on:click={() => {
+						onclick={() => {
 							currentPage++;
 							loadTemplates();
 						}}
@@ -330,12 +332,3 @@
 		{/if}
 	{/if}
 </div>
-
-<style>
-	.line-clamp-2 {
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-</style>

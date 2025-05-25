@@ -4,11 +4,23 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '$lib/components/ui/select';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import * as Select from '$lib/components/ui/select';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
-	import { templateService, type Template, type TemplateStyles } from '$lib/services/template.service';
-	import { ArrowLeft, Save, Eye } from 'lucide-svelte';
+	import {
+		templateService,
+		type Template,
+		type TemplateStyles
+	} from '$lib/services/template.service';
+	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
+	import DeviceFloppyIcon from '@tabler/icons-svelte/icons/device-floppy';
+	import EyeIcon from '@tabler/icons-svelte/icons/eye';
 
 	let saving = false;
 	let error = '';
@@ -119,12 +131,11 @@
 
 			const newTemplate = await templateService.create(templateData);
 			success = 'Template created successfully!';
-			
+
 			// Redirect to template list after a short delay
 			setTimeout(() => {
 				goto('/dashboard/templates');
 			}, 1500);
-
 		} catch (err) {
 			error = 'Failed to create template. Please try again.';
 			console.error('Error creating template:', err);
@@ -147,41 +158,37 @@
 	<title>Create Template - BlendSphere</title>
 </svelte:head>
 
-<div class="container mx-auto py-6 max-w-4xl space-y-6">
+<div class="container mx-auto max-w-4xl space-y-6 py-6">
 	<!-- Header -->
 	<div class="flex items-center gap-4">
-		<Button variant="ghost" size="sm" on:click={handleCancel}>
-			<ArrowLeft class="h-4 w-4" />
+		<Button variant="ghost" size="sm" onclick={handleCancel}>
+			<ArrowLeftIcon class="h-4 w-4" />
 		</Button>
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">Create Template</h1>
-			<p class="text-muted-foreground">
-				Define the structure and appearance of your flashcards
-			</p>
+			<p class="text-muted-foreground">Define the structure and appearance of your flashcards</p>
 		</div>
 	</div>
 
 	<!-- Messages -->
 	{#if error}
-		<div class="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+		<div class="bg-destructive/15 text-destructive rounded-md p-3 text-sm">
 			{error}
 		</div>
 	{/if}
 
 	{#if success}
-		<div class="bg-green-100 text-green-800 text-sm p-3 rounded-md">
+		<div class="rounded-md bg-green-100 p-3 text-sm text-green-800">
 			{success}
 		</div>
 	{/if}
 
-	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+	<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 		<!-- Template Information -->
 		<Card>
 			<CardHeader>
 				<CardTitle>Basic Information</CardTitle>
-				<CardDescription>
-					Set up the basic properties of your template
-				</CardDescription>
+				<CardDescription>Set up the basic properties of your template</CardDescription>
 			</CardHeader>
 			<CardContent class="space-y-4">
 				<div class="space-y-2">
@@ -209,45 +216,45 @@
 				<div class="grid grid-cols-2 gap-4">
 					<div class="space-y-2">
 						<Label>Native Language *</Label>
-						<Select bind:value={nativeLanguage}>
-							<SelectTrigger>
-								<SelectValue placeholder="Select language" />
-							</SelectTrigger>
-							<SelectContent>
+						<Select.Root type="single" bind:value={nativeLanguage}>
+							<Select.Trigger>
+								{languages.find((l) => l.value === nativeLanguage)?.label || 'Select language'}
+							</Select.Trigger>
+							<Select.Content>
 								{#each languages as language}
-									<SelectItem value={language.value}>{language.label}</SelectItem>
+									<Select.Item value={language.value}>{language.label}</Select.Item>
 								{/each}
-							</SelectContent>
-						</Select>
+							</Select.Content>
+						</Select.Root>
 					</div>
 
 					<div class="space-y-2">
 						<Label>Learning Language *</Label>
-						<Select bind:value={learningLanguage}>
-							<SelectTrigger>
-								<SelectValue placeholder="Select language" />
-							</SelectTrigger>
-							<SelectContent>
+						<Select.Root type="single" bind:value={learningLanguage}>
+							<Select.Trigger>
+								{languages.find((l) => l.value === learningLanguage)?.label || 'Select language'}
+							</Select.Trigger>
+							<Select.Content>
 								{#each languages as language}
-									<SelectItem value={language.value}>{language.label}</SelectItem>
+									<Select.Item value={language.value}>{language.label}</Select.Item>
 								{/each}
-							</SelectContent>
-						</Select>
+							</Select.Content>
+						</Select.Root>
 					</div>
 				</div>
 
 				<div class="space-y-2">
 					<Label>Language Level *</Label>
-					<Select bind:value={languageLevel}>
-						<SelectTrigger>
-							<SelectValue placeholder="Select level" />
-						</SelectTrigger>
-						<SelectContent>
+					<Select.Root type="single" bind:value={languageLevel}>
+						<Select.Trigger>
+							{levels.find((l) => l.value === languageLevel)?.label || 'Select level'}
+						</Select.Trigger>
+						<Select.Content>
 							{#each levels as level}
-								<SelectItem value={level.value}>{level.label}</SelectItem>
+								<Select.Item value={level.value}>{level.label}</Select.Item>
 							{/each}
-						</SelectContent>
-					</Select>
+						</Select.Content>
+					</Select.Root>
 				</div>
 
 				<div class="flex items-center space-x-2">
@@ -280,8 +287,8 @@
 						rows={6}
 						class="font-mono text-sm"
 					/>
-					<p class="text-xs text-muted-foreground">
-						Use `{{'{{fieldName}}'}}` to insert field values
+					<p class="text-muted-foreground text-xs">
+						Use &lbrace;&lbrace;fieldName&rbrace;&rbrace; to insert field values
 					</p>
 				</div>
 
@@ -294,8 +301,8 @@
 						rows={6}
 						class="font-mono text-sm"
 					/>
-					<p class="text-xs text-muted-foreground">
-						Use `{{'{{fieldName}}'}}` to insert field values
+					<p class="text-muted-foreground text-xs">
+						Use &lbrace;&lbrace;fieldName&rbrace;&rbrace; to insert field values
 					</p>
 				</div>
 			</CardContent>
@@ -305,20 +312,20 @@
 	<!-- Actions -->
 	<div class="flex justify-between">
 		<div class="flex gap-2">
-			<Button variant="outline" on:click={handleCancel} disabled={saving}>
-				Cancel
-			</Button>
+			<Button variant="outline" onclick={handleCancel} disabled={saving}>Cancel</Button>
 		</div>
 		<div class="flex gap-2">
-			<Button variant="outline" on:click={handlePreview} disabled={saving}>
-				<Eye class="mr-2 h-4 w-4" />
+			<Button variant="outline" onclick={handlePreview} disabled={saving}>
+				<EyeIcon class="mr-2 h-4 w-4" />
 				Preview
 			</Button>
-			<Button on:click={handleSave} disabled={saving || !templateName.trim()}>
+			<Button onclick={handleSave} disabled={saving || !templateName.trim()}>
 				{#if saving}
-					<div class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+					<div
+						class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+					></div>
 				{:else}
-					<Save class="mr-2 h-4 w-4" />
+					<DeviceFloppyIcon class="mr-2 h-4 w-4" />
 				{/if}
 				Save Template
 			</Button>
