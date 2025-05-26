@@ -140,7 +140,7 @@
 							</div>
 						</CardContent>
 
-						<CardFooter class="flex flex-col space-y-4">
+						<CardFooter class="my-4 flex flex-col space-y-4">
 							<Button type="submit" class="w-full" disabled={isLoading}>
 								{#if isLoading}
 									<div

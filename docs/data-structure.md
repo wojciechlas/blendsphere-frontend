@@ -13,43 +13,77 @@ The data structure of BlendSphere defines how information is organized, stored, 
 
 ## Key Entities
 
-### User
+### Users
+Represents a user of the application. Users can have roles like ADMIN, TEACHER, STUDENT, or INDIVIDUAL_LEARNER. Stores user profile information, preferences, and authentication details.
 
-The central entity representing a user of the application. Users can be teachers, students, or individual learners.
+### Templates
+Defines the structure, layout, and styling for flashcards. Templates are created by users and can be public or private. Each template can have multiple fields.
 
-### Deck
+### Fields
+Represents a piece of data within a template, such as text, image, or audio. Fields have a type, language, and can be designated as input fields.
 
-A collection of flashcards created by a user. Decks can be personal or shared within classes.
+### Decks
+A collection of flashcards created or owned by a user. Decks can be public or private and are used to organize flashcards for study.
 
-### Flashcard
+### Flashcards
+The core learning unit. Each flashcard is based on a template and contains data for its fields. Flashcards store FSRS (Free Spaced Repetition Scheduler) state, difficulty, stability, and review history.
 
-The fundamental learning unit containing question/answer pairs and additional metadata for SRS scheduling.
+### Classes
+Represents an educational group or class, typically managed by a teacher. Students can enroll in classes.
 
-### Template
+### ClassEnrollments
+Tracks the enrollment of students in classes, including their status (e.g., PENDING, ACTIVE).
 
-Defines the structure and format of flashcards. Templates can be shared and reused.
+### Lessons
+Represents a unit of learning within a class, created by a teacher. Lessons can have associated posts for discussion.
 
-### Class
+### StudySessions
+Records a user's study activity, including start/end times and performance metrics like cards reviewed and correct/incorrect answers.
 
-Represents an educational class or group. Classes have members (teachers and students) and associated learning materials.
+### FlashcardReviews
+Detailed records of individual flashcard reviews by a user during a study session. Includes the rating given, time taken, and the FSRS state after the review.
 
-### Review Session
+### Posts
+User-generated content within a lesson, such as questions, resources, announcements, or discussions.
 
-Records of user's review activities, including performance metrics used by the SRS algorithm.
+### Comments
+Replies or comments made by users on posts.
 
-### AI Generation
+### Reactions
+User reactions (e.g., LIKE, HELPFUL) to posts or comments.
 
-History of AI-assisted content generation, including prompts and responses.
+### AIPrompts
+Stores records of interactions with AI features, such as prompts for flashcard generation, explanations, or translations, along with the AI's response.
 
 ## Data Relationships
 
-- **User to Deck**: One-to-many (a user can have multiple decks)
-- **Deck to Flashcard**: One-to-many (a deck contains multiple flashcards)
-- **Template to Flashcard**: One-to-many (a template can be used for multiple flashcards)
-- **User to Class**: Many-to-many (users can be part of multiple classes, classes have multiple users)
-- **Class to Deck**: One-to-many (a class can have multiple associated decks)
-- **User to Review Session**: One-to-many (a user has multiple review sessions)
-- **Flashcard to Review Record**: One-to-many (a flashcard has multiple review records)
+- **Users "1" -- "0..*" Templates**: A user can create multiple templates.
+- **Users "1" -- "0..*" Decks**: A user owns multiple decks.
+- **Users "1" -- "0..*" Classes**: A user (teacher) can teach multiple classes.
+- **Users "1" -- "0..*" ClassEnrollments**: A user (student) enrolls in classes via enrollments.
+- **Users "1" -- "0..*" StudySessions**: A user participates in multiple study sessions.
+- **Users "1" -- "0..*" FlashcardReviews**: A user provides multiple flashcard reviews.
+- **Users "1" -- "0..*" Posts**: A user creates multiple posts.
+- **Users "1" -- "0..*" Comments**: A user writes multiple comments.
+- **Users "1" -- "0..*" Reactions**: A user gives multiple reactions.
+- **Users "1" -- "0..*" AIPrompts**: A user submits multiple AI prompts.
+
+- **Templates "1" -- "0..*" Fields**: A template contains multiple fields.
+- **Templates "1" -- "0..*" Flashcards**: A template is used by multiple flashcards.
+
+- **Decks "1" -- "0..*" Flashcards**: A deck contains multiple flashcards.
+
+- **Classes "1" -- "0..*" ClassEnrollments**: A class has multiple enrollments.
+- **Classes "1" -- "0..*" Lessons**: A class contains multiple lessons.
+
+- **Lessons "1" -- "0..*" Posts**: A lesson contains multiple posts.
+
+- **StudySessions "1" -- "0..*" FlashcardReviews**: A study session includes multiple flashcard reviews.
+
+- **Posts "1" -- "0..*" Comments**: A post has multiple comments.
+- **Posts "1" -- "0..*" Reactions**: A post receives multiple reactions.
+
+- **Comments "1" -- "0..*" Reactions**: A comment receives multiple reactions.
 
 ## Data Storage
 

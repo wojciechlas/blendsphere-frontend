@@ -6,6 +6,10 @@ export interface RegisterUser {
     password: string;
     passwordConfirm: string;
     name?: string;
+    username: string; // Added username
+    nativeLanguage: string; // Added nativeLanguage
+    aboutMe?: string; // Added aboutMe
+    role: string; // Added role
 }
 
 export interface LoginUser {

@@ -1,0 +1,151 @@
+{
+    "id": "pbc_lessons",
+    "listRule": "class.teacher = @request.auth.id || class.classEnrollments_via_class.student ?= @request.auth.id",
+    "viewRule": "class.teacher = @request.auth.id || class.classEnrollments_via_class.student ?= @request.auth.id",
+    "createRule": "class.teacher = @request.auth.id",
+    "updateRule": "class.teacher = @request.auth.id",
+    "deleteRule": "class.teacher = @request.auth.id",
+    "name": "lessons",
+    "type": "base",
+    "fields": [
+        {
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "hidden": false,
+            "id": "text3208210256",
+            "max": 15,
+            "min": 15,
+            "name": "id",
+            "pattern": "^[a-z0-9]+$",
+            "presentable": false,
+            "primaryKey": true,
+            "required": true,
+            "system": true,
+            "type": "text"
+        },
+        {
+            "cascadeDelete": true,
+            "collectionId": "pbc_classes",
+            "hidden": false,
+            "id": "relation_class",
+            "maxSelect": 1,
+            "minSelect": 1,
+            "name": "class",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_title",
+            "max": 200,
+            "min": 1,
+            "name": "title",
+            "pattern": "",
+            "presentable": true,
+            "primaryKey": false,
+            "required": true,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "convertURLs": false,
+            "hidden": false,
+            "id": "editor_content",
+            "maxSize": 0,
+            "name": "content",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "editor"
+        },
+        {
+            "hidden": false,
+            "id": "number_order",
+            "max": null,
+            "min": 1,
+            "name": "order",
+            "onlyInt": true,
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "date_lesson_date",
+            "max": "",
+            "min": "",
+            "name": "lessonDate",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "date"
+        },
+        {
+            "hidden": false,
+            "id": "file_attachments",
+            "maxSelect": 10,
+            "maxSize": 52428800,
+            "mimeTypes": [
+                "application/pdf",
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/webp",
+                "audio/mpeg",
+                "audio/wav",
+                "audio/ogg",
+                "video/mp4",
+                "video/webm",
+                "text/plain",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ],
+            "name": "attachments",
+            "presentable": false,
+            "protected": false,
+            "required": false,
+            "system": false,
+            "thumbs": [
+                "200x150"
+            ],
+            "type": "file"
+        },
+        {
+            "hidden": false,
+            "id": "bool_is_published",
+            "name": "isPublished",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "bool"
+        },
+        {
+            "hidden": false,
+            "id": "autodate2990389176",
+            "name": "created",
+            "onCreate": true,
+            "onUpdate": false,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        },
+        {
+            "hidden": false,
+            "id": "autodate3332085495",
+            "name": "updated",
+            "onCreate": true,
+            "onUpdate": true,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        }
+    ],
+    "indexes": [
+        "CREATE INDEX `idx_lessons_class` ON `lessons` (`class`)",
+        "CREATE INDEX `idx_lessons_order` ON `lessons` (`class`, `order`)",
+        "CREATE INDEX `idx_lessons_published` ON `lessons` (`isPublished`)"
+    ],
+    "system": false
+}

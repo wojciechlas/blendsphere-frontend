@@ -1,0 +1,175 @@
+{
+    "id": "pbc_classes",
+    "listRule": "teacher = @request.auth.id || classEnrollments_via_class.student ?= @request.auth.id",
+    "viewRule": "teacher = @request.auth.id || classEnrollments_via_class.student ?= @request.auth.id",
+    "createRule": "@request.auth.id != '' && @request.auth.role ?= 'TEACHER'",
+    "updateRule": "teacher = @request.auth.id",
+    "deleteRule": "teacher = @request.auth.id",
+    "name": "classes",
+    "type": "base",
+    "fields": [
+        {
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "hidden": false,
+            "id": "text3208210256",
+            "max": 15,
+            "min": 15,
+            "name": "id",
+            "pattern": "^[a-z0-9]+$",
+            "presentable": false,
+            "primaryKey": true,
+            "required": true,
+            "system": true,
+            "type": "text"
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_name",
+            "max": 100,
+            "min": 1,
+            "name": "name",
+            "pattern": "",
+            "presentable": true,
+            "primaryKey": false,
+            "required": true,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_description",
+            "max": 1000,
+            "min": 0,
+            "name": "description",
+            "pattern": "",
+            "presentable": false,
+            "primaryKey": false,
+            "required": false,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "cascadeDelete": false,
+            "collectionId": "_pb_users_auth_",
+            "hidden": false,
+            "id": "relation_teacher",
+            "maxSelect": 1,
+            "minSelect": 1,
+            "name": "teacher",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "autogeneratePattern": "[A-Z0-9]{6}",
+            "hidden": false,
+            "id": "text_code",
+            "max": 6,
+            "min": 6,
+            "name": "code",
+            "pattern": "^[A-Z0-9]{6}$",
+            "presentable": false,
+            "primaryKey": false,
+            "required": true,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "hidden": false,
+            "id": "select_language",
+            "maxSelect": 1,
+            "name": "language",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "select",
+            "values": [
+                "EN",
+                "ES",
+                "FR",
+                "DE",
+                "IT",
+                "PL"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "select_level",
+            "maxSelect": 1,
+            "name": "level",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "select",
+            "values": [
+                "A1",
+                "A2",
+                "B1",
+                "B2",
+                "C1",
+                "C2"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "bool_is_active",
+            "name": "isActive",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "bool"
+        },
+        {
+            "hidden": false,
+            "id": "date_start_date",
+            "max": "",
+            "min": "",
+            "name": "startDate",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "date"
+        },
+        {
+            "hidden": false,
+            "id": "date_end_date",
+            "max": "",
+            "min": "",
+            "name": "endDate",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "date"
+        },
+        {
+            "hidden": false,
+            "id": "autodate2990389176",
+            "name": "created",
+            "onCreate": true,
+            "onUpdate": false,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        },
+        {
+            "hidden": false,
+            "id": "autodate3332085495",
+            "name": "updated",
+            "onCreate": true,
+            "onUpdate": true,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        }
+    ],
+    "indexes": [
+        "CREATE UNIQUE INDEX `idx_classes_code` ON `classes` (`code`)",
+        "CREATE INDEX `idx_classes_teacher` ON `classes` (`teacher`)",
+        "CREATE INDEX `idx_classes_active` ON `classes` (`isActive`)",
+        "CREATE INDEX `idx_classes_language_level` ON `classes` (`language`, `level`)"
+    ],
+    "system": false
+}

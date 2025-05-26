@@ -156,7 +156,7 @@
 	<title>Templates - BlendSphere</title>
 </svelte:head>
 
-<div class="container mx-auto space-y-6 py-6">
+<div class="container mx-auto space-y-6 p-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 		<div>

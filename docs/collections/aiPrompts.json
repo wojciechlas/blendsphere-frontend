@@ -1,0 +1,120 @@
+{
+    "id": "pbc_ai_prompts",
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id",
+    "name": "aiPrompts",
+    "type": "base",
+    "fields": [
+        {
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "hidden": false,
+            "id": "text3208210256",
+            "max": 15,
+            "min": 15,
+            "name": "id",
+            "pattern": "^[a-z0-9]+$",
+            "presentable": false,
+            "primaryKey": true,
+            "required": true,
+            "system": true,
+            "type": "text"
+        },
+        {
+            "cascadeDelete": false,
+            "collectionId": "_pb_users_auth_",
+            "hidden": false,
+            "id": "relation_user",
+            "maxSelect": 1,
+            "minSelect": 1,
+            "name": "user",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_prompt",
+            "max": 5000,
+            "min": 1,
+            "name": "prompt",
+            "pattern": "",
+            "presentable": true,
+            "primaryKey": false,
+            "required": true,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_response",
+            "max": 10000,
+            "min": 0,
+            "name": "response",
+            "pattern": "",
+            "presentable": false,
+            "primaryKey": false,
+            "required": false,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "hidden": false,
+            "id": "number_response_time",
+            "max": null,
+            "min": 0,
+            "name": "responseTime",
+            "onlyInt": true,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "select_type",
+            "maxSelect": 1,
+            "name": "type",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "select",
+            "values": [
+                "FLASHCARD_GENERATION",
+                "EXPLANATION_HELP",
+                "TRANSLATION"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "autodate2990389176",
+            "name": "created",
+            "onCreate": true,
+            "onUpdate": false,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        },
+        {
+            "hidden": false,
+            "id": "autodate3332085495",
+            "name": "updated",
+            "onCreate": true,
+            "onUpdate": true,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        }
+    ],
+    "indexes": [
+        "CREATE INDEX `idx_ai_prompts_user` ON `aiPrompts` (`user`)",
+        "CREATE INDEX `idx_ai_prompts_type` ON `aiPrompts` (`type`)",
+        "CREATE INDEX `idx_ai_prompts_created` ON `aiPrompts` (`created`)"
+    ],
+    "system": false
+}

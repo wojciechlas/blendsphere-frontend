@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Language, UserRole } from '$lib/components/schemas';
 
 /**
  * Form validation utilities using Zod
@@ -53,6 +54,41 @@ const nameSchema = z
     .optional();
 
 /**
+ * Username validation schema
+ */
+const usernameSchema = z
+    .string()
+    .trim()
+    .min(3, 'Username must be at least 3 characters long')
+    .max(30, 'Username must be less than 30 characters')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
+
+/**
+ * Native language validation schema
+ */
+const nativeLanguageSchema = z
+    .nativeEnum(Language, {
+        errorMap: () => ({ message: 'Please select a valid native language' })
+    });
+
+/**
+ * User role validation schema
+ */
+const userRoleSchema = z
+    .nativeEnum(UserRole, {
+        errorMap: () => ({ message: 'Please select a valid account type' })
+    });
+
+/**
+ * About me validation schema
+ */
+const aboutMeSchema = z
+    .string()
+    .trim()
+    .max(500, 'About me must be less than 500 characters')
+    .optional();
+
+/**
  * Login form validation schema
  */
 export const loginSchema = z.object({
@@ -68,6 +104,10 @@ export const signupSchema = z.object({
     password: passwordSchema,
     passwordConfirm: z.string().min(1, 'Password confirmation is required'),
     name: nameSchema,
+    username: usernameSchema,
+    nativeLanguage: nativeLanguageSchema,
+    role: userRoleSchema,
+    aboutMe: aboutMeSchema,
 }).refine((data) => data.password === data.passwordConfirm, {
     message: 'Passwords do not match',
     path: ['passwordConfirm'],
@@ -136,13 +176,21 @@ export function validateSignupForm(
     email: string,
     password: string,
     passwordConfirm: string,
-    name?: string
+    name?: string,
+    username?: string,
+    nativeLanguage?: string,
+    role?: string,
+    aboutMe?: string
 ): ValidationResult {
     const result = signupSchema.safeParse({
         email,
         password,
         passwordConfirm,
-        name: name || undefined
+        name: name || undefined,
+        username,
+        nativeLanguage,
+        role,
+        aboutMe: aboutMe || undefined
     });
 
     if (result.success) {

@@ -61,7 +61,6 @@ export const isLoggedIn = () => pb.authStore.isValid;
 // Export the collections for easy access
 export const collections = {
     users: pb.collection('users'),
-    authMethods: pb.collection('authMethods'),
     templates: pb.collection('templates'),
     fields: pb.collection('fields'),
     decks: pb.collection('decks'),

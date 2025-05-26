@@ -68,6 +68,22 @@ function createAuthStore() {
         try {
             const authData = await pb.collection('users').authWithPassword(email, password);
 
+            // Check if user is verified
+            if (!authData.record.verified) {
+                // Log out the user immediately
+                pb.authStore.clear();
+
+                update(state => ({
+                    ...state,
+                    isLoading: false,
+                    isAuthenticated: false,
+                    user: null
+                }));
+
+                logSecurityEvent('login_failed_unverified', { userId: authData.record.id, email });
+                throw new Error('Please verify your email address before logging in. Check your inbox for a verification link.');
+            }
+
             // Store session securely
             SecureStorage.setItem('lastLoginTime', Date.now().toString());
 
@@ -96,7 +112,7 @@ function createAuthStore() {
     };
 
     // Signup function
-    const signup = async (email: string, password: string, passwordConfirm: string, name?: string) => {
+    const signup = async (email: string, password: string, passwordConfirm: string, name?: string, username?: string, nativeLanguage?: string, aboutMe?: string, role?: string) => {
         const rateLimitId = getRateLimitIdentifier();
 
         // Check rate limiting
@@ -113,7 +129,11 @@ function createAuthStore() {
                 email,
                 password,
                 passwordConfirm,
-                ...(name && { name })
+                ...(name && { name }),
+                ...(username && { username }), // Added username
+                ...(nativeLanguage && { nativeLanguage }), // Added nativeLanguage
+                ...(aboutMe && { aboutMe }), // Added aboutMe
+                ...(role && { role }) // Added role
             };
 
             // Create user account
@@ -121,10 +141,10 @@ function createAuthStore() {
 
             logSecurityEvent('signup_success', { userId: record.id, email });
 
-            // Automatically log in after successful registration
-            const authData = await login(email, password);
+            // Don't automatically log in - user needs to verify email first
+            update(state => ({ ...state, isLoading: false }));
 
-            return authData;
+            return { record, message: 'Account created successfully! Please check your email to verify your account before logging in.' };
         } catch (error) {
             update(state => ({
                 ...state,
@@ -145,6 +165,23 @@ function createAuthStore() {
             isAuthenticated: false,
             lastActivity: Date.now()
         });
+    };
+
+    // OAuth provider login function
+    const loginWithProvider = async (provider: string, redirectTo?: string) => {
+        update(state => ({ ...state, isLoading: true }));
+
+        try {
+            // For now, just show a message that OAuth is not implemented
+            // In the future, this would integrate with PocketBase OAuth
+            alert(`OAuth login with ${provider} is not implemented yet. Please use email and password for now.`);
+
+            update(state => ({ ...state, isLoading: false }));
+        } catch (error) {
+            update(state => ({ ...state, isLoading: false }));
+            console.error(`OAuth login with ${provider} failed:`, error);
+            throw error;
+        }
     };
 
     // Listen to PocketBase auth changes
@@ -170,8 +207,9 @@ function createAuthStore() {
     return {
         subscribe,
         login,
-        signup,
+        signup, // Ensure signup is exported with new signature
         logout,
+        loginWithProvider,
         updateActivity
     };
 }

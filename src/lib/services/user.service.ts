@@ -4,7 +4,12 @@ export interface User {
     id: string;
     email: string;
     name?: string;
+    username: string; // Added username
     avatar?: string;
+    nativeLanguage: string; // Added nativeLanguage
+    aboutMe?: string; // Added aboutMe
+    role: string; // Added role, assuming it's a string representation of UserRole
+    verified: boolean; // Added verified
     created: string;
     updated: string;
 }

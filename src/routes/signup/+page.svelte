@@ -2,6 +2,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { Textarea } from '$lib/components/ui/textarea';
+	import * as Select from '$lib/components/ui/select'; // Changed import for Select
 	import {
 		Card,
 		CardContent,
@@ -14,14 +16,20 @@
 	import { validateSignupForm, sanitizeInput, type ValidationError } from '$lib/utils/validation';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { Language, UserRole } from '$lib/components/schemas'; // Assuming schemas.ts exports these enums
 
 	// Form state
 	let email = $state('');
 	let password = $state('');
 	let passwordConfirm = $state('');
-	let name = $state('');
+	let name = $state(''); // Optional
+	let username = $state(''); // Required
+	let nativeLanguage = $state(''); // Required
+	let aboutMe = $state(''); // Optional
+	let role = $state(UserRole.INDIVIDUAL_LEARNER); // Default role
 	let errors: ValidationError[] = $state([]);
 	let submitError = $state('');
+	let successMessage = $state('');
 	let showPassword = $state(false);
 	let showPasswordConfirm = $state(false);
 	let agreedToTerms = $state(false);
@@ -45,24 +53,29 @@
 	const handleSubmit = async (event: SubmitEvent) => {
 		event.preventDefault();
 
-		// Check terms agreement
 		if (!agreedToTerms) {
-			submitError = 'Please agree to the Terms of Service and Privacy Policy to continue.';
+			submitError = 'You must agree to the terms and conditions.';
 			return;
 		}
 
 		// Sanitize inputs
 		const sanitizedEmail = sanitizeInput(email);
-		const sanitizedPassword = sanitizeInput(password);
-		const sanitizedPasswordConfirm = sanitizeInput(passwordConfirm);
+		const sanitizedPassword = password; // Passwords are not typically sanitized like other text inputs
+		const sanitizedPasswordConfirm = passwordConfirm;
 		const sanitizedName = sanitizeInput(name);
+		const sanitizedUsername = sanitizeInput(username);
+		const sanitizedAboutMe = sanitizeInput(aboutMe);
 
-		// Validate form
+		// Validate form (assuming validateSignupForm is updated to include new fields)
 		const validation = validateSignupForm(
 			sanitizedEmail,
 			sanitizedPassword,
 			sanitizedPasswordConfirm,
-			sanitizedName || undefined
+			sanitizedName || undefined,
+			sanitizedUsername,
+			nativeLanguage,
+			role
+			// aboutMe is optional and might not be part of initial validation, or handled differently
 		);
 
 		if (!validation.isValid) {
@@ -73,17 +86,36 @@
 		// Clear previous errors
 		errors = [];
 		submitError = '';
+		successMessage = '';
 
 		try {
-			await authStore.signup(
+			const result = await authStore.signup(
 				sanitizedEmail,
 				sanitizedPassword,
 				sanitizedPasswordConfirm,
-				sanitizedName || undefined
+				sanitizedName || undefined,
+				sanitizedUsername,
+				nativeLanguage,
+				sanitizedAboutMe || undefined,
+				role
 			);
 
-			// Redirect on successful signup
-			goto(redirectTo);
+			// Show success message about email verification
+			submitError = ''; // Clear any previous errors
+			successMessage =
+				result.message ||
+				'Account created successfully! Please check your email to verify your account before logging in.';
+
+			// Clear the form
+			email = '';
+			password = '';
+			passwordConfirm = '';
+			name = '';
+			username = '';
+			nativeLanguage = '';
+			aboutMe = '';
+			role = UserRole.INDIVIDUAL_LEARNER; // Reset to default instead of empty string
+			agreedToTerms = false;
 		} catch (error) {
 			console.error('Signup error:', error);
 
@@ -98,6 +130,12 @@
 				const errorData = error.data as Record<string, any>;
 
 				// Handle field-specific errors
+				if (errorData.username) {
+					errors = [
+						...errors,
+						{ field: 'username', message: 'Username already exists or is invalid.' }
+					];
+				}
 				if (errorData.email) {
 					errors = [
 						...errors,
@@ -138,22 +176,42 @@
 
 	// Handle Enter key in form
 	const handleKeydown = (event: KeyboardEvent) => {
-		if (event.key === 'Enter' && !$isLoading) {
-			const target = event.target as HTMLElement;
-			const form = target.closest('form');
-			if (form) {
-				form.requestSubmit();
-			}
+		if (event.key === 'Enter' && !$isLoading && agreedToTerms) {
+			handleSubmit(new SubmitEvent('submit'));
 		}
+	};
+
+	const languageOptions = Object.values(Language);
+	const roleOptions = Object.values(UserRole);
+
+	// Helper function to get display label for language
+	const getLanguageLabel = (lang: Language): string => {
+		const labels: Record<Language, string> = {
+			[Language.EN]: 'English',
+			[Language.ES]: 'Español',
+			[Language.FR]: 'Français',
+			[Language.DE]: 'Deutsch',
+			[Language.IT]: 'Italiano',
+			[Language.PL]: 'Polski'
+		};
+		return labels[lang] || lang;
+	};
+
+	// Helper function to get display label for role
+	const getRoleLabel = (role: UserRole): string => {
+		const labels: Record<UserRole, string> = {
+			[UserRole.ADMIN]: 'Admin',
+			[UserRole.TEACHER]: 'Teacher',
+			[UserRole.STUDENT]: 'Student',
+			[UserRole.INDIVIDUAL_LEARNER]: 'Individual Learner'
+		};
+		return labels[role] || role;
 	};
 </script>
 
 <svelte:head>
 	<title>Sign Up - BlendSphere</title>
-	<meta
-		name="description"
-		content="Create your BlendSphere account and start learning languages with AI-powered flashcards."
-	/>
+	<meta name="description" content="Create your BlendSphere account to start learning languages." />
 </svelte:head>
 
 <div
@@ -162,41 +220,48 @@
 	<!-- Left side - Signup Form -->
 	<div class="lg:p-8">
 		<div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
-			<!-- Header -->
-			<div class="flex flex-col space-y-2 text-center">
-				<h1 class="text-2xl font-semibold tracking-tight">Create an account</h1>
-				<p class="text-muted-foreground text-sm">
-					Enter your information below to create your account
-				</p>
-			</div>
-
-			<!-- Signup Form -->
-			<Card>
-				<CardHeader class="space-y-1">
-					<CardTitle class="text-center text-2xl">Sign Up</CardTitle>
-					<CardDescription class="text-center">
-						Join BlendSphere to start your language learning journey
-					</CardDescription>
+			<Card class="w-full">
+				<CardHeader class="space-y-1 text-center">
+					<img src="/logo-color.svg" alt="BlendSphere Logo" class="mx-auto mb-4 h-16 w-auto" />
+					<CardTitle class="text-2xl">Create an Account</CardTitle>
+					<CardDescription>Enter your details below to get started</CardDescription>
 				</CardHeader>
 
 				<form onsubmit={handleSubmit}>
 					<CardContent class="space-y-4">
 						<!-- Name Field (Optional) -->
 						<div class="space-y-2">
-							<Label for="name">Name (Optional)</Label>
+							<Label for="name">Full Name (Optional)</Label>
 							<Input
 								id="name"
-								type="text"
-								placeholder="Your full name"
+								placeholder="John Doe"
 								bind:value={name}
 								oninput={() => clearFieldError('name')}
-								onkeydown={handleKeydown}
 								disabled={$isLoading}
 								class={getFieldError('name') ? 'border-red-500' : ''}
 								autocomplete="name"
 							/>
 							{#if getFieldError('name')}
 								<p class="text-sm text-red-500">{getFieldError('name')}</p>
+							{/if}
+						</div>
+
+						<!-- Username Field (Required) -->
+						<div class="space-y-2">
+							<Label for="username">Username</Label>
+							<Input
+								id="username"
+								placeholder="johndoe123"
+								bind:value={username}
+								oninput={() => clearFieldError('username')}
+								onkeydown={handleKeydown}
+								disabled={$isLoading}
+								class={getFieldError('username') ? 'border-red-500' : ''}
+								autocomplete="username"
+								required
+							/>
+							{#if getFieldError('username')}
+								<p class="text-sm text-red-500">{getFieldError('username')}</p>
 							{/if}
 						</div>
 
@@ -250,10 +315,6 @@
 							{#if getFieldError('password')}
 								<p class="text-sm text-red-500">{getFieldError('password')}</p>
 							{/if}
-							<p class="text-muted-foreground text-xs">
-								Password must be at least 8 characters with uppercase, lowercase, number, and
-								special character.
-							</p>
 						</div>
 
 						<!-- Confirm Password Field -->
@@ -288,27 +349,90 @@
 							{/if}
 						</div>
 
-						<!-- Terms Agreement -->
-						<div class="flex items-start space-x-2">
+						<!-- Native Language Field (Required) -->
+						<div class="space-y-2">
+							<Label for="nativeLanguage">Native Language</Label>
+							<Select.Root type="single" bind:value={nativeLanguage}>
+								<Select.Trigger
+									id="nativeLanguage"
+									class={getFieldError('nativeLanguage') ? 'border-red-500' : ''}
+								>
+									{nativeLanguage
+										? getLanguageLabel(nativeLanguage as Language)
+										: 'Select your native language'}
+								</Select.Trigger>
+								<Select.Content>
+									{#each languageOptions as lang}
+										<Select.Item value={lang}>{getLanguageLabel(lang)}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							{#if getFieldError('nativeLanguage')}
+								<p class="text-sm text-red-500">{getFieldError('nativeLanguage')}</p>
+							{/if}
+						</div>
+
+						<!-- Role Field (Defaulted, can be hidden or shown based on logic) -->
+						<div class="space-y-2">
+							<Label for="role">Account Type</Label>
+							<Select.Root type="single" bind:value={role}>
+								<Select.Trigger id="role" class={getFieldError('role') ? 'border-red-500' : ''}>
+									{role ? getRoleLabel(role as UserRole) : 'Select account type'}
+								</Select.Trigger>
+								<Select.Content>
+									{#each roleOptions as r}
+										<Select.Item value={r}>{getRoleLabel(r)}</Select.Item>
+									{/each}
+								</Select.Content>
+							</Select.Root>
+							{#if getFieldError('role')}
+								<p class="text-sm text-red-500">{getFieldError('role')}</p>
+							{/if}
+						</div>
+
+						<!-- About Me Field (Optional) -->
+						<div class="space-y-2">
+							<Label for="aboutMe">About Me (Optional)</Label>
+							<Textarea
+								id="aboutMe"
+								placeholder="Tell us a bit about yourself, what you like and dislike, your interests, or hobbies..."
+								bind:value={aboutMe}
+								oninput={() => clearFieldError('aboutMe')}
+								disabled={$isLoading}
+								class="min-h-[80px] {getFieldError('aboutMe') ? 'border-red-500' : ''}"
+								maxlength={500}
+							/>
+							{#if getFieldError('aboutMe')}
+								<p class="text-sm text-red-500">{getFieldError('aboutMe')}</p>
+							{/if}
+						</div>
+
+						<!-- Terms and Conditions -->
+						<div class="flex items-center space-x-2 pt-2">
 							<input
 								type="checkbox"
 								id="terms"
 								bind:checked={agreedToTerms}
 								disabled={$isLoading}
-								class="mt-1"
-								required
+								class="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
 							/>
-							<Label for="terms" class="text-sm leading-5">
-								I agree to the{' '}
-								<a href="/terms" target="_blank" class="text-primary hover:underline">
-									Terms of Service
-								</a>
-								{' '}and{' '}
-								<a href="/privacy" target="_blank" class="text-primary hover:underline">
-									Privacy Policy
-								</a>
+							<Label for="terms" class="text-muted-foreground text-sm font-normal">
+								I agree to the <a
+									href="/terms"
+									target="_blank"
+									class="hover:text-primary underline underline-offset-4">terms and conditions</a
+								>.
 							</Label>
 						</div>
+
+						<!-- Success Message -->
+						{#if successMessage}
+							<div
+								class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-600"
+							>
+								{successMessage}
+							</div>
+						{/if}
 
 						<!-- Submit Error -->
 						{#if submitError}
@@ -318,55 +442,113 @@
 						{/if}
 					</CardContent>
 
-					<CardFooter class="flex flex-col space-y-4">
+					<CardFooter class="my-4 flex-col items-stretch space-y-4">
 						<Button type="submit" class="w-full" disabled={$isLoading || !agreedToTerms}>
 							{#if $isLoading}
-								<div
-									class="border-background mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"
-								></div>
-								Creating account...
+								<svg
+									class="mr-2 h-4 w-4 animate-spin"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+								>
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+								Signing Up...
 							{:else}
-								Create account
+								Create Account
 							{/if}
 						</Button>
 
-						<div class="text-center text-sm">
-							Already have an account?{' '}
-							<a href="/login" class="text-primary hover:underline"> Sign in </a>
+						<!-- Social Logins -->
+						<div class="relative">
+							<div class="absolute inset-0 flex items-center">
+								<span class="w-full border-t"></span>
+							</div>
+							<div class="relative flex justify-center text-xs uppercase">
+								<span class="bg-card text-muted-foreground px-2"> Or continue with </span>
+							</div>
+						</div>
+
+						<div class="grid grid-cols-2 gap-4">
+							<Button
+								variant="outline"
+								type="button"
+								disabled={$isLoading}
+								onclick={() => authStore.loginWithProvider('google', redirectTo)}
+							>
+								<!-- Google Icon -->
+								<svg class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+									<path
+										d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+									/>
+									<path
+										d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+									/>
+									<path
+										d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+									/>
+									<path
+										d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+									/>
+									<path d="M1 1h22v22H1z" fill="none" />
+								</svg>
+								Google
+							</Button>
+							<Button
+								variant="outline"
+								type="button"
+								disabled={$isLoading}
+								onclick={() => authStore.loginWithProvider('facebook', redirectTo)}
+							>
+								<!-- Facebook Icon -->
+								<svg class="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+									<path
+										d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3l-.5 3h-2.5v6.8c4.56-.93 8-4.96 8-9.8z"
+									/>
+								</svg>
+								Facebook
+							</Button>
 						</div>
 					</CardFooter>
 				</form>
+
+				<p class="text-muted-foreground mt-6 px-8 text-center text-sm">
+					Already have an account? <a
+						href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
+						class="hover:text-primary underline underline-offset-4"
+					>
+						Log in
+					</a>
+				</p>
 			</Card>
 		</div>
 	</div>
 
-	<!-- Right side - Background/Branding -->
-	<div class="bg-muted relative hidden h-full flex-col p-10 text-white lg:flex dark:border-l">
-		<div class="from-primary to-primary/80 absolute inset-0 bg-gradient-to-br"></div>
-		<div class="relative z-20 flex items-center text-lg font-medium">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="mr-2 h-6 w-6"
-			>
-				<path d="M12 2L2 7l10 5 10-5-10-5z" />
-				<path d="M2 17l10 5 10-5" />
-				<path d="M2 12l10 5 10-5" />
-			</svg>
-			BlendSphere
-		</div>
+	<!-- Right side - Image/Branding -->
+	<div class="bg-muted relative hidden h-full flex-col p-10 text-white lg:flex dark:border-r">
+		<div
+			class="absolute inset-0 bg-cover bg-center"
+			style="background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80');"
+		></div>
 		<div class="relative z-20 mt-auto">
 			<blockquote class="space-y-2">
 				<p class="text-lg">
-					"The spaced repetition system combined with AI-generated flashcards has made learning
-					vocabulary incredibly efficient."
+					&ldquo;BlendSphere has transformed my language learning. The AI tools and community make
+					it engaging and effective.&rdquo;
 				</p>
-				<footer class="text-sm">Marcus Rodriguez - Medical Student</footer>
+				<footer class="text-sm">Sofia Davis, Language Enthusiast</footer>
 			</blockquote>
 		</div>
 	</div>

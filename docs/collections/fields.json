@@ -1,0 +1,148 @@
+{
+    "id": "pbc_fields",
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "template.author = @request.auth.id",
+    "deleteRule": "template.author = @request.auth.id",
+    "name": "fields",
+    "type": "base",
+    "fields": [
+        {
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "hidden": false,
+            "id": "text3208210256",
+            "max": 15,
+            "min": 15,
+            "name": "id",
+            "pattern": "^[a-z0-9]+$",
+            "presentable": false,
+            "primaryKey": true,
+            "required": true,
+            "system": true,
+            "type": "text"
+        },
+        {
+            "cascadeDelete": true,
+            "collectionId": "pbc_templates",
+            "hidden": false,
+            "id": "relation_template",
+            "maxSelect": 1,
+            "minSelect": 1,
+            "name": "template",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "hidden": false,
+            "id": "select_type",
+            "maxSelect": 1,
+            "name": "type",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "select",
+            "values": [
+                "TEXT",
+                "IMAGE",
+                "AUDIO"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "bool_is_input",
+            "name": "isInput",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "bool"
+        },
+        {
+            "hidden": false,
+            "id": "select_language",
+            "maxSelect": 1,
+            "name": "language",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "select",
+            "values": [
+                "EN",
+                "ES",
+                "FR",
+                "DE",
+                "IT",
+                "PL"
+            ]
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_label",
+            "max": 100,
+            "min": 1,
+            "name": "label",
+            "pattern": "",
+            "presentable": true,
+            "primaryKey": false,
+            "required": true,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_description",
+            "max": 500,
+            "min": 0,
+            "name": "description",
+            "pattern": "",
+            "presentable": false,
+            "primaryKey": false,
+            "required": false,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "autogeneratePattern": "",
+            "hidden": false,
+            "id": "text_example",
+            "max": 500,
+            "min": 0,
+            "name": "example",
+            "pattern": "",
+            "presentable": false,
+            "primaryKey": false,
+            "required": false,
+            "system": false,
+            "type": "text"
+        },
+        {
+            "hidden": false,
+            "id": "autodate2990389176",
+            "name": "created",
+            "onCreate": true,
+            "onUpdate": false,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        },
+        {
+            "hidden": false,
+            "id": "autodate3332085495",
+            "name": "updated",
+            "onCreate": true,
+            "onUpdate": true,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        }
+    ],
+    "indexes": [
+        "CREATE INDEX `idx_fields_template` ON `fields` (`template`)",
+        "CREATE INDEX `idx_fields_type_input` ON `fields` (`type`, `isInput`)"
+    ],
+    "system": false
+}

@@ -1,0 +1,198 @@
+{
+    "id": "pbc_flashcards",
+    "listRule": "deck.user = @request.auth.id || deck.isPublic = true || (deck.class != '' && deck.class.classEnrollments_via_class.student ?= @request.auth.id)",
+    "viewRule": "deck.user = @request.auth.id || deck.isPublic = true || (deck.class != '' && deck.class.classEnrollments_via_class.student ?= @request.auth.id)",
+    "createRule": "deck.user = @request.auth.id || (deck.class != '' && deck.class.teacher = @request.auth.id)",
+    "updateRule": "deck.user = @request.auth.id || (deck.class != '' && deck.class.teacher = @request.auth.id)",
+    "deleteRule": "deck.user = @request.auth.id || (deck.class != '' && deck.class.teacher = @request.auth.id)",
+    "name": "flashcards",
+    "type": "base",
+    "fields": [
+        {
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "hidden": false,
+            "id": "text3208210256",
+            "max": 15,
+            "min": 15,
+            "name": "id",
+            "pattern": "^[a-z0-9]+$",
+            "presentable": false,
+            "primaryKey": true,
+            "required": true,
+            "system": true,
+            "type": "text"
+        },
+        {
+            "cascadeDelete": true,
+            "collectionId": "pbc_decks",
+            "hidden": false,
+            "id": "relation_deck",
+            "maxSelect": 1,
+            "minSelect": 1,
+            "name": "deck",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "cascadeDelete": false,
+            "collectionId": "pbc_templates",
+            "hidden": false,
+            "id": "relation_template",
+            "maxSelect": 1,
+            "minSelect": 0,
+            "name": "template",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "hidden": false,
+            "id": "json_data",
+            "maxSize": 0,
+            "name": "data",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "json"
+        },
+        {
+            "hidden": false,
+            "id": "select_state",
+            "maxSelect": 1,
+            "name": "state",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "select",
+            "values": [
+                "NEW",
+                "LEARNING",
+                "REVIEW",
+                "RELEARNING"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "number_difficulty",
+            "max": 100,
+            "min": 0,
+            "name": "difficulty",
+            "onlyInt": false,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "number_stability",
+            "max": null,
+            "min": 0,
+            "name": "stability",
+            "onlyInt": false,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "number_retrievability",
+            "max": 1,
+            "min": 0,
+            "name": "retrievability",
+            "onlyInt": false,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "date_last_review",
+            "max": "",
+            "min": "",
+            "name": "lastReview",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "date"
+        },
+        {
+            "hidden": false,
+            "id": "date_next_review",
+            "max": "",
+            "min": "",
+            "name": "nextReview",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "date"
+        },
+        {
+            "hidden": false,
+            "id": "number_reviews_count",
+            "max": null,
+            "min": 0,
+            "name": "reviewsCount",
+            "onlyInt": true,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "number_lapses_count",
+            "max": null,
+            "min": 0,
+            "name": "lapsesCount",
+            "onlyInt": true,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "json_tags",
+            "maxSize": 0,
+            "name": "tags",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "json"
+        },
+        {
+            "hidden": false,
+            "id": "autodate2990389176",
+            "name": "created",
+            "onCreate": true,
+            "onUpdate": false,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        },
+        {
+            "hidden": false,
+            "id": "autodate3332085495",
+            "name": "updated",
+            "onCreate": true,
+            "onUpdate": true,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        }
+    ],
+    "indexes": [
+        "CREATE INDEX `idx_flashcards_deck` ON `flashcards` (`deck`)",
+        "CREATE INDEX `idx_flashcards_template` ON `flashcards` (`template`)",
+        "CREATE INDEX `idx_flashcards_state` ON `flashcards` (`state`)",
+        "CREATE INDEX `idx_flashcards_next_review` ON `flashcards` (`nextReview`)",
+        "CREATE INDEX `idx_flashcards_srs_data` ON `flashcards` (`state`, `nextReview`, `difficulty`)"
+    ],
+    "system": false
+}

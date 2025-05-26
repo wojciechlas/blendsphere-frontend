@@ -1,0 +1,221 @@
+{
+    "id": "pbc_flashcard_reviews",
+    "listRule": "user = @request.auth.id",
+    "viewRule": "user = @request.auth.id",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "user = @request.auth.id",
+    "deleteRule": "user = @request.auth.id",
+    "name": "flashcardReviews",
+    "type": "base",
+    "fields": [
+        {
+            "autogeneratePattern": "[a-z0-9]{15}",
+            "hidden": false,
+            "id": "text3208210256",
+            "max": 15,
+            "min": 15,
+            "name": "id",
+            "pattern": "^[a-z0-9]+$",
+            "presentable": false,
+            "primaryKey": true,
+            "required": true,
+            "system": true,
+            "type": "text"
+        },
+        {
+            "cascadeDelete": true,
+            "collectionId": "pbc_flashcards",
+            "hidden": false,
+            "id": "relation_flashcard",
+            "maxSelect": 1,
+            "minSelect": 1,
+            "name": "flashcard",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "cascadeDelete": false,
+            "collectionId": "pbc_study_sessions",
+            "hidden": false,
+            "id": "relation_session",
+            "maxSelect": 1,
+            "minSelect": 0,
+            "name": "session",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "cascadeDelete": false,
+            "collectionId": "_pb_users_auth_",
+            "hidden": false,
+            "id": "relation_user",
+            "maxSelect": 1,
+            "minSelect": 1,
+            "name": "user",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "relation"
+        },
+        {
+            "hidden": false,
+            "id": "select_rating",
+            "maxSelect": 1,
+            "name": "rating",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "select",
+            "values": [
+                "AGAIN",
+                "HARD",
+                "GOOD",
+                "EASY"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "number_response_time_ms",
+            "max": null,
+            "min": 0,
+            "name": "responseTimeMs",
+            "onlyInt": true,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "date_review_time",
+            "name": "reviewTime",
+            "presentable": false,
+            "required": true,
+            "system": false,
+            "type": "date"
+        },
+        {
+            "hidden": false,
+            "id": "number_previous_difficulty",
+            "max": 10,
+            "min": 0,
+            "name": "previousDifficulty",
+            "onlyInt": false,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "number_new_difficulty",
+            "max": 10,
+            "min": 0,
+            "name": "newDifficulty",
+            "onlyInt": false,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "number_previous_stability",
+            "max": null,
+            "min": 0,
+            "name": "previousStability",
+            "onlyInt": false,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "number_new_stability",
+            "max": null,
+            "min": 0,
+            "name": "newStability",
+            "onlyInt": false,
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "number"
+        },
+        {
+            "hidden": false,
+            "id": "select_previous_state",
+            "maxSelect": 1,
+            "name": "previousState",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "select",
+            "values": [
+                "NEW",
+                "LEARNING",
+                "REVIEW",
+                "RELEARNING"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "select_new_state",
+            "maxSelect": 1,
+            "name": "newState",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "select",
+            "values": [
+                "NEW",
+                "LEARNING",
+                "REVIEW",
+                "RELEARNING"
+            ]
+        },
+        {
+            "hidden": false,
+            "id": "json_fsrs_data",
+            "maxSize": 0,
+            "name": "fsrsData",
+            "presentable": false,
+            "required": false,
+            "system": false,
+            "type": "json"
+        },
+        {
+            "hidden": false,
+            "id": "autodate2990389176",
+            "name": "created",
+            "onCreate": true,
+            "onUpdate": false,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        },
+        {
+            "hidden": false,
+            "id": "autodate3332085495",
+            "name": "updated",
+            "onCreate": true,
+            "onUpdate": true,
+            "presentable": false,
+            "system": false,
+            "type": "autodate"
+        }
+    ],
+    "indexes": [
+        "CREATE INDEX `idx_flashcard_reviews_flashcard` ON `flashcardReviews` (`flashcard`)",
+        "CREATE INDEX `idx_flashcard_reviews_user` ON `flashcardReviews` (`user`)",
+        "CREATE INDEX `idx_flashcard_reviews_session` ON `flashcardReviews` (`session`)",
+        "CREATE INDEX `idx_flashcard_reviews_rating` ON `flashcardReviews` (`rating`)",
+        "CREATE INDEX `idx_flashcard_reviews_review_time` ON `flashcardReviews` (`reviewTime`)",
+        "CREATE INDEX `idx_flashcard_reviews_state_change` ON `flashcardReviews` (`previousState`, `newState`)"
+    ],
+    "system": false
+}

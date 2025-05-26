@@ -71,6 +71,12 @@
 				return;
 			}
 
+			// Handle email verification error specifically
+			if (error instanceof Error && error.message.includes('verify your email')) {
+				submitError = error.message;
+				return;
+			}
+
 			// Handle specific PocketBase errors
 			if (error && typeof error === 'object' && 'status' in error) {
 				switch (error.status) {
@@ -193,7 +199,7 @@
 						{/if}
 					</CardContent>
 
-					<CardFooter class="flex flex-col space-y-4">
+					<CardFooter class="my-4 flex flex-col space-y-4">
 						<Button type="submit" class="w-full" disabled={$isLoading}>
 							{#if $isLoading}
 								<div
