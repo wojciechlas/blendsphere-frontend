@@ -33,6 +33,8 @@
 	import IconPalette from '@tabler/icons-svelte/icons/palette';
 	import IconList from '@tabler/icons-svelte/icons/list';
 	import type { Snippet } from 'svelte';
+	import { Edra, EdraToolbar } from '$lib/components/edra/shadcn/index';
+	import type { Editor } from '@tiptap/core';
 
 	interface Props {
 		initialData?: Partial<TemplateFormData>;
@@ -61,6 +63,11 @@
 	let selectedTab = $state('basic');
 	let showPreview = $state(false);
 	let fieldValidationError = $state<string | null>(null);
+
+	// Rich text editor state
+	let frontEditor = $state<Editor>();
+	let backEditor = $state<Editor>();
+	let currentSide = $state<'front' | 'back'>('front');
 
 	// Default styles
 	const defaultStyles = {
@@ -112,6 +119,47 @@
 		fields = event.detail;
 		// Clear field validation error when fields are updated
 		fieldValidationError = null;
+	}
+
+	// Handle rich text editor updates
+	function handleFrontEditorUpdate({ editor }: { editor: Editor }) {
+		$formData.frontLayout = editor.getHTML();
+	}
+
+	function handleBackEditorUpdate({ editor }: { editor: Editor }) {
+		$formData.backLayout = editor.getHTML();
+	}
+
+	// Insert placeholder into editor
+	function insertPlaceholder(editor: Editor | undefined, placeholder: string) {
+		if (!editor) return;
+
+		editor.chain().focus().insertContent(placeholder).run();
+	}
+
+	// Insert placeholder into current editor
+	function insertPlaceholderToCurrent(placeholder: string) {
+		const editor = currentSide === 'front' ? frontEditor : backEditor;
+		insertPlaceholder(editor, placeholder);
+	}
+
+	// Generate placeholder from field label
+	function getFieldPlaceholder(field: FieldData): string {
+		return `{{${field.label.toLowerCase().replace(/\s+/g, '_')}}}`;
+	}
+
+	// Replace placeholders with example values for preview
+	function replacePlaceholdersWithExamples(content: string, fields: FieldData[]): string {
+		if (!content) return '';
+
+		let result = content;
+		fields.forEach((field) => {
+			const placeholder = getFieldPlaceholder(field);
+			const exampleValue = field.example || `[${field.label}]`;
+			result = result.replaceAll(placeholder, exampleValue);
+		});
+
+		return result;
 	}
 
 	// Validate form with fields
@@ -372,23 +420,26 @@
 								<h4 class="mb-2 text-sm font-medium">Available Field Placeholders:</h4>
 								<div class="flex flex-wrap gap-2">
 									{#each fields as field}
-										<button
-											type="button"
-											class="bg-background hover:bg-accent cursor-pointer rounded border px-2 py-1 font-mono text-xs"
-											onclick={() => {
-												// Copy placeholder to clipboard
-												navigator.clipboard.writeText(
-													`{{${field.label.toLowerCase().replace(/\s+/g, '_')}}}`
-												);
-											}}
-											title="Click to copy placeholder"
-										>
-											{`{{${field.label.toLowerCase().replace(/\s+/g, '_')}}}`}
-										</button>
+										{@const placeholder = getFieldPlaceholder(field)}
+										<div class="flex items-center gap-1">
+											<code class="bg-background rounded border px-2 py-1 text-xs">
+												{placeholder}
+											</code>
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												class="h-6 px-2 text-xs"
+												onclick={() => insertPlaceholderToCurrent(placeholder)}
+												title="Insert into current layout"
+											>
+												Insert
+											</Button>
+										</div>
 									{/each}
 								</div>
 								<p class="text-muted-foreground mt-2 text-xs">
-									Click any placeholder to copy it to clipboard
+									Click Insert to add placeholders to the current layout
 								</p>
 							</div>
 						{:else}
@@ -399,48 +450,105 @@
 							</div>
 						{/if}
 
-						<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-							<!-- Front Layout -->
-							<Form.Field {form} name="frontLayout">
-								<Form.Control>
-									{#snippet children({ props })}
-										<Form.Label>Front Layout</Form.Label>
-										<Textarea
-											{...props}
-											bind:value={$formData.frontLayout}
-											placeholder="HTML template for the front of the flashcard"
-											rows={8}
-											class="font-mono text-sm"
-											{...$constraints.frontLayout}
-										/>
-										<Form.Description>
-											HTML content shown on the front side of flashcards
-										</Form.Description>
-									{/snippet}
-								</Form.Control>
-								<Form.FieldErrors />
-							</Form.Field>
+						<!-- Side Toggle -->
+						<div class="flex items-center gap-2">
+							<div class="bg-muted flex rounded-lg border p-1">
+								<Button
+									type="button"
+									variant={currentSide === 'front' ? 'default' : 'ghost'}
+									size="sm"
+									class="h-8 px-3 text-xs"
+									onclick={() => (currentSide = 'front')}
+								>
+									Front Side
+								</Button>
+								<Button
+									type="button"
+									variant={currentSide === 'back' ? 'default' : 'ghost'}
+									size="sm"
+									class="h-8 px-3 text-xs"
+									onclick={() => (currentSide = 'back')}
+								>
+									Back Side
+								</Button>
+							</div>
+						</div>
 
-							<!-- Back Layout -->
-							<Form.Field {form} name="backLayout">
-								<Form.Control>
-									{#snippet children({ props })}
-										<Form.Label>Back Layout</Form.Label>
-										<Textarea
-											{...props}
-											bind:value={$formData.backLayout}
-											placeholder="HTML template for the back of the flashcard"
-											rows={8}
-											class="font-mono text-sm"
-											{...$constraints.backLayout}
-										/>
-										<Form.Description>
-											HTML content shown on the back side of flashcards
-										</Form.Description>
-									{/snippet}
-								</Form.Control>
-								<Form.FieldErrors />
-							</Form.Field>
+						<!-- Full-width Toolbar -->
+						<div class="w-full">
+							{#if currentSide === 'front' && frontEditor}
+								<EdraToolbar editor={frontEditor} />
+							{/if}
+							{#if currentSide === 'back' && backEditor}
+								<EdraToolbar editor={backEditor} />
+							{/if}
+						</div>
+
+						<!-- Editor and Preview Side by Side -->
+						<div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+							<!-- Editor -->
+							<div class="space-y-4">
+								{#if currentSide === 'front'}
+									<Form.Field {form} name="frontLayout">
+										<Form.Control>
+											{#snippet children({ props })}
+												<Form.Label></Form.Label>
+												<div class="min-h-[300px] rounded-md border">
+													<Edra
+														bind:editor={frontEditor}
+														content={$formData.frontLayout}
+														onUpdate={handleFrontEditorUpdate}
+														class="p-4"
+														showSlashCommands={false}
+													/>
+												</div>
+												<Form.Description></Form.Description>
+											{/snippet}
+										</Form.Control>
+										<Form.FieldErrors />
+									</Form.Field>
+								{:else}
+									<Form.Field {form} name="backLayout">
+										<Form.Control>
+											{#snippet children({ props })}
+												<Form.Label></Form.Label>
+												<div class="min-h-[300px] rounded-md border">
+													<Edra
+														bind:editor={backEditor}
+														content={$formData.backLayout}
+														onUpdate={handleBackEditorUpdate}
+														class="p-4"
+														showSlashCommands={false}
+													/>
+												</div>
+												<Form.Description></Form.Description>
+											{/snippet}
+										</Form.Control>
+										<Form.FieldErrors />
+									</Form.Field>
+								{/if}
+							</div>
+
+							<!-- Live Preview -->
+							<div class="my-2 space-y-4">
+								{#if fields.length > 0}
+									<div class="bg-card min-h-[300px] rounded-lg border p-6">
+										{@html replacePlaceholdersWithExamples(
+											currentSide === 'front' ? $formData.frontLayout : $formData.backLayout,
+											fields
+										)}
+									</div>
+								{:else}
+									<div
+										class="bg-muted/20 flex min-h-[300px] items-center justify-center rounded-lg border p-6"
+									>
+										<div class="text-muted-foreground text-center">
+											<p class="text-sm">Add fields to see preview with sample data</p>
+											<p class="mt-1 text-xs">Placeholders will be replaced with example values</p>
+										</div>
+									</div>
+								{/if}
+							</div>
 						</div>
 					</CardContent>
 				</Card>
