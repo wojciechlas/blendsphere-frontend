@@ -327,7 +327,9 @@
 		{#if fields.length === 0}
 			<div class="text-muted-foreground py-8 text-center">
 				<div class="bg-muted mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full">
-					<IconPlus class="h-6 w-6" />
+					{#if !readonly}
+						<IconPlus class="h-6 w-6" onclick={() => openFieldDialog()} />
+					{/if}
 				</div>
 				<p class="text-sm font-medium">No fields defined yet</p>
 				<p class="text-xs">Add fields to structure your flashcard data</p>

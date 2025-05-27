@@ -116,6 +116,6 @@
 				focusEditor(editor, event);
 			}
 		}}
-		class="edra-editor prose h-full min-w-full cursor-auto py-2 pl-10 pr-8 dark:prose-invert *:outline-none"
+		class="edra-editor prose dark:prose-invert h-full min-w-full cursor-auto py-2 pr-8 pl-10 *:outline-none"
 	></div>
 </div>

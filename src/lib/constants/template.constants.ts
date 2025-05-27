@@ -35,12 +35,6 @@ export const FIELD_TYPES = [
     { value: 'AUDIO', label: 'Audio' }
 ] as const;
 
-export const DEFAULT_FRONT_LAYOUT = `<div class="flashcard-front">
-	<h2>{{word}}</h2>
-	<p class="pronunciation">{{pronunciation}}</p>
-</div>`;
+export const DEFAULT_FRONT_LAYOUT = '';
 
-export const DEFAULT_BACK_LAYOUT = `<div class="flashcard-back">
-	<h2>{{translation}}</h2>
-	<p class="example">{{example}}</p>
-</div>`;
+export const DEFAULT_BACK_LAYOUT = '';
