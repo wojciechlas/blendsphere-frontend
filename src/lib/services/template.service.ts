@@ -1,42 +1,21 @@
 import { pb } from '../pocketbase';
 import type { RecordModel } from 'pocketbase';
+import { Language, LanguageLevel } from '$lib/components/schemas';
+import type { TemplateStyles } from '$lib/schemas/template.schemas';
 
 export interface Template extends RecordModel {
     name: string;
     description?: string;
     version: string;
     author: string;
-    nativeLanguage: 'EN' | 'ES' | 'FR' | 'DE' | 'IT' | 'PL';
-    learningLanguage: 'EN' | 'ES' | 'FR' | 'DE' | 'IT' | 'PL';
-    languageLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+    nativeLanguage: Language;
+    learningLanguage: Language;
+    languageLevel: LanguageLevel;
     frontLayout: string; // HTML with placeholders
     backLayout: string; // HTML with placeholders
     styles: TemplateStyles;
     user: string;
     isPublic: boolean;
-}
-
-export interface TemplateStyles {
-    theme: 'default' | 'modern' | 'classic' | 'minimal';
-    colors: {
-        primary: string;
-        secondary: string;
-        background: string;
-        text: string;
-        accent: string;
-    };
-    typography: {
-        fontFamily: string;
-        fontSize: string;
-        fontWeight: string;
-        lineHeight: string;
-    };
-    spacing: {
-        padding: string;
-        margin: string;
-        borderRadius: string;
-    };
-    customCSS?: string;
 }
 
 export const templateService = {

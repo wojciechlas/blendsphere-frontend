@@ -165,7 +165,7 @@ interface Field {
 
 #### 3.2.1 Template Editor
 - **Template Information Panel**: Basic template settings
-- **Field Management Panel**: Add, edit, reorder fields
+- **Field Management Panel**: Add, edit fields
 - **Layout Editor**: Rich text editor for front/back layouts
 - **Style Customizer**: Visual styling controls
 - **Preview Panel**: Live preview of flashcard appearance
@@ -220,7 +220,7 @@ interface Field {
 3. **Field Definition**
    - Add input fields (what users will provide)
    - Add output fields (what AI will generate)
-   - Configure field properties and validation
+   - Configure field properties
 
 4. **Layout Design**
    - Design front side layout with placeholders
