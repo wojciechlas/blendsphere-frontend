@@ -17,6 +17,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { Language, UserRole } from '$lib/components/schemas'; // Assuming schemas.ts exports these enums
+	import { getLanguageName } from '$lib/constants/template.constants';
 
 	// Form state
 	let email = $state('');
@@ -184,19 +185,6 @@
 	const languageOptions = Object.values(Language);
 	const roleOptions = Object.values(UserRole);
 
-	// Helper function to get display label for language
-	const getLanguageLabel = (lang: Language): string => {
-		const labels: Record<Language, string> = {
-			[Language.EN]: 'English',
-			[Language.ES]: 'Español',
-			[Language.FR]: 'Français',
-			[Language.DE]: 'Deutsch',
-			[Language.IT]: 'Italiano',
-			[Language.PL]: 'Polski'
-		};
-		return labels[lang] || lang;
-	};
-
 	// Helper function to get display label for role
 	const getRoleLabel = (role: UserRole): string => {
 		const labels: Record<UserRole, string> = {
@@ -358,12 +346,12 @@
 									class={getFieldError('nativeLanguage') ? 'border-red-500' : ''}
 								>
 									{nativeLanguage
-										? getLanguageLabel(nativeLanguage as Language)
+										? getLanguageName(nativeLanguage as Language)
 										: 'Select your native language'}
 								</Select.Trigger>
 								<Select.Content>
 									{#each languageOptions as lang}
-										<Select.Item value={lang}>{getLanguageLabel(lang)}</Select.Item>
+										<Select.Item value={lang}>{getLanguageName(lang)}</Select.Item>
 									{/each}
 								</Select.Content>
 							</Select.Root>

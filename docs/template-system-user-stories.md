@@ -21,7 +21,6 @@
 **Definition of Done:**
 - Template creation wizard is implemented
 - Basic validation is in place
-- User can navigate through creation steps
 - Template is saved to database
 - User is redirected to template editor
 

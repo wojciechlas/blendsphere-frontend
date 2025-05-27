@@ -38,3 +38,11 @@ export const FIELD_TYPES = [
 export const DEFAULT_FRONT_LAYOUT = '';
 
 export const DEFAULT_BACK_LAYOUT = '';
+
+/**
+ * Utility function to get language name from language code
+ */
+export function getLanguageName(languageCode: string): string {
+    const language = SUPPORTED_LANGUAGES.find(lang => lang.value === languageCode);
+    return language?.label || languageCode;
+}

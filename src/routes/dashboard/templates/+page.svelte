@@ -14,6 +14,7 @@
 	} from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 	import { templateService, type Template } from '$lib/services/template.service';
+	import { fieldService } from '$lib/services/field.service';
 	import PlusIcon from '@tabler/icons-svelte/icons/plus';
 	import SearchIcon from '@tabler/icons-svelte/icons/search';
 	import FilterIcon from '@tabler/icons-svelte/icons/filter';
@@ -21,6 +22,9 @@
 	import EditIcon from '@tabler/icons-svelte/icons/edit';
 	import CopyIcon from '@tabler/icons-svelte/icons/copy';
 	import TrashIcon from '@tabler/icons-svelte/icons/trash';
+	import { pb } from '$lib/pocketbase';
+	import { SUPPORTED_LANGUAGES, LANGUAGE_LEVELS } from '$lib/constants/template.constants';
+	import { formatRelativeTime } from '$lib/utils';
 
 	let templates: Template[] = [];
 	let loading = true;
@@ -35,25 +39,9 @@
 	let totalItems = 0;
 	const itemsPerPage = 12;
 
-	const languages = [
-		{ value: 'all', label: 'All Languages' },
-		{ value: 'EN', label: 'English' },
-		{ value: 'ES', label: 'Spanish' },
-		{ value: 'FR', label: 'French' },
-		{ value: 'DE', label: 'German' },
-		{ value: 'IT', label: 'Italian' },
-		{ value: 'PL', label: 'Polish' }
-	];
+	const languages = [{ value: 'all', label: 'All Languages' }, ...SUPPORTED_LANGUAGES];
 
-	const levels = [
-		{ value: 'all', label: 'All Levels' },
-		{ value: 'A1', label: 'A1 - Beginner' },
-		{ value: 'A2', label: 'A2 - Elementary' },
-		{ value: 'B1', label: 'B1 - Intermediate' },
-		{ value: 'B2', label: 'B2 - Upper Intermediate' },
-		{ value: 'C1', label: 'C1 - Advanced' },
-		{ value: 'C2', label: 'C2 - Proficient' }
-	];
+	const levels = [{ value: 'all', label: 'All Levels' }, ...LANGUAGE_LEVELS];
 
 	onMount(() => {
 		loadTemplates();
@@ -64,8 +52,15 @@
 			loading = true;
 			error = '';
 
+			// Get current user ID
+			const currentUserId = pb.authStore.record?.id;
+			if (!currentUserId) {
+				error = 'Please log in to view your templates.';
+				return;
+			}
+
 			const result = await templateService.list(currentPage, itemsPerPage, {
-				isPublic: false // Load user's own templates first
+				user: currentUserId // Load user's own templates
 			});
 
 			templates = result.items;
@@ -84,7 +79,7 @@
 	}
 
 	function handleEditTemplate(templateId: string) {
-		goto(`/dashboard/templates/${templateId}`);
+		goto(`/dashboard/templates/${templateId}/edit`);
 	}
 
 	function handleViewTemplate(templateId: string) {
@@ -93,7 +88,21 @@
 
 	async function handleCloneTemplate(template: Template) {
 		try {
-			await templateService.clone(template.id, `Copy of ${template.name}`);
+			// Clone the template
+			const newTemplate = await templateService.clone(template.id, `Copy of ${template.name}`);
+
+			// Get the original template's fields and clone them
+			const fieldsResult = await fieldService.listByTemplate(template.id);
+			if (fieldsResult.items && fieldsResult.items.length > 0) {
+				for (const field of fieldsResult.items) {
+					const { id, created, updated, ...fieldData } = field;
+					await fieldService.create({
+						...fieldData,
+						template: newTemplate.id
+					});
+				}
+			}
+
 			loadTemplates(); // Refresh the list
 		} catch (err) {
 			error = 'Failed to clone template. Please try again.';
@@ -247,7 +256,7 @@
 	{:else}
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{#each filteredTemplates as template (template.id)}
-				<Card class="transition-shadow hover:shadow-md">
+				<Card class="flex flex-col transition-shadow hover:shadow-md">
 					<CardHeader>
 						<CardTitle class="line-clamp-2 text-lg">{template.name}</CardTitle>
 						{#if template.description}
@@ -256,7 +265,7 @@
 							</CardDescription>
 						{/if}
 					</CardHeader>
-					<CardContent class="space-y-3">
+					<CardContent class="flex flex-1 flex-col justify-end space-y-3">
 						<div class="flex items-center justify-between text-sm">
 							<span class="text-muted-foreground">Languages:</span>
 							<span class="font-medium">{getLanguagePairDisplay(template)}</span>
@@ -268,8 +277,8 @@
 							</Badge>
 						</div>
 						<div class="flex items-center justify-between text-sm">
-							<span class="text-muted-foreground">Version:</span>
-							<span class="font-mono">{template.version}</span>
+							<span class="text-muted-foreground">Updated:</span>
+							<span>{formatRelativeTime(template.updated)}</span>
 						</div>
 					</CardContent>
 					<CardFooter class="flex gap-2">

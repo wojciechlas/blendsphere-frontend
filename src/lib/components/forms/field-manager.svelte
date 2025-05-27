@@ -21,7 +21,11 @@
 	import * as Checkbox from '$lib/components/ui/checkbox';
 	import { fieldFormSchema, type FieldFormData, type FieldData } from '$lib/schemas/field.schemas';
 	import { Language } from '$lib/components/schemas';
-	import { SUPPORTED_LANGUAGES, FIELD_TYPES } from '$lib/constants/template.constants';
+	import {
+		SUPPORTED_LANGUAGES,
+		FIELD_TYPES,
+		getLanguageName
+	} from '$lib/constants/template.constants';
 	import { fieldService } from '$lib/services/field.service';
 	import { createEventDispatcher, onMount } from 'svelte';
 	import IconPlus from '@tabler/icons-svelte/icons/plus';
@@ -295,11 +299,6 @@
 		return FIELD_TYPES.find((t) => t.value === type)?.label || type;
 	}
 
-	// Get language label
-	function getLanguageLabel(language: Language): string {
-		return SUPPORTED_LANGUAGES.find((l) => l.value === language)?.label || language;
-	}
-
 	// Check if template has required input fields
 	const hasInputFields = $derived(fields.some((field) => field.isInput));
 	const hasOutputFields = $derived(fields.some((field) => !field.isInput));
@@ -407,7 +406,7 @@
 									<Badge variant="outline">{getFieldTypeLabel(field.type)}</Badge>
 								</Table.Cell>
 								<Table.Cell>
-									<Badge variant="secondary">{getLanguageLabel(field.language)}</Badge>
+									<Badge variant="secondary">{getLanguageName(field.language)}</Badge>
 								</Table.Cell>
 								<Table.Cell>
 									{#if field.isInput}

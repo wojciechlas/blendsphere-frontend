@@ -79,15 +79,15 @@ export const templateService = {
         page: number = 1,
         limit: number = 20,
         filter: {
-            createdBy?: string,
+            user?: string,
             isPublic?: boolean
         } = {}
     ): Promise<{ items: Template[], totalItems: number, totalPages: number }> => {
         try {
             let filterString = '';
 
-            if (filter.createdBy) {
-                filterString += `createdBy="${filter.createdBy}"`;
+            if (filter.user) {
+                filterString += `user="${filter.user}"`;
             }
 
             if (filter.isPublic !== undefined) {
@@ -131,7 +131,7 @@ export const templateService = {
                 frontLayout: sourceTemplate.frontLayout,
                 backLayout: sourceTemplate.backLayout,
                 styles: sourceTemplate.styles,
-                user: pb.authStore.model?.id || '',
+                user: pb.authStore.record?.id || '',
                 isPublic: false, // Default to private for cloned templates
             };
 

@@ -13,6 +13,7 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
+	import { Separator } from '$lib/components/ui/separator';
 	import * as Checkbox from '$lib/components/ui/checkbox';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import FieldManager from './field-manager.svelte';
@@ -26,7 +27,13 @@
 		DEFAULT_BACK_LAYOUT
 	} from '$lib/constants/template.constants';
 	import DeviceFloppyIcon from '@tabler/icons-svelte/icons/device-floppy';
+	import EyeIcon from '@tabler/icons-svelte/icons/eye';
+	import IconCards from '@tabler/icons-svelte/icons/cards';
+	import IconSettings from '@tabler/icons-svelte/icons/settings';
+	import IconPalette from '@tabler/icons-svelte/icons/palette';
+	import IconList from '@tabler/icons-svelte/icons/list';
 	import type { Snippet } from 'svelte';
+	import { Edra } from '$lib/components/edra/shadcn/index';
 	import type { Editor } from '@tiptap/core';
 	import LayoutEditor from './layout-editor.svelte';
 
@@ -62,6 +69,26 @@
 	let frontEditor = $state<Editor>();
 	let backEditor = $state<Editor>();
 	let currentSide = $state<'front' | 'back'>('front');
+	
+	// Reactive statement to ensure proper editor initialization when tab changes
+	$: {
+		// This will re-run whenever currentSide changes
+		if (currentSide === 'front') {
+			// Ensure frontEditor is properly focused when switching to front tab
+			setTimeout(() => {
+				if (frontEditor) {
+					frontEditor.commands.focus();
+				}
+			}, 50);
+		} else {
+			// Ensure backEditor is properly focused when switching to back tab
+			setTimeout(() => {
+				if (backEditor) {
+					backEditor.commands.focus();
+				}
+			}, 50);
+		}
+	}
 
 	// Default styles
 	const defaultStyles = {
@@ -127,8 +154,18 @@
 	// Insert placeholder into editor
 	function insertPlaceholder(editor: Editor | undefined, placeholder: string) {
 		if (!editor) return;
+		
+		// Make sure the editor is focused before inserting content
+		editor.commands.focus();
+		setTimeout(() => {
+			editor.chain().insertContent(placeholder).run();
+		}, 10);
+	}
 
-		editor.chain().focus().insertContent(placeholder).run();
+	// Insert placeholder into current editor
+	function insertPlaceholderToCurrent(placeholder: string) {
+		const editor = currentSide === 'front' ? frontEditor : backEditor;
+		insertPlaceholder(editor, placeholder);
 	}
 
 	// Generate placeholder from field label
@@ -166,6 +203,14 @@
 		// If the form is valid, submit it with fields
 		if (result.valid && $formData) {
 			onSubmit({ ...$formData, fields });
+		}
+	}
+
+	// Toggle preview mode
+	function togglePreview() {
+		showPreview = !showPreview;
+		if (onPreview) {
+			onPreview();
 		}
 	}
 </script>
@@ -347,7 +392,7 @@
 							<Form.Control>
 								{#snippet children({ props })}
 									<LayoutEditor
-										editor={frontEditor}
+										bind:editor={frontEditor}
 										content={$formData.frontLayout}
 										onUpdate={handleFrontEditorUpdate}
 										{fields}
@@ -364,7 +409,7 @@
 							<Form.Control>
 								{#snippet children({ props })}
 									<LayoutEditor
-										editor={backEditor}
+										bind:editor={backEditor}
 										content={$formData.backLayout}
 										onUpdate={handleBackEditorUpdate}
 										{fields}
@@ -383,7 +428,9 @@
 		<!-- Footer with actions -->
 		<div class="flex items-center justify-end gap-3">
 			{#if cancel}
-				{@render cancel()}
+				<Button variant="outline" disabled={isLoading || $submitting} onclick={cancel}
+					>Cancel</Button
+				>
 			{/if}
 			<Button onclick={handleSubmit} disabled={isLoading || $submitting} class="min-w-[120px]">
 				{#if isLoading || $submitting}

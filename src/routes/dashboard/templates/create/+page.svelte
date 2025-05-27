@@ -4,7 +4,7 @@
 	import TemplateForm from '$lib/components/forms/template-form.svelte';
 	import { templateService } from '$lib/services/template.service';
 	import { fieldService } from '$lib/services/field.service';
-	import { templateFormSchema, type TemplateFormData } from '$lib/schemas/template.schemas';
+	import { type TemplateFormData } from '$lib/schemas/template.schemas';
 	import type { FieldData } from '$lib/schemas/field.schemas';
 	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
 	import { pb } from '$lib/pocketbase';
@@ -65,9 +65,13 @@
 	}
 
 	function handlePreview() {
-		// For now, just show an alert
-		// In a real implementation, this would open a modal or navigate to a preview page
-		alert('Preview functionality will be implemented soon');
+		// For the create page, we need to get the current form data to preview
+		// This is a bit more complex since we don't have a saved template yet
+		// For now, we'll just show an alert, but this could be enhanced
+		// to create a temporary template object from current form data
+		alert(
+			'Preview functionality for new templates will be implemented soon. Save the template first to see a preview.'
+		);
 	}
 </script>
 
@@ -78,9 +82,12 @@
 <div class="container mx-auto max-w-4xl space-y-6 p-6">
 	<!-- Header -->
 	<div class="flex items-center gap-4">
-		<Button variant="ghost" size="sm" onclick={handleCancel}>
+		<button
+			class="hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-2.5"
+			onclick={handleCancel}
+		>
 			<ArrowLeftIcon class="h-4 w-4" />
-		</Button>
+		</button>
 		<div>
 			<h1 class="text-3xl font-bold tracking-tight">Create Template</h1>
 			<p class="text-muted-foreground">Define the structure and appearance of your flashcards</p>
@@ -108,7 +115,13 @@
 		submitLabel="Save Template"
 	>
 		{#snippet cancel()}
-			<Button variant="outline" disabled={saving} onclick={handleCancel}>Cancel</Button>
+			<button
+				class="bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 inline-flex h-9 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium whitespace-nowrap shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+				disabled={saving}
+				onclick={handleCancel}
+			>
+				Cancel
+			</button>
 		{/snippet}
 	</TemplateForm>
 </div>

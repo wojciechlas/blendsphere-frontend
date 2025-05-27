@@ -19,11 +19,10 @@ export const load: PageLoad = async ({ params }) => {
 
         return {
             template,
-            fields: fieldsResult.items,
-            title: `${template.name} - BlendSphere`
+            fields: fieldsResult.items
         };
     } catch (err: any) {
-        console.error('Error loading template:', err);
+        console.error('Error loading template for edit:', err);
         throw error(404, 'Template not found');
     }
 };

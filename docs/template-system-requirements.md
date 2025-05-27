@@ -33,27 +33,11 @@ The Template System is a core component of BlendSphere that enables users to cre
 - **Rich Text Editor** with:
   - Basic formatting (bold, italic, underline)
   - Text alignment and lists
+  - Text sizes (XS, S, M, L, XL)
+  - Vertical aligment of the content (top, center, bottom)
+  - Color change (text, texh highlight, flashcard background)
   - Placeholder insertion via UI
-  - Preview mode to see rendered output
-
-#### 2.1.4 Visual Styling
-- **Theme Selection**: Default, Modern, Classic, Minimal
-- **Color Customization**:
-  - Primary color (brand/accent)
-  - Secondary color (supporting elements)
-  - Background color
-  - Text color
-  - Accent color (highlights)
-- **Typography Settings**:
-  - Font family (from predefined list)
-  - Font size (adjustable scale)
-  - Font weight (light, normal, medium, bold)
-  - Line height
-- **Spacing Controls**:
-  - Padding (internal spacing)
-  - Margin (external spacing)
-  - Border radius (rounded corners)
-- **Custom CSS** (optional, for advanced users)
+  - Live preview mode to see rendered output
 
 ### 2.2 Field Management
 
