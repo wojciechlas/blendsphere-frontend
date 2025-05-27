@@ -7,10 +7,10 @@ import { browser } from '$app/environment';
  * Redirects to login if user is not authenticated
  */
 export function requireAuth(url: URL) {
-    // Only run auth checks on the client side to avoid SSR/hydration mismatches
-    if (browser && (!pb.authStore.isValid || !pb.authStore.model)) {
-        throw redirect(302, `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`);
-    }
+	// Only run auth checks on the client side to avoid SSR/hydration mismatches
+	if (browser && (!pb.authStore.isValid || !pb.authStore.model)) {
+		throw redirect(302, `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`);
+	}
 }
 
 /**
@@ -18,8 +18,8 @@ export function requireAuth(url: URL) {
  * Redirects to dashboard if user is already authenticated
  */
 export function requireGuest() {
-    // Only run auth checks on the client side to avoid SSR/hydration mismatches
-    if (browser && pb.authStore.isValid && pb.authStore.model) {
-        throw redirect(302, '/dashboard');
-    }
+	// Only run auth checks on the client side to avoid SSR/hydration mismatches
+	if (browser && pb.authStore.isValid && pb.authStore.model) {
+		throw redirect(302, '/dashboard');
+	}
 }

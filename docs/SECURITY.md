@@ -5,12 +5,14 @@ This document outlines the comprehensive security measures implemented in the Bl
 ## Authentication Security
 
 ### Password Security
+
 - **Strong Password Requirements**: Minimum 8 characters with uppercase, lowercase, numbers, and special characters
 - **Secure Transmission**: All authentication data transmitted over HTTPS in production
 - **Password Hashing**: Handled securely by PocketBase using bcrypt
 - **No Password Storage**: Passwords are never stored in frontend memory or localStorage
 
 ### Session Management
+
 - **Session Timeout**: 30-minute inactivity timeout with automatic renewal
 - **Activity Tracking**: User interactions update session activity
 - **Secure Storage**: Session tokens managed by PocketBase with httpOnly cookies
@@ -19,29 +21,33 @@ This document outlines the comprehensive security measures implemented in the Bl
 ## Input Security
 
 ### Validation & Sanitization
+
 - **Client-Side Validation**: Comprehensive form validation with immediate feedback
 - **Input Sanitization**: All user inputs sanitized to prevent XSS attacks
 - **Email Validation**: RFC-compliant email format validation
 - **Type Safety**: TypeScript ensures type safety across the application
 
 ### XSS Prevention
+
 ```typescript
 // Example: Input sanitization
 export function sanitizeInput(input: string): string {
-    return input
-        .replace(/[<>]/g, '') // Remove < and > characters
-        .trim();
+	return input
+		.replace(/[<>]/g, '') // Remove < and > characters
+		.trim();
 }
 ```
 
 ## Rate Limiting
 
 ### Client-Side Protection
+
 - **Login Attempts**: 5 attempts per minute, 5-minute block on exceeded limit
 - **Signup Attempts**: 3 attempts per minute, 10-minute block on exceeded limit
 - **Browser Fingerprinting**: Simple fingerprinting to identify unique clients
 
 ### Implementation
+
 ```typescript
 // Rate limiter configuration
 export const loginRateLimiter = new RateLimiter(5, 60000, 300000);
@@ -51,12 +57,14 @@ export const signupRateLimiter = new RateLimiter(3, 60000, 600000);
 ## Data Protection
 
 ### Secure Storage
+
 - **No Sensitive Data**: Passwords never stored in frontend
 - **Encrypted Storage**: Sensitive configuration data encrypted in localStorage
 - **Session Management**: PocketBase handles secure session storage
 - **Data Minimization**: Only necessary user data stored
 
 ### HTTPS Enforcement
+
 - **Production HTTPS**: Enforced HTTPS in production environments
 - **Secure Context Checks**: Validation of secure context for sensitive operations
 - **Mixed Content Prevention**: All resources loaded over HTTPS
@@ -64,11 +72,13 @@ export const signupRateLimiter = new RateLimiter(3, 60000, 600000);
 ## Error Handling
 
 ### Security-Aware Error Messages
+
 - **No Information Leakage**: Generic error messages to prevent information disclosure
 - **Rate Limiting Messages**: Clear feedback without revealing system details
 - **Email Enumeration Prevention**: Password reset doesn't reveal if email exists
 
 ### Example Implementation
+
 ```typescript
 // Secure error handling
 catch (error) {
@@ -81,22 +91,25 @@ catch (error) {
 ## Content Security Policy
 
 ### Production CSP Headers
+
 ```typescript
 // CSP Configuration
-VITE_CSP_DEFAULT_SRC="'self'"
-VITE_CSP_SCRIPT_SRC="'self' 'unsafe-inline'"
-VITE_CSP_STYLE_SRC="'self' 'unsafe-inline'"
-VITE_CSP_IMG_SRC="'self' data: https:"
+VITE_CSP_DEFAULT_SRC = "'self'";
+VITE_CSP_SCRIPT_SRC = "'self' 'unsafe-inline'";
+VITE_CSP_STYLE_SRC = "'self' 'unsafe-inline'";
+VITE_CSP_IMG_SRC = "'self' data: https:";
 ```
 
 ## Security Logging
 
 ### Event Tracking
+
 - **Authentication Events**: Login/logout/registration tracking
 - **Security Events**: Rate limiting, failed attempts, suspicious activity
 - **Error Logging**: Secure error logging without sensitive data exposure
 
 ### Example Events
+
 ```typescript
 // Security event logging
 logSecurityEvent('login_success', { userId: authData.record.id, email });
@@ -107,6 +120,7 @@ logSecurityEvent('password_reset_requested', { email: sanitizedEmail });
 ## Route Protection
 
 ### Authentication Guards
+
 - **Protected Routes**: Dashboard and user-specific pages require authentication
 - **Guest Routes**: Login/signup redirect authenticated users
 - **Redirect Handling**: Secure redirect to prevent open redirect attacks
@@ -114,7 +128,9 @@ logSecurityEvent('password_reset_requested', { email: sanitizedEmail });
 - **Server-side Protection**: Authentication checks performed in `+page.ts` files for security
 
 ### Protected Routes
+
 All dashboard routes are protected with server-side authentication:
+
 - `/dashboard/*` - All dashboard pages and sub-routes
 - `/dashboard/templates/*` - Template management pages
 - `/dashboard/classes/*` - Class management pages
@@ -125,47 +141,52 @@ All dashboard routes are protected with server-side authentication:
 - `/dashboard/help/*` - Help and support pages
 
 ### Guest Routes
+
 Authentication pages redirect logged-in users:
+
 - `/` - Landing page (redirects to dashboard if authenticated)
 - `/login` - Login page
 - `/signup` - Registration page
 - `/forgot-password` - Password reset page
 
 ### Implementation
+
 ```typescript
 // Route protection - standardized across all routes
 export function requireAuth(url: URL) {
-    if (!pb.authStore.isValid || !pb.authStore.model) {
-        throw redirect(302, `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`);
-    }
+	if (!pb.authStore.isValid || !pb.authStore.model) {
+		throw redirect(302, `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`);
+	}
 }
 
 export function requireGuest() {
-    if (pb.authStore.isValid && pb.authStore.model) {
-        throw redirect(302, '/dashboard');
-    }
+	if (pb.authStore.isValid && pb.authStore.model) {
+		throw redirect(302, '/dashboard');
+	}
 }
 
 // Usage in page load functions
 export const load: PageLoad = async ({ url }) => {
-    requireAuth(url); // For protected routes
-    // or
-    requireGuest();   // For authentication pages
-    
-    return {
-        title: 'Page Title - BlendSphere'
-    };
+	requireAuth(url); // For protected routes
+	// or
+	requireGuest(); // For authentication pages
+
+	return {
+		title: 'Page Title - BlendSphere'
+	};
 };
 ```
 
 ## Environment Security
 
 ### Development vs Production
+
 - **Environment Separation**: Different security levels for dev/prod
 - **Debug Mode**: Debug information only in development
 - **Feature Flags**: Security features can be toggled via environment variables
 
 ### Configuration
+
 ```bash
 # Development
 VITE_DEBUG_MODE=true
@@ -179,12 +200,14 @@ VITE_LOG_LEVEL=error
 ## Security Best Practices
 
 ### Code Security
+
 1. **Type Safety**: Full TypeScript implementation with strict mode
 2. **Input Validation**: All user inputs validated and sanitized
 3. **Error Boundaries**: Graceful error handling without information leakage
 4. **Dependency Security**: Regular security updates for dependencies
 
 ### Deployment Security
+
 1. **HTTPS Only**: Production deployment enforces HTTPS
 2. **Security Headers**: Comprehensive security headers in production
 3. **Environment Variables**: Sensitive configuration via environment variables
@@ -193,11 +216,13 @@ VITE_LOG_LEVEL=error
 ## Security Monitoring
 
 ### Client-Side Monitoring
+
 - **Failed Authentication Attempts**: Tracking and alerting
 - **Rate Limiting Events**: Monitoring for abuse patterns
 - **Security Event Logging**: Comprehensive security event tracking
 
 ### Integration Points
+
 - **Backend Security**: Coordinates with PocketBase security features
 - **Real-time Monitoring**: Security events can be sent to monitoring services
 - **Audit Trail**: Complete audit trail of security-relevant events
@@ -205,11 +230,13 @@ VITE_LOG_LEVEL=error
 ## Compliance
 
 ### Privacy Considerations
+
 - **GDPR Compliance**: Minimal data collection with user consent
 - **Data Retention**: Clear data retention policies
 - **User Rights**: Support for data export and deletion requests
 
 ### Security Standards
+
 - **OWASP Guidelines**: Following OWASP security recommendations
 - **Industry Standards**: Implementing industry-standard security practices
 - **Regular Audits**: Security code reviews and vulnerability assessments
@@ -217,6 +244,7 @@ VITE_LOG_LEVEL=error
 ## Security Checklist
 
 ### Pre-Deployment
+
 - [ ] All user inputs validated and sanitized
 - [ ] Rate limiting configured and tested
 - [ ] HTTPS enforced in production
@@ -227,6 +255,7 @@ VITE_LOG_LEVEL=error
 - [ ] Content Security Policy configured
 
 ### Post-Deployment
+
 - [ ] Security monitoring active
 - [ ] Error logging configured
 - [ ] Rate limiting monitored

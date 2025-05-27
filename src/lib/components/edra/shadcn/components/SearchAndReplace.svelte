@@ -86,7 +86,7 @@
 		<EdraToolTip content="Search and Replace">
 			<Button variant="ghost" size="icon" class="gap-0.5">
 				<Search />
-				<ChevronDown class="!size-2 text-muted-foreground" />
+				<ChevronDown class="text-muted-foreground !size-2" />
 			</Button>
 		</EdraToolTip>
 	</Popover.Trigger>
@@ -96,7 +96,7 @@
 	>
 		<Button
 			variant="ghost"
-			class={cn('size-6 rounded-sm p-0 transition-transform', showMore && 'rotate-90 bg-muted')}
+			class={cn('size-6 rounded-sm p-0 transition-transform', showMore && 'bg-muted rotate-90')}
 			title="Show More"
 			onclick={() => (showMore = !showMore)}
 		>
@@ -110,7 +110,7 @@
 					oninput={() => updateSearchTerm()}
 					class="w-40"
 				/>
-				<span class="text-sm text-muted-foreground"
+				<span class="text-muted-foreground text-sm"
 					>{searchCount > 0 ? searchIndex + 1 : 0}/{searchCount}
 				</span>
 				<Button

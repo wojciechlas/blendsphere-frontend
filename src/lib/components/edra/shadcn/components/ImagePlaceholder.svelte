@@ -14,7 +14,7 @@
 		<Popover.Trigger
 			class={buttonVariants({
 				variant: 'outline',
-				class: 'h-fit w-full bg-muted/50 p-0'
+				class: 'bg-muted/50 h-fit w-full p-0'
 			})}
 			disabled={!editor.isEditable}
 		>
@@ -27,7 +27,7 @@
 			<div class="flex items-center justify-between">
 				<h1 class="text-xl font-bold">Image</h1>
 				<Popover.Close>
-					<X class="size-4 text-muted-foreground" />
+					<X class="text-muted-foreground size-4" />
 				</Popover.Close>
 			</div>
 			<p>Insert image url</p>

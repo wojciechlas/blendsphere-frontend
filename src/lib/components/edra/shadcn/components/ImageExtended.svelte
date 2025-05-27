@@ -131,7 +131,7 @@
 			<input
 				value={node.attrs.title}
 				type="text"
-				class="my-1 w-full bg-transparent text-center text-sm text-muted-foreground outline-none"
+				class="text-muted-foreground my-1 w-full bg-transparent text-center text-sm outline-none"
 				onchange={(e) => {
 					if (e.target === null) return;
 					updateAttributes({ title: (e.target as HTMLInputElement).value });
@@ -154,7 +154,7 @@
 				}}
 			>
 				<div
-					class="z-20 h-[70px] w-1 rounded-xl border bg-muted opacity-0 transition-all group-hover:opacity-100"
+					class="bg-muted z-20 h-[70px] w-1 rounded-xl border opacity-0 transition-all group-hover:opacity-100"
 				></div>
 			</div>
 
@@ -172,12 +172,12 @@
 				}}
 			>
 				<div
-					class="z-20 h-[70px] w-1 rounded-xl border bg-muted opacity-0 transition-all group-hover:opacity-100"
+					class="bg-muted z-20 h-[70px] w-1 rounded-xl border opacity-0 transition-all group-hover:opacity-100"
 				></div>
 			</div>
 			<div
 				class={cn(
-					'absolute -top-4 left-[calc(50%-3rem)] flex items-center gap-1 rounded border bg-background/50 p-1 opacity-0 backdrop-blur-sm transition-opacity',
+					'bg-background/50 absolute -top-4 left-[calc(50%-3rem)] flex items-center gap-1 rounded border p-1 opacity-0 backdrop-blur-sm transition-opacity',
 					!resizing && 'group-hover:opacity-100',
 					openedMore && 'opacity-100'
 				)}

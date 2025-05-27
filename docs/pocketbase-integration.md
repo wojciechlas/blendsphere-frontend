@@ -30,17 +30,17 @@ import { authService } from '$lib/services/auth.service';
 
 // Register a new user
 const userData = {
-  email: 'user@example.com',
-  password: 'password123',
-  passwordConfirm: 'password123',
-  name: 'John Doe'
+	email: 'user@example.com',
+	password: 'password123',
+	passwordConfirm: 'password123',
+	name: 'John Doe'
 };
 await authService.register(userData);
 
 // Login
 await authService.login({
-  email: 'user@example.com',
-  password: 'password123'
+	email: 'user@example.com',
+	password: 'password123'
 });
 
 // Get current user
@@ -98,16 +98,19 @@ Flashcard management is handled by the `flashcard.service.ts` file, which provid
 We've created scripts to make setting up and running PocketBase easier:
 
 1. Go to the PocketBase directory:
+
    ```bash
    cd pocketbase
    ```
 
 2. Run the installation script:
+
    ```bash
    ./install_pocketbase.sh
    ```
 
 3. Start the PocketBase server:
+
    ```bash
    ./run_pocketbase.sh
    ```

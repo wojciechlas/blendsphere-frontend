@@ -16,7 +16,6 @@
 	let saving = $state(false);
 	let error = $state('');
 	let success = $state('');
-	let showPreview = $state(false);
 
 	// Get template ID from URL params
 	let templateId = $derived($page.params.templateId);
@@ -90,14 +89,14 @@
 			for (const field of fields) {
 				if (field.id && !field.id.startsWith('temp-') && currentFieldIds.has(field.id)) {
 					// Update existing field
-					const { id, ...fieldData } = field;
+					const { id: _id, ...fieldData } = field;
 					await fieldService.update(field.id, {
 						...fieldData,
 						template: templateId
 					});
 				} else {
 					// Create new field (either no ID or temp ID)
-					const { id, ...fieldData } = field;
+					const { id: _id, ...fieldData } = field;
 					await fieldService.create({
 						...fieldData,
 						template: templateId
@@ -111,8 +110,8 @@
 			setTimeout(() => {
 				goto('/dashboard/templates');
 			}, 1500);
-		} catch (err: any) {
-			error = err?.message || 'Failed to update template. Please try again.';
+		} catch (err: unknown) {
+			error = (err as Error)?.message || 'Failed to update template. Please try again.';
 			console.error('Error updating template:', err);
 		} finally {
 			saving = false;
@@ -121,10 +120,6 @@
 
 	function handleCancel() {
 		goto('/dashboard/templates');
-	}
-
-	function handlePreview() {
-		showPreview = true;
 	}
 </script>
 
@@ -164,7 +159,6 @@
 		{initialData}
 		{initialFields}
 		onSubmit={handleSave}
-		onPreview={handlePreview}
 		isLoading={saving}
 		submitLabel="Update Template"
 	>

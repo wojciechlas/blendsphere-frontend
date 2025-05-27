@@ -15,7 +15,7 @@
 		<Popover.Trigger
 			class={buttonVariants({
 				variant: 'outline',
-				class: 'h-fit w-full bg-muted/50 p-0'
+				class: 'bg-muted/50 h-fit w-full p-0'
 			})}
 			disabled={!editor.isEditable}
 		>
@@ -24,7 +24,7 @@
 				<span>Insert an IFrame</span>
 			</div>
 		</Popover.Trigger>
-		<Popover.Content class="relative bg-popover shadow-lg *:my-2">
+		<Popover.Content class="bg-popover relative shadow-lg *:my-2">
 			<p>Insert ifram url</p>
 			<Input placeholder="Enter iframe src url..." type="url" bind:value={src} class="w-full" />
 			{#if src.trim() !== ''}

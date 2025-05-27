@@ -106,7 +106,14 @@
 		resetForm: true
 	});
 
-	const { form: formData, enhance, errors, constraints, submitting, submit } = form;
+	const {
+		form: formData,
+		enhance: _enhance,
+		errors,
+		constraints,
+		submitting: _submitting,
+		submit: _submit
+	} = form;
 
 	// Load fields on mount if templateId is provided
 	onMount(async () => {
@@ -301,7 +308,7 @@
 
 	// Check if template has required input fields
 	const hasInputFields = $derived(fields.some((field) => field.isInput));
-	const hasOutputFields = $derived(fields.some((field) => !field.isInput));
+	const _hasOutputFields = $derived(fields.some((field) => !field.isInput));
 </script>
 
 <Card class="w-full">
@@ -504,7 +511,7 @@
 									{FIELD_TYPES.find((t) => t.value === $formData.type)?.label || 'Select type'}
 								</Select.Trigger>
 								<Select.Content>
-									{#each FIELD_TYPES as type}
+									{#each FIELD_TYPES as type (type.value)}
 										<Select.Item value={type.value}>{type.label}</Select.Item>
 									{/each}
 								</Select.Content>
@@ -525,7 +532,7 @@
 										'Select language'}
 								</Select.Trigger>
 								<Select.Content>
-									{#each prioritizedLanguages() as language, index}
+									{#each prioritizedLanguages() as language, index (language.value)}
 										{#if index === 2}
 											<Select.Separator />
 										{/if}

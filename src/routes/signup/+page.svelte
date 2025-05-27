@@ -14,7 +14,6 @@
 	} from '$lib/components/ui/card';
 	import { authStore, isLoading } from '$lib/stores/auth.store';
 	import { validateSignupForm, sanitizeInput, type ValidationError } from '$lib/utils/validation';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { Language, UserRole } from '$lib/components/schemas'; // Assuming schemas.ts exports these enums
 	import { getLanguageName } from '$lib/constants/template.constants';
@@ -125,10 +124,9 @@
 				submitError = error.message;
 				return;
 			}
-
 			// Handle specific PocketBase errors
 			if (error && typeof error === 'object' && 'data' in error && error.data) {
-				const errorData = error.data as Record<string, any>;
+				const errorData = error.data as Record<string, unknown>;
 
 				// Handle field-specific errors
 				if (errorData.username) {
@@ -350,7 +348,7 @@
 										: 'Select your native language'}
 								</Select.Trigger>
 								<Select.Content>
-									{#each languageOptions as lang}
+									{#each languageOptions as lang (lang)}
 										<Select.Item value={lang}>{getLanguageName(lang)}</Select.Item>
 									{/each}
 								</Select.Content>
@@ -368,7 +366,7 @@
 									{role ? getRoleLabel(role as UserRole) : 'Select account type'}
 								</Select.Trigger>
 								<Select.Content>
-									{#each roleOptions as r}
+									{#each roleOptions as r (r)}
 										<Select.Item value={r}>{getRoleLabel(r)}</Select.Item>
 									{/each}
 								</Select.Content>

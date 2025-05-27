@@ -4,25 +4,25 @@ import { fieldService } from '$lib/services/field.service';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ params }) => {
-    try {
-        const templateId = params.templateId;
+	try {
+		const templateId = params.templateId;
 
-        if (!templateId) {
-            throw error(404, 'Template not found');
-        }
+		if (!templateId) {
+			throw error(404, 'Template not found');
+		}
 
-        // Load template and its fields in parallel
-        const [template, fieldsResult] = await Promise.all([
-            templateService.getById(templateId),
-            fieldService.listByTemplate(templateId)
-        ]);
+		// Load template and its fields in parallel
+		const [template, fieldsResult] = await Promise.all([
+			templateService.getById(templateId),
+			fieldService.listByTemplate(templateId)
+		]);
 
-        return {
-            template,
-            fields: fieldsResult.items
-        };
-    } catch (err: any) {
-        console.error('Error loading template for edit:', err);
-        throw error(404, 'Template not found');
-    }
+		return {
+			template,
+			fields: fieldsResult.items
+		};
+	} catch (err: unknown) {
+		console.error('Error loading template for edit:', err);
+		throw error(404, 'Template not found');
+	}
 };

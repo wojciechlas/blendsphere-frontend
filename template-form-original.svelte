@@ -69,7 +69,7 @@
 	let frontEditor = $state<Editor>();
 	let backEditor = $state<Editor>();
 	let currentSide = $state<'front' | 'back'>('front');
-	
+
 	// Reactive statement to ensure proper editor initialization when tab changes
 	$: {
 		// This will re-run whenever currentSide changes
@@ -154,7 +154,7 @@
 	// Insert placeholder into editor
 	function insertPlaceholder(editor: Editor | undefined, placeholder: string) {
 		if (!editor) return;
-		
+
 		// Make sure the editor is focused before inserting content
 		editor.commands.focus();
 		setTimeout(() => {

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
 	import TemplateForm from '$lib/components/forms/template-form.svelte';
 	import { templateService } from '$lib/services/template.service';
 	import { fieldService } from '$lib/services/field.service';
@@ -37,7 +36,7 @@
 			if (fields && fields.length > 0) {
 				for (const field of fields) {
 					// Prepare field data for creation (remove temp ID if exists)
-					const { id, ...fieldData } = field;
+					const { id: _id, ...fieldData } = field;
 
 					await fieldService.create({
 						...fieldData,
@@ -52,8 +51,8 @@
 			setTimeout(() => {
 				goto('/dashboard/templates');
 			}, 1500);
-		} catch (err: any) {
-			error = err?.message || 'Failed to create template. Please try again.';
+		} catch (err: unknown) {
+			error = (err as Error)?.message || 'Failed to create template. Please try again.';
 			console.error('Error creating template:', err);
 		} finally {
 			saving = false;
@@ -62,16 +61,6 @@
 
 	function handleCancel() {
 		goto('/dashboard/templates');
-	}
-
-	function handlePreview() {
-		// For the create page, we need to get the current form data to preview
-		// This is a bit more complex since we don't have a saved template yet
-		// For now, we'll just show an alert, but this could be enhanced
-		// to create a temporary template object from current form data
-		alert(
-			'Preview functionality for new templates will be implemented soon. Save the template first to see a preview.'
-		);
 	}
 </script>
 
@@ -108,12 +97,7 @@
 	{/if}
 
 	<!-- Template Form -->
-	<TemplateForm
-		onSubmit={handleSave}
-		onPreview={handlePreview}
-		isLoading={saving}
-		submitLabel="Save Template"
-	>
+	<TemplateForm onSubmit={handleSave} isLoading={saving} submitLabel="Save Template">
 		{#snippet cancel()}
 			<button
 				class="bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 inline-flex h-9 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium whitespace-nowrap shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"

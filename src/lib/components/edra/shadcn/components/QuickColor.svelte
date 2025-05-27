@@ -39,17 +39,17 @@
 				style={`color: ${currentColor}; background-color: ${currentHighlight}50;`}
 			>
 				<span>A</span>
-				<ChevronDown class="!size-2 text-muted-foreground" />
+				<ChevronDown class="text-muted-foreground !size-2" />
 			</Button>
 		</EdraToolTip>
 	</Popover.Trigger>
 	<Popover.Content
-		class="size-fit bg-popover shadow-lg"
+		class="bg-popover size-fit shadow-lg"
 		portalProps={{ disabled: true, to: undefined }}
 	>
-		<div class="my-2 text-xs text-muted-foreground">Text Colors</div>
+		<div class="text-muted-foreground my-2 text-xs">Text Colors</div>
 		<div class="grid grid-cols-5 gap-2">
-			{#each colors as color}
+			{#each colors as color (color.value + color.label)}
 				<Button
 					variant="ghost"
 					class={cn(
@@ -75,9 +75,9 @@
 			{/each}
 		</div>
 
-		<div class="my-2 text-xs text-muted-foreground">Highlight Colors</div>
+		<div class="text-muted-foreground my-2 text-xs">Highlight Colors</div>
 		<div class="grid grid-cols-5 gap-2">
-			{#each colors as color}
+			{#each colors as color (color.value + color.label + 'highlight')}
 				<Button
 					variant="ghost"
 					class={cn(

@@ -10,10 +10,8 @@
 		CardHeader,
 		CardTitle
 	} from '$lib/components/ui/card';
-	import { Separator } from '$lib/components/ui/separator';
 	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
 	import EditIcon from '@tabler/icons-svelte/icons/edit';
-	import EyeIcon from '@tabler/icons-svelte/icons/eye';
 	import CopyIcon from '@tabler/icons-svelte/icons/copy';
 	import TrashIcon from '@tabler/icons-svelte/icons/trash';
 	import { getLanguageName } from '$lib/constants/template.constants';
@@ -56,7 +54,7 @@
 			// Clone all fields as well
 			if (data.fields && data.fields.length > 0) {
 				for (const field of data.fields) {
-					const { id, created, updated, ...fieldData } = field;
+					const { id: _id, created: _created, updated: _updated, ...fieldData } = field;
 					await fieldService.create({
 						...fieldData,
 						template: newTemplate.id
@@ -70,8 +68,8 @@
 			setTimeout(() => {
 				goto(`/dashboard/templates/${newTemplate.id}`);
 			}, 1500);
-		} catch (err: any) {
-			error = err?.message || 'Failed to duplicate template. Please try again.';
+		} catch (err: unknown) {
+			error = (err as Error)?.message || 'Failed to duplicate template. Please try again.';
 			console.error('Error duplicating template:', err);
 		} finally {
 			isLoading = false;
@@ -104,8 +102,8 @@
 			setTimeout(() => {
 				goto('/dashboard/templates');
 			}, 1000);
-		} catch (err: any) {
-			error = err?.message || 'Failed to delete template. Please try again.';
+		} catch (err: unknown) {
+			error = (err as Error)?.message || 'Failed to delete template. Please try again.';
 			console.error('Error deleting template:', err);
 		} finally {
 			isLoading = false;
@@ -275,7 +273,7 @@
 					<p class="text-muted-foreground text-sm">No fields defined</p>
 				{:else}
 					<div class="space-y-3">
-						{#each data.fields as field}
+						{#each data.fields as field (field.id)}
 							<div class="flex items-center justify-between rounded-md border p-3">
 								<div>
 									<div class="font-medium">{field.label}</div>
@@ -314,6 +312,7 @@
 				<!-- Rendered Preview -->
 				<div>
 					<div class="bg-card layout-preview min-h-[120px] rounded-md border p-4">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 						{@html frontPreview}
 					</div>
 				</div>
@@ -342,6 +341,7 @@
 				<!-- Rendered Preview -->
 				<div>
 					<div class="bg-card layout-preview min-h-[120px] rounded-md border p-4">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 						{@html backPreview}
 					</div>
 				</div>

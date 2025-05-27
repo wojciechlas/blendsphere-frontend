@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn } from '$lib/utils.js';
-	import { icons } from 'lucide-svelte';
+	import { icons, FileText } from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
 
 	interface Props {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,6 +17,12 @@
 	let selectedCommandIndex = $state<number>(0);
 
 	const items = $derived.by(() => props.items);
+
+	// Helper function to safely get icon component
+	function getIconComponent(iconName: string): ComponentType {
+		const icon = icons[iconName as keyof typeof icons];
+		return icon || FileText;
+	}
 
 	$effect(() => {
 		if (items) {
@@ -97,13 +104,13 @@
 {#if items.length}
 	<div
 		bind:this={scrollContainer}
-		class="flex max-h-80 flex-col gap-1 overflow-auto scroll-smooth rounded border bg-background/80 backdrop-blur-xl"
+		class="bg-background/80 flex max-h-80 flex-col gap-1 overflow-auto scroll-smooth rounded border backdrop-blur-xl"
 	>
-		{#each items as grp, groupIndex}
-			<span class="p-2 text-xs text-muted-foreground">{grp.title}</span>
+		{#each items as grp, groupIndex (grp.title + groupIndex)}
+			<span class="text-muted-foreground p-2 text-xs">{grp.title}</span>
 
-			{#each grp.commands as command, commandIndex}
-				{@const Icon = icons[command.iconName]}
+			{#each grp.commands as command, commandIndex (command.title + commandIndex)}
+				{@const Icon = getIconComponent(command.iconName)}
 				{@const isActive =
 					selectedGroupIndex === groupIndex && selectedCommandIndex === commandIndex}
 				<Button

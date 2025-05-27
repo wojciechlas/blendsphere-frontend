@@ -3,8 +3,9 @@
 	import { cn } from '$lib/utils.js';
 	import type { EdraCommand } from '../../commands/types.js';
 	import type { Editor } from '@tiptap/core';
-	import { icons } from 'lucide-svelte';
+	import { icons, FileText } from 'lucide-svelte';
 	import EdraToolTip from './EdraToolTip.svelte';
+	import type { ComponentType } from 'svelte';
 
 	interface Props {
 		class?: string;
@@ -16,7 +17,13 @@
 
 	const { class: className = '', command, editor, style, onclick }: Props = $props();
 
-	const Icon = icons[command.iconName];
+	// Helper function to safely get icon component
+	function getIconComponent(iconName: string): ComponentType {
+		const icon = icons[iconName as keyof typeof icons];
+		return icon || FileText;
+	}
+
+	const Icon = getIconComponent(command.iconName);
 	const shortcut = command.shortCuts ? ` (${command.shortCuts[0]})` : '';
 
 	const isActive = $derived.by(() => editor.isActive(command.name) || command.isActive?.(editor));

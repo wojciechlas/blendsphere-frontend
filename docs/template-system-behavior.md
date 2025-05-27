@@ -5,6 +5,7 @@
 ### 1.1 Template Creation Process
 
 #### User Journey: Creating a New Template
+
 ```
 1. User clicks "Create Template" button
 2. System displays template creation wizard
@@ -25,13 +26,14 @@
 ```
 
 #### Template Editor Behavior
+
 ```
 Layout:
 ┌─────────────────┬─────────────────┬─────────────────┐
 │     Basic       │              Fields               │
 │   Information   │                                   │
 │                 │           [Add field]             │
-│ • Basic Info    │        • Table with fields        | 
+│ • Basic Info    │        • Table with fields        |
 └─────────────────┼─────────────────┼─────────────────┤
 │                  Template Editor                    │
 │                 [Flip front/back]                   │
@@ -43,6 +45,7 @@ Layout:
 ### 1.2 Field Management Behavior
 
 #### Adding a New Field
+
 ```
 1. User clicks "Add Field" button
 2. System adds a new fild to the fields lists:
@@ -64,6 +67,7 @@ Layout:
 ```
 
 #### Field Validation Rules
+
 ```
 Input Validation:
 - Label: 1-50 characters, alphanumeric + spaces (required)
@@ -84,6 +88,7 @@ Business Rules:
 ### 1.3 Layout Editor Behavior
 
 #### Rich Text Editor Features
+
 ```
 Toolbar:
 [B] [I] [U] | [≡] [≢] [≣] | [🎨] [🔗] | [{{}}] [👁]
@@ -106,6 +111,7 @@ Placeholder Insertion:
 ```
 
 #### Layout Validation
+
 ```
 Real-time Validation:
 - Check for orphaned placeholders (no matching field)
@@ -122,6 +128,7 @@ Validation Messages:
 ### 1.4 Style Customization Behavior
 
 #### Theme Selection
+
 ```
 Theme Picker:
 ┌─────────────────────────────────────┐
@@ -135,6 +142,7 @@ Theme Picker:
 ```
 
 #### Color Customization
+
 ```
 Color Controls:
 Primary:    [#3B82F6] [🎨] ──→ Color Picker
@@ -156,6 +164,7 @@ Color Picker Behavior:
 ### 2.1 Flashcard Creation with Templates
 
 #### Template Selection
+
 ```
 1. User creating new flashcard selects template:
    ┌─────────────────────────────────────┐
@@ -180,6 +189,7 @@ Color Picker Behavior:
 ```
 
 #### Data Input Form
+
 ```
 Based on template fields, system generates form:
 ┌─────────────────────────────────────┐
@@ -207,6 +217,7 @@ Form Behavior:
 ### 2.2 AI Generation Process
 
 #### AI Content Generation Flow
+
 ```
 1. User fills input fields and clicks "Generate AI Content"
 2. System shows loading state:
@@ -223,6 +234,7 @@ Form Behavior:
 ```
 
 #### AI Prompt Construction
+
 ```
 System automatically builds prompts:
 
@@ -235,6 +247,7 @@ Template Description: "Basic Spanish vocabulary with translations"
 ### 2.3 Template Preview Behavior
 
 #### Live Preview Updates
+
 ```
 Preview Panel Updates:
 - Instant when typing in layout editor
@@ -255,6 +268,7 @@ Sample Data:
 ### 3.1 Template Validation
 
 #### Save Validation
+
 ```
 Before saving template, system checks:
 1. Required fields completed
@@ -281,6 +295,7 @@ Error Display:
 ### 3.2 Field Validation
 
 #### Real-time Field Validation
+
 ```
 Field Input Validation:
 - Label: Show character count (50 max)
@@ -298,6 +313,7 @@ Validation States:
 ### 3.3 AI Generation Error Handling
 
 #### AI Service Failures
+
 ```
 Error Types and Responses:
 1. Network Error:
@@ -322,6 +338,7 @@ Error Types and Responses:
 ### 4.1 Editor Performance
 
 #### Optimization Strategies
+
 ```
 1. Debounced Preview Updates:
    - 300ms delay after user stops typing
@@ -342,6 +359,7 @@ Error Types and Responses:
 ### 4.2 User Experience Enhancements
 
 #### Intuitive Interactions
+
 ```
 1. Contextual Help:
    - Tooltip hints on hover

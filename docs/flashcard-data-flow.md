@@ -16,11 +16,13 @@ The flashcard data flow describes how flashcard data is created, stored, retriev
 ### Flashcard Creation
 
 1. **User Input**:
+
    - Manual creation through forms
    - Bulk import from external files
    - AI-assisted generation from text
 
 2. **Data Processing**:
+
    - Validation of content
    - Formatting and standardization
    - Media processing (images, audio)
@@ -34,11 +36,13 @@ The flashcard data flow describes how flashcard data is created, stored, retriev
 ### Flashcard Retrieval
 
 1. **Query Parameters**:
+
    - Deck selection
    - SRS due date filtering
    - Search and filtering
 
 2. **Data Loading**:
+
    - Batched loading for performance
    - Caching for frequently accessed cards
    - Prefetching for smoother experience
@@ -51,16 +55,19 @@ The flashcard data flow describes how flashcard data is created, stored, retriev
 ### Review Process
 
 1. **Session Initialization**:
+
    - Loading due cards based on SRS algorithm
    - Prioritization of cards
    - Session metrics initialization
 
 2. **User Interaction**:
+
    - Card presentation
    - User response collection
    - Performance rating
 
 3. **Data Update**:
+
    - SRS scheduling update
    - Performance history recording
    - Statistics calculation
@@ -76,28 +83,28 @@ The flashcard data flow describes how flashcard data is created, stored, retriev
 
 ```typescript
 interface Flashcard {
-  id: string;
-  deckId: string;
-  templateId: string;
-  content: {
-    front: ContentBlock[];
-    back: ContentBlock[];
-    hints?: ContentBlock[];
-    notes?: string;
-  };
-  tags: string[];
-  mediaRefs: string[];
-  srsData: {
-    state: 'new' | 'learning' | 'review' | 'relearning' | 'graduated';
-    dueDate: string;
-    interval: number;
-    easeFactor: number;
-    reviewCount: number;
-    lapseCount: number;
-  };
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
+	id: string;
+	deckId: string;
+	templateId: string;
+	content: {
+		front: ContentBlock[];
+		back: ContentBlock[];
+		hints?: ContentBlock[];
+		notes?: string;
+	};
+	tags: string[];
+	mediaRefs: string[];
+	srsData: {
+		state: 'new' | 'learning' | 'review' | 'relearning' | 'graduated';
+		dueDate: string;
+		interval: number;
+		easeFactor: number;
+		reviewCount: number;
+		lapseCount: number;
+	};
+	createdAt: string;
+	updatedAt: string;
+	createdBy: string;
 }
 ```
 
@@ -105,17 +112,17 @@ interface Flashcard {
 
 ```typescript
 interface ReviewRecord {
-  id: string;
-  flashcardId: string;
-  userId: string;
-  sessionId: string;
-  rating: 1 | 2 | 3 | 4 | 5;
-  timeSpent: number;  // milliseconds
-  previousInterval: number;
-  newInterval: number;
-  previousEaseFactor: number;
-  newEaseFactor: number;
-  timestamp: string;
+	id: string;
+	flashcardId: string;
+	userId: string;
+	sessionId: string;
+	rating: 1 | 2 | 3 | 4 | 5;
+	timeSpent: number; // milliseconds
+	previousInterval: number;
+	newInterval: number;
+	previousEaseFactor: number;
+	newEaseFactor: number;
+	timestamp: string;
 }
 ```
 
@@ -124,10 +131,12 @@ interface ReviewRecord {
 BlendSphere provides robust offline support for flashcard operations:
 
 1. **Local Storage**:
+
    - All active decks and due cards are cached locally
    - New cards created offline are stored locally
 
 2. **Synchronization Queue**:
+
    - Changes made offline are queued for sync
    - Sync occurs automatically when connection is restored
 

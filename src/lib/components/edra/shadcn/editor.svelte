@@ -24,9 +24,6 @@
 	import ImageExtendedComponent from './components/ImageExtended.svelte';
 	import VideoExtendedComponent from './components/VideoExtended.svelte';
 	import AudioExtendedComponent from './components/AudioExtended.svelte';
-	import LinkMenu from './menus/link-menu.svelte';
-	import TableColMenu from './menus/table-col-menu.svelte';
-	import TableRowMenu from './menus/table-row-menu.svelte';
 	import slashcommand from '../extensions/slash-command/slashcommand.js';
 	import SlashCommandList from './components/SlashCommandList.svelte';
 	import LoaderCircle from 'lucide-svelte/icons/loader-circle';
@@ -46,8 +43,6 @@
 		editable = true,
 		editor = $bindable<Editor | undefined>(),
 		showSlashCommands = true,
-		showLinkBubbleMenu = true,
-		showTableBubbleMenu = true,
 		onUpdate,
 		children
 	}: EdraProps = $props();
@@ -92,15 +87,6 @@
 
 <div class={cn('edra', className)}>
 	{@render children?.()}
-	{#if editor}
-		{#if showLinkBubbleMenu}
-			<LinkMenu {editor} />
-		{/if}
-		{#if showTableBubbleMenu}
-			<TableColMenu {editor} />
-			<TableRowMenu {editor} />
-		{/if}
-	{/if}
 	{#if !editor}
 		<div class="flex size-full items-center justify-center gap-4 text-xl">
 			<LoaderCircle class="animate-spin" /> Loading...

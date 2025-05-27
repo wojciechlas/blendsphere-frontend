@@ -26,6 +26,7 @@ The SRS algorithm in BlendSphere is based on scientific research in cognitive ps
 1. **Initial Learning**: When a flashcard is first created, it's scheduled for review in a short time period (typically 1 day).
 
 2. **Review & Rating**: During review, users rate their recall performance on a scale (typically 1-5):
+
    - 1: Complete failure to recall
    - 2: Significant difficulty recalling
    - 3: Correct recall with effort
@@ -33,6 +34,7 @@ The SRS algorithm in BlendSphere is based on scientific research in cognitive ps
    - 5: Perfect recall with no hesitation
 
 3. **Interval Calculation**: Based on the user's rating, the algorithm calculates the next review interval:
+
    - For ratings 1-2: The interval is shortened (relearning phase)
    - For rating 3: The interval increases slightly
    - For ratings 4-5: The interval increases significantly

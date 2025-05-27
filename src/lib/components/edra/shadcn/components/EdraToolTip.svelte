@@ -17,7 +17,7 @@
 			{@render children()}
 		</Tooltip.Trigger>
 		<Tooltip.Content
-			class="flex items-center gap-1 rounded border-2 bg-background text-xs font-medium text-foreground"
+			class="bg-background text-foreground flex items-center gap-1 rounded border-2 text-xs font-medium"
 		>
 			<p>{content}</p>
 			<p class="text-muted-foreground">{shortCut}</p>

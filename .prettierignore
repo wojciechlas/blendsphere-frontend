@@ -4,3 +4,44 @@ pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb
+
+# Build outputs
+.svelte-kit/
+build/
+dist/
+.output/
+.vercel/
+.netlify/
+.wrangler/
+
+# Generated files
+*.d.ts
+
+# Environment files
+.env*
+
+# Documentation images (binary files)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+
+# PlantUML jar file
+docs/plantuml.jar
+
+# Husky hooks directory
+.husky/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git files
+.gitignore
+.gitattributes
+
+# Documentation (PlantUML and generated images)
+docs/**/*.puml
+docs/images/

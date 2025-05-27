@@ -33,7 +33,6 @@
 	interface Props {
 		initialData?: Partial<TemplateFormData>;
 		onSubmit: (data: TemplateFormData & { fields: FieldData[] }) => Promise<void>;
-		onPreview?: () => void;
 		isLoading?: boolean;
 		submitLabel?: string;
 		cancel?: Snippet;
@@ -44,7 +43,6 @@
 	let {
 		initialData = {},
 		onSubmit,
-		onPreview,
 		isLoading = false,
 		submitLabel = 'Save Template',
 		cancel,
@@ -54,8 +52,6 @@
 
 	// State for reactive form behavior
 	let fields = $state<FieldData[]>(initialFields);
-	let selectedTab = $state('basic');
-	let showPreview = $state(false);
 	let fieldValidationError = $state<string | null>(null);
 
 	// Rich text editor state
@@ -106,7 +102,7 @@
 		dataType: 'json'
 	});
 
-	const { form: formData, enhance, errors, constraints, submitting } = form;
+	const { form: formData, enhance, errors: _errors, constraints, submitting } = form;
 
 	// Handle field changes from FieldManager
 	function handleFieldsChanged(event: CustomEvent<FieldData[]>) {
@@ -122,13 +118,6 @@
 
 	function handleBackEditorUpdate({ editor }: { editor: Editor }) {
 		$formData.backLayout = editor.getHTML();
-	}
-
-	// Insert placeholder into editor
-	function insertPlaceholder(editor: Editor | undefined, placeholder: string) {
-		if (!editor) return;
-
-		editor.chain().focus().insertContent(placeholder).run();
 	}
 
 	// Generate placeholder from field label
@@ -156,7 +145,6 @@
 		const hasInputFields = fields.some((field) => field.isInput);
 		if (!hasInputFields) {
 			fieldValidationError = 'At least one input field is required';
-			selectedTab = 'fields';
 			return;
 		}
 
@@ -256,7 +244,7 @@
 												?.label || 'Select language'}
 										</Select.Trigger>
 										<Select.Content>
-											{#each SUPPORTED_LANGUAGES as language}
+											{#each SUPPORTED_LANGUAGES as language (language.value)}
 												<Select.Item value={language.value}>{language.label}</Select.Item>
 											{/each}
 										</Select.Content>
@@ -276,7 +264,7 @@
 												?.label || 'Select language'}
 										</Select.Trigger>
 										<Select.Content>
-											{#each SUPPORTED_LANGUAGES as language}
+											{#each SUPPORTED_LANGUAGES as language (language.value)}
 												<Select.Item value={language.value}>{language.label}</Select.Item>
 											{/each}
 										</Select.Content>
@@ -297,7 +285,7 @@
 											'Select level'}
 									</Select.Trigger>
 									<Select.Content>
-										{#each LANGUAGE_LEVELS as level}
+										{#each LANGUAGE_LEVELS as level (level.value)}
 											<Select.Item value={level.value}>{level.label}</Select.Item>
 										{/each}
 									</Select.Content>
@@ -345,7 +333,7 @@
 					<Tabs.Content value="front" class="mt-4">
 						<Form.Field {form} name="frontLayout">
 							<Form.Control>
-								{#snippet children({ props })}
+								{#snippet children({ props: _props })}
 									<LayoutEditor
 										editor={frontEditor}
 										content={$formData.frontLayout}
@@ -362,7 +350,7 @@
 					<Tabs.Content value="back" class="mt-4">
 						<Form.Field {form} name="backLayout">
 							<Form.Control>
-								{#snippet children({ props })}
+								{#snippet children({ props: _props })}
 									<LayoutEditor
 										editor={backEditor}
 										content={$formData.backLayout}
@@ -385,7 +373,7 @@
 			{#if cancel}
 				{@render cancel()}
 			{/if}
-			<Button onclick={handleSubmit} disabled={isLoading || $submitting} class="min-w-[120px]">
+			<Button type="submit" disabled={isLoading || $submitting} class="min-w-[120px]">
 				{#if isLoading || $submitting}
 					<div
 						class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"

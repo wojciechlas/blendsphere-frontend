@@ -113,7 +113,7 @@
 						</div>
 
 						<div class="text-center text-sm">
-							Remember your password?{' '}
+							Remember your password?
 							<a href="/login" class="text-primary hover:underline"> Sign in </a>
 						</div>
 					</CardFooter>
@@ -153,12 +153,12 @@
 							</Button>
 
 							<div class="text-center text-sm">
-								Remember your password?{' '}
+								Remember your password?
 								<a href="/login" class="text-primary hover:underline"> Sign in </a>
 							</div>
 
 							<div class="text-center text-sm">
-								Don't have an account?{' '}
+								Don't have an account?
 								<a href="/signup" class="text-primary hover:underline"> Sign up </a>
 							</div>
 						</CardFooter>

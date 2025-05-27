@@ -219,7 +219,7 @@
 						</div>
 
 						<div class="text-center text-sm">
-							Don't have an account?{' '}
+							Don't have an account?
 							<a href="/signup" class="text-primary hover:underline"> Sign up </a>
 						</div>
 					</CardFooter>

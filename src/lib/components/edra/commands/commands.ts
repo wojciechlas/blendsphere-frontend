@@ -257,7 +257,7 @@ export const commands: Record<string, EdraCommandGroup> = {
 				action: (editor) => {
 					editor.chain().focus().insertImagePlaceholder().run();
 				}
-			},
+			}
 			/* {
 				iconName: 'Video',
 				name: 'video-placeholder',

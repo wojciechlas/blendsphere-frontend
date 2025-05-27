@@ -13,16 +13,19 @@ This guide provides detailed instructions for setting up and running PocketBase 
 We provide scripts to make installation easy:
 
 1. Navigate to the PocketBase directory:
+
    ```bash
    cd /home/wlas/BlendSphere/pocketbase
    ```
 
 2. Run the installation script:
+
    ```bash
    ./install_pocketbase.sh
    ```
 
    This script:
+
    - Downloads PocketBase v0.28.2
    - Extracts it to the current directory
    - Makes the binary executable
@@ -37,6 +40,7 @@ After installation, you can start PocketBase with:
 ```
 
 This script:
+
 - Starts the PocketBase server on http://127.0.0.1:8090
 - Automatically applies migrations from the migrations directory
 
@@ -51,6 +55,7 @@ When you first run PocketBase:
 5. Click "Create account"
 
 This superuser account will have full administrative access to PocketBase, allowing you to:
+
 - Manage collections and records
 - Configure authentication settings
 - View and manage users

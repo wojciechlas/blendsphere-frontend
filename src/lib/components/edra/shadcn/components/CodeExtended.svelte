@@ -26,7 +26,7 @@
 </script>
 
 <NodeViewWrapper
-	class="code-wrapper group relative rounded bg-muted p-6 dark:bg-muted/20"
+	class="code-wrapper group bg-muted dark:bg-muted/20 relative rounded p-6"
 	draggable={false}
 	spellcheck={false}
 >
@@ -37,13 +37,13 @@
 				class={buttonVariants({
 					variant: 'ghost',
 					size: 'sm',
-					class: 'h-4 rounded px-1 py-2 text-xs text-muted-foreground'
+					class: 'text-muted-foreground h-4 rounded px-1 py-2 text-xs'
 				})}
 				>{defaultLanguage}
 				<ChevronDown class="!size-2" />
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content class="h-96 w-40 overflow-auto" contenteditable="false">
-				{#each languages as language}
+				{#each languages as language (language)}
 					<DropdownMenu.Item
 						contenteditable="false"
 						data-current={defaultLanguage === language}
@@ -62,7 +62,7 @@
 				{/each}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>
-		<Button variant="ghost" class="size-4 p-0 text-muted-foreground" onclick={copyCode}>
+		<Button variant="ghost" class="text-muted-foreground size-4 p-0" onclick={copyCode}>
 			{#if isCopying}
 				<Check class="size-3 text-green-500" />
 			{:else}

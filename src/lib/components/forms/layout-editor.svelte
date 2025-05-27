@@ -37,7 +37,7 @@
 		<div class="bg-muted/50 rounded-lg p-4">
 			<h4 class="mb-2 text-sm font-medium">Available Field Placeholders:</h4>
 			<div class="flex flex-wrap gap-2">
-				{#each fields as field}
+				{#each fields as field (field.id)}
 					{@const placeholder = getFieldPlaceholder(field)}
 					<div class="flex items-center gap-1">
 						<code class="bg-background rounded border px-2 py-1 text-xs">
@@ -86,6 +86,7 @@
 		<div class="space-y-4">
 			{#if fields.length > 0}
 				<div class="bg-card min-h-[300px] rounded-lg border px-8 py-6">
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					{@html previewContent}
 				</div>
 			{:else}

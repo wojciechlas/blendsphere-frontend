@@ -4,7 +4,6 @@
 	import EdraToolBarIcon from './components/EdraToolBarIcon.svelte';
 	import QuickColor from './components/QuickColor.svelte';
 	import FontSize from './components/FontSize.svelte';
-	import SearchAndReplace from './components/SearchAndReplace.svelte';
 	import type { Snippet } from 'svelte';
 	import { cn } from '$lib/utils.js';
 
@@ -23,14 +22,13 @@
 	{#if children}
 		{@render children()}
 	{:else}
-		{#each Object.keys(commands).filter((key) => !excludedCommands.includes(key)) as keys}
+		{#each Object.keys(commands).filter((key) => !excludedCommands.includes(key)) as keys (keys)}
 			{@const groups = commands[keys].commands}
-			{#each groups as command}
+			{#each groups as command (command)}
 				<EdraToolBarIcon {command} {editor} />
 			{/each}
 		{/each}
 		<FontSize {editor} />
 		<QuickColor {editor} />
-		<SearchAndReplace {editor} />
 	{/if}
 </div>

@@ -36,12 +36,12 @@
 		<EdraToolTip content="Font Size">
 			<Button variant="ghost" class={cn('gap-0.5 p-2', className)}>
 				<span>{currentLabel}</span>
-				<ChevronDown class="!size-2 text-muted-foreground" />
+				<ChevronDown class="text-muted-foreground !size-2" />
 			</Button>
 		</EdraToolTip>
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content class="h-fit w-fit" portalProps={{ disabled: true, to: undefined }}>
-		{#each FONT_SIZE as fontSize}
+		{#each FONT_SIZE as fontSize (fontSize.value)}
 			<DropdownMenu.Item
 				onclick={() => {
 					editor.chain().focus().setFontSize(fontSize.value).run();

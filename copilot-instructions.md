@@ -134,11 +134,11 @@ These instructions are designed to guide developers (and a coding copilot) worki
 ### 6. Additional Considerations
 
 - **State Management Strategy:** Svelte stores for application-wide state
-- **API Communication:** 
+- **API Communication:**
   - REST API for PocketBase (core application data)
   - REST API for FastAPI (AI features)
 - **Deployment:** Docker, possible to deploy in Vercel, Netlify
-- **Backend Architecture:** 
+- **Backend Architecture:**
   - PocketBase and FastAPI will be maintained in a separate repository
   - Frontend should implement clear separation of concerns when interacting with each backend
 - **Backend Communication Patterns:**

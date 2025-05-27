@@ -95,7 +95,7 @@
 			const fieldsResult = await fieldService.listByTemplate(template.id);
 			if (fieldsResult.items && fieldsResult.items.length > 0) {
 				for (const field of fieldsResult.items) {
-					const { id, created, updated, ...fieldData } = field;
+					const { id: _id, created: _created, updated: _updated, ...fieldData } = field;
 					await fieldService.create({
 						...fieldData,
 						template: newTemplate.id
@@ -192,7 +192,7 @@
 					{languages.find((l) => l.value === languageFilter)?.label || 'Language'}
 				</Select.Trigger>
 				<Select.Content>
-					{#each languages as language}
+					{#each languages as language (language.value)}
 						<Select.Item value={language.value}>{language.label}</Select.Item>
 					{/each}
 				</Select.Content>
@@ -202,7 +202,7 @@
 					{levels.find((l) => l.value === levelFilter)?.label || 'Level'}
 				</Select.Trigger>
 				<Select.Content>
-					{#each levels as level}
+					{#each levels as level (level.value)}
 						<Select.Item value={level.value}>{level.label}</Select.Item>
 					{/each}
 				</Select.Content>
@@ -220,7 +220,7 @@
 	<!-- Templates Grid -->
 	{#if loading}
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-			{#each Array(8) as _}
+			{#each Array(8) as _, index (index)}
 				<Card class="animate-pulse">
 					<CardHeader>
 						<div class="bg-muted h-4 w-3/4 rounded"></div>

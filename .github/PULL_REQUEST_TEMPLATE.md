@@ -2,7 +2,7 @@
 
 ## Description
 
-<!-- 
+<!--
 Provide a detailed description of the changes introduced by this PR.
 What problem does it solve? What new features or improvements does it add?
 Include any relevant links to issues, documentation, or discussions.
@@ -55,7 +55,7 @@ Include any relevant links to issues, documentation, or discussions.
 
 ## Testing Instructions
 
-<!-- 
+<!--
 Provide clear step-by-step instructions for testing this PR:
 1. Checkout this branch
 2. Run `npm install` if dependencies changed
@@ -65,7 +65,7 @@ Provide clear step-by-step instructions for testing this PR:
 
 ## Performance Considerations
 
-<!-- 
+<!--
 If applicable, describe any performance implications and how you've addressed them.
 Have you measured the impact? Include metrics if available.
 -->
