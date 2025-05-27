@@ -9,7 +9,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { templateService, type Template } from '$lib/services/template.service';
-	import FieldManager from '$lib/components/template/field-manager.svelte';
+	import FieldManager from '$lib/components/forms/field-manager.svelte';
 
 	let template: Template | null = null;
 	let loading = true;
@@ -61,7 +61,7 @@
 	}
 </script>
 
-<div class="container mx-auto py-6">
+<div class="container mx-auto p-6">
 	<!-- Header -->
 	<div class="mb-6">
 		<h1 class="text-3xl font-bold tracking-tight">Template Editor</h1>

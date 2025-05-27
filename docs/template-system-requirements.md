@@ -27,8 +27,8 @@ The Template System is a core component of BlendSphere that enables users to cre
 - Support for language pairs: EN, ES, FR, DE, IT, PL
 
 #### 2.1.3 Layout Definition
-- **Front Layout** - HTML template with placeholders (e.g., `{{word}}`, `{{pronunciation}}`)
-- **Back Layout** - HTML template with placeholders (e.g., `{{translation}}`, `{{example}}`)
+- **Front Layout** - Rich Text Editor with placeholders (e.g., `{{word}}`, `{{pronunciation}}`)
+- **Back Layout** - Rich Text Editor with placeholders (e.g., `{{translation}}`, `{{example}}`)
 - **Placeholder Syntax**: `{{fieldName}}` for field values
 - **Rich Text Editor** with:
   - Basic formatting (bold, italic, underline)
@@ -168,7 +168,7 @@ interface Field {
 - **Field Management Panel**: Add, edit fields
 - **Layout Editor**: Rich text editor for front/back layouts
 - **Style Customizer**: Visual styling controls
-- **Preview Panel**: Live preview of flashcard appearance
+- **Live Preview Panel**: Live preview of flashcard appearance
 
 #### 3.2.2 Template Browser
 - **Category Filter**: Filter by template category
@@ -201,7 +201,7 @@ interface Field {
 
 #### 3.4.2 Scalability
 - Support up to 50 fields per template
-- Handle 10,000+ templates per user
+- Handle 1,000+ templates per user
 - Efficient template cloning and versioning
 
 ## 4. User Experience Requirements

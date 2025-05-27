@@ -3,7 +3,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import TemplateForm from '$lib/components/forms/template-form.svelte';
 	import { templateService } from '$lib/services/template.service';
+	import { fieldService } from '$lib/services/field.service';
 	import { templateFormSchema, type TemplateFormData } from '$lib/schemas/template.schemas';
+	import type { FieldData } from '$lib/schemas/field.schemas';
 	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
 	import { pb } from '$lib/pocketbase';
 
@@ -11,22 +13,39 @@
 	let error = '';
 	let success = '';
 
-	async function handleSave(data: TemplateFormData) {
+	async function handleSave(data: TemplateFormData & { fields: FieldData[] }) {
 		try {
 			saving = true;
 			error = '';
 			success = '';
 
+			// Separate fields from template data
+			const { fields, ...templateData } = data;
+
 			// Set up template data with author and user information
-			const templateData = {
-				...data,
+			const templateCreateData = {
+				...templateData,
 				version: '1.0.0',
 				author: pb.authStore.record?.id || '',
 				user: pb.authStore.record?.id || ''
 			};
 
-			// Create the template
-			const newTemplate = await templateService.create(templateData);
+			// Create the template first
+			const newTemplate = await templateService.create(templateCreateData);
+
+			// Create fields if any exist
+			if (fields && fields.length > 0) {
+				for (const field of fields) {
+					// Prepare field data for creation (remove temp ID if exists)
+					const { id, ...fieldData } = field;
+
+					await fieldService.create({
+						...fieldData,
+						template: newTemplate.id
+					});
+				}
+			}
+
 			success = 'Template created successfully!';
 
 			// Redirect to template list after a short delay
