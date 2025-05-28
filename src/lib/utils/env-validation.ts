@@ -61,16 +61,16 @@ const envSchema = z.object({
 	// Feature flags
 	VITE_ENABLE_SECURITY_LOGGING: z
 		.string()
-		.transform((val) => val === 'true')
-		.default(true),
+		.default('true')
+		.transform((val) => val === 'true'),
 	VITE_ENABLE_RATE_LIMITING: z
 		.string()
-		.transform((val) => val === 'true')
-		.default(true),
+		.default('true')
+		.transform((val) => val === 'true'),
 	VITE_ENABLE_FINGERPRINTING: z
 		.string()
-		.transform((val) => val === 'true')
-		.default(true),
+		.default('true')
+		.transform((val) => val === 'true'),
 
 	// Development only
 	VITE_MOCK_SECURITY_EVENTS: z

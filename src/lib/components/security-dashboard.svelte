@@ -4,7 +4,7 @@
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import { AlertTriangle, Shield, Eye, RefreshCw } from 'lucide-svelte';
+	import { IconAlertTriangle, IconShield, IconEye, IconRefresh } from '@tabler/icons-svelte';
 
 	let securityEvents: SecurityEvent[] = [];
 	let stats = {
@@ -28,7 +28,9 @@
 		stats.low = securityLogger.getEventsBySeverity('low').length;
 	}
 
-	function getSeverityColor(severity: SecurityEvent['severity']): string {
+	function getSeverityColor(
+		severity: SecurityEvent['severity']
+	): 'default' | 'secondary' | 'destructive' | 'outline' | undefined {
 		switch (severity) {
 			case 'critical':
 				return 'destructive';
@@ -47,12 +49,12 @@
 		switch (severity) {
 			case 'critical':
 			case 'high':
-				return AlertTriangle;
+				return IconAlertTriangle;
 			case 'medium':
-				return Eye;
+				return IconEye;
 			case 'low':
 			default:
-				return Shield;
+				return IconShield;
 		}
 	}
 
@@ -84,11 +86,11 @@
 			<p class="text-muted-foreground">Real-time security event tracking and analysis</p>
 		</div>
 		<div class="flex gap-2">
-			<Button on:click={refreshEvents} variant="outline" size="sm">
-				<RefreshCw class="mr-2 h-4 w-4" />
+			<Button onclick={refreshEvents} variant="outline" size="sm">
+				<IconRefresh class="mr-2 h-4 w-4" />
 				Refresh
 			</Button>
-			<Button on:click={clearEvents} variant="outline" size="sm">Clear Events</Button>
+			<Button onclick={clearEvents} variant="outline" size="sm">Clear Events</Button>
 		</div>
 	</div>
 
@@ -97,175 +99,138 @@
 		<Card>
 			<CardContent class="p-4">
 				<div class="flex items-center space-x-2">
-					<Shield class="h-5 w-5 text-blue-500" />
+					<IconShield class="h-5 w-5 text-blue-500" />
 					<div>
-						<p class="text-sm font-medium">Total Events</p>
-						<p class="text-2xl font-bold">{stats.total}</p>
+						<p class="text-muted-foreground text-sm font-medium">Total Events</p>
+						<p class="text-xl font-bold">{stats.total}</p>
 					</div>
 				</div>
 			</CardContent>
 		</Card>
-
 		<Card>
 			<CardContent class="p-4">
 				<div class="flex items-center space-x-2">
-					<AlertTriangle class="h-5 w-5 text-red-500" />
+					<IconAlertTriangle class="h-5 w-5 text-red-500" />
 					<div>
-						<p class="text-sm font-medium">Critical</p>
-						<p class="text-2xl font-bold text-red-500">{stats.critical}</p>
+						<p class="text-muted-foreground text-sm font-medium">Critical</p>
+						<p class="text-xl font-bold">{stats.critical}</p>
 					</div>
 				</div>
 			</CardContent>
 		</Card>
-
 		<Card>
 			<CardContent class="p-4">
 				<div class="flex items-center space-x-2">
-					<AlertTriangle class="h-5 w-5 text-orange-500" />
+					<IconAlertTriangle class="h-5 w-5 text-orange-500" />
 					<div>
-						<p class="text-sm font-medium">High</p>
-						<p class="text-2xl font-bold text-orange-500">{stats.high}</p>
+						<p class="text-muted-foreground text-sm font-medium">High</p>
+						<p class="text-xl font-bold">{stats.high}</p>
 					</div>
 				</div>
 			</CardContent>
 		</Card>
-
 		<Card>
 			<CardContent class="p-4">
 				<div class="flex items-center space-x-2">
-					<Eye class="h-5 w-5 text-yellow-500" />
+					<IconEye class="h-5 w-5 text-yellow-500" />
 					<div>
-						<p class="text-sm font-medium">Medium</p>
-						<p class="text-2xl font-bold text-yellow-500">{stats.medium}</p>
+						<p class="text-muted-foreground text-sm font-medium">Medium</p>
+						<p class="text-xl font-bold">{stats.medium}</p>
 					</div>
 				</div>
 			</CardContent>
 		</Card>
-
 		<Card>
 			<CardContent class="p-4">
 				<div class="flex items-center space-x-2">
-					<Shield class="h-5 w-5 text-green-500" />
+					<IconShield class="h-5 w-5 text-green-500" />
 					<div>
-						<p class="text-sm font-medium">Low</p>
-						<p class="text-2xl font-bold text-green-500">{stats.low}</p>
+						<p class="text-muted-foreground text-sm font-medium">Low</p>
+						<p class="text-xl font-bold">{stats.low}</p>
 					</div>
 				</div>
 			</CardContent>
 		</Card>
 	</div>
 
-	<!-- Recent Events -->
+	<!-- Recent Security Events -->
 	<Card>
 		<CardHeader>
 			<CardTitle>Recent Security Events</CardTitle>
 		</CardHeader>
 		<CardContent>
 			{#if securityEvents.length === 0}
-				<div class="text-muted-foreground py-8 text-center">
-					<Shield class="mx-auto mb-4 h-12 w-12 opacity-50" />
-					<p>No security events recorded</p>
-					<p class="text-sm">This is good news! Your application is secure.</p>
-				</div>
+				<p class="text-muted-foreground">No security events recorded recently.</p>
 			{:else}
-				<div class="space-y-4">
-					{#each securityEvents as event (event.timestamp + event.type)}
-						<div class="flex items-start space-x-4 rounded-lg border p-4">
-							<div class="flex-shrink-0">
-								{#if getSeverityIcon(event.severity)}
-									<svelte:component
-										this={getSeverityIcon(event.severity)}
-										class="h-5 w-5 text-{getSeverityColor(event.severity) === 'destructive'
-											? 'red'
-											: getSeverityColor(event.severity) === 'default'
-												? 'yellow'
-												: 'gray'}-500"
-									/>
-								{/if}
-							</div>
-							<div class="min-w-0 flex-1">
-								<div class="flex items-center justify-between">
-									<div>
-										<h4 class="font-medium">{event.type.replace(/_/g, ' ').toUpperCase()}</h4>
-										<p class="text-muted-foreground text-sm">{formatTimestamp(event.timestamp)}</p>
-									</div>
-									<Badge variant={getSeverityColor(event.severity)}>
-										{event.severity}
-									</Badge>
-								</div>
-								{#if Object.keys(event.details).length > 0}
-									<div class="mt-2">
-										<details class="text-sm">
-											<summary class="text-muted-foreground hover:text-foreground cursor-pointer">
-												Event Details
-											</summary>
-											<div class="bg-muted mt-2 rounded p-2 font-mono text-xs">
-												{JSON.stringify(event.details, null, 2)}
-											</div>
-										</details>
-									</div>
-								{/if}
-								{#if event.userAgent}
-									<p class="text-muted-foreground mt-1 text-xs">
-										User Agent: {event.userAgent.slice(0, 80)}...
-									</p>
-								{/if}
-							</div>
-						</div>
-					{/each}
+				<div class="overflow-x-auto">
+					<table class="min-w-full divide-y divide-gray-200">
+						<thead class="bg-gray-50">
+							<tr>
+								<th
+									scope="col"
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+								>
+									Severity
+								</th>
+								<th
+									scope="col"
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+								>
+									Timestamp
+								</th>
+								<th
+									scope="col"
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+								>
+									Type
+								</th>
+								<th
+									scope="col"
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+								>
+									Message
+								</th>
+								<th
+									scope="col"
+									class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+								>
+									Details
+								</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-200 bg-white">
+							{#each securityEvents as event (event.id)}
+								<tr>
+									<td class="px-6 py-4 whitespace-nowrap">
+										<Badge variant={getSeverityColor(event.severity)}>
+											{@const Icon = getSeverityIcon(event.severity)}
+											<Icon class="mr-1 h-3 w-3" />
+											{event.severity}
+										</Badge>
+									</td>
+									<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+										{formatTimestamp(event.timestamp)}
+									</td>
+									<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">{event.type}</td>
+									<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+										{event.message}
+									</td>
+									<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
+										{#if event.details}
+											<pre
+												class="max-w-xs overflow-x-auto text-xs whitespace-pre-wrap">{JSON.stringify(
+													event.details,
+													null,
+													2
+												)}</pre>
+										{/if}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
 				</div>
 			{/if}
-		</CardContent>
-	</Card>
-
-	<!-- Security Recommendations -->
-	<Card>
-		<CardHeader>
-			<CardTitle>Security Recommendations</CardTitle>
-		</CardHeader>
-		<CardContent>
-			<div class="space-y-4">
-				<div class="flex items-start space-x-3">
-					<Shield class="mt-0.5 h-5 w-5 text-green-500" />
-					<div>
-						<h4 class="font-medium">Regular Security Audits</h4>
-						<p class="text-muted-foreground text-sm">
-							Review security events weekly and investigate any unusual patterns.
-						</p>
-					</div>
-				</div>
-
-				<div class="flex items-start space-x-3">
-					<Shield class="mt-0.5 h-5 w-5 text-blue-500" />
-					<div>
-						<h4 class="font-medium">Keep Dependencies Updated</h4>
-						<p class="text-muted-foreground text-sm">
-							Run <code class="bg-muted rounded px-1">npm audit</code> regularly and update vulnerable
-							packages.
-						</p>
-					</div>
-				</div>
-
-				<div class="flex items-start space-x-3">
-					<Shield class="mt-0.5 h-5 w-5 text-purple-500" />
-					<div>
-						<h4 class="font-medium">Monitor Rate Limiting</h4>
-						<p class="text-muted-foreground text-sm">
-							Watch for excessive rate limiting events which may indicate attack attempts.
-						</p>
-					</div>
-				</div>
-
-				<div class="flex items-start space-x-3">
-					<Shield class="mt-0.5 h-5 w-5 text-orange-500" />
-					<div>
-						<h4 class="font-medium">Review Authentication Logs</h4>
-						<p class="text-muted-foreground text-sm">
-							Investigate failed login attempts and unusual authentication patterns.
-						</p>
-					</div>
-				</div>
-			</div>
 		</CardContent>
 	</Card>
 </div>

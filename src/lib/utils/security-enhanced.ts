@@ -243,8 +243,10 @@ export class AdvancedRateLimiter {
  * Security event logger with structured logging
  */
 export interface SecurityEvent {
+	id: string;
 	type: string;
 	severity: 'low' | 'medium' | 'high' | 'critical';
+	message: string;
 	details: Record<string, any>;
 	timestamp: string;
 	userAgent?: string;
@@ -256,9 +258,10 @@ export class SecurityLogger {
 	private events: SecurityEvent[] = [];
 	private maxEvents = 1000;
 
-	log(event: Omit<SecurityEvent, 'timestamp'>): void {
+	log(event: Omit<SecurityEvent, 'timestamp' | 'id'>): void {
 		const securityEvent: SecurityEvent = {
 			...event,
+			id: crypto.randomUUID(),
 			timestamp: new Date().toISOString(),
 			userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
 		};
@@ -375,6 +378,7 @@ export class SecureLocalStorage {
 			securityLogger.log({
 				type: 'storage_error',
 				severity: 'medium',
+				message: 'Failed to store encrypted data in localStorage',
 				details: { error: error instanceof Error ? error.message : 'Unknown error', key }
 			});
 		}

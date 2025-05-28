@@ -16,7 +16,7 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 			"font-src 'self' https://fonts.gstatic.com",
 			"img-src 'self' data: https:",
-			"connect-src 'self' ws://localhost:* wss://localhost:* https:",
+			"connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https:",
 			"object-src 'none'",
 			"base-uri 'self'",
 			"frame-ancestors 'none'",

@@ -49,7 +49,7 @@ These instructions are designed to guide developers (and a coding copilot) worki
 - **Framework:** Svelte 5
 - **Build Tool:** Vite
 - **Language:** TypeScript
-- **UI Library:** shadcn-svelte
+- **UI Library:** shadcn-svelte@next, @tabler/icons-svelte
 - **State Management:** Svelte stores
 - **Styling:** Tailwind CSS
 - **API Communication:** Fetch API
@@ -89,7 +89,7 @@ These instructions are designed to guide developers (and a coding copilot) worki
 - **Error Handling:** Implement proper error handling for API calls and user interactions.
 - **Performance Optimization:** Optimize for performance. Use techniques like memoization, debouncing, and virtualization.
 - **Responsive Design:** Ensure the application is responsive and works well on different screen sizes.
-- **Testing:** Write unit tests and integration tests. Use testing libraries like Vitest and Svelte Testing Library.
+- **Testing:** Write unit tests and integration tests. Use testing libraries like Vitest, Svelte Testing Library, and Playwright.
 - **Version Control:** Use Git for version control. Follow a branching strategy (e.g., Gitflow).
 
 **4.5. AI Integration (GenAI):**
