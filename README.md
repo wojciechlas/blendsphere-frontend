@@ -21,6 +21,7 @@ AI-powered language learning application built with SvelteKit, TypeScript, and s
 ### Installation
 
 1. **Clone and install dependencies:**
+
 ```bash
 git clone <repository-url>
 cd blendsphere-frontend
@@ -28,6 +29,7 @@ npm install
 ```
 
 2. **Environment setup:**
+
 ```bash
 # Copy the example environment file
 cp .env.example .env
@@ -37,6 +39,7 @@ cp .env.example .env
 ```
 
 3. **Start development server:**
+
 ```bash
 npm run dev
 
@@ -125,6 +128,7 @@ npm run lint
 
 1. **PocketBase Server**: Ensure PocketBase is running on port 8090
 2. **Collections**: The following collections should be configured:
+
    - `users` - User accounts with email/password authentication
    - Additional collections as per the data structure documentation
 
@@ -222,3 +226,5 @@ Please read our [Contributing Guidelines](./docs/CONTRIBUTING.md) before submitt
 ## License
 
 This project is part of the BlendSphere language learning platform.
+
+# Test commit hook

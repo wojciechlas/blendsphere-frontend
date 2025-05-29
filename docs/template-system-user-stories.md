@@ -5,11 +5,13 @@
 ### Theme: Template Creation and Customization
 
 #### Story 1: Basic Template Creation
+
 **As a** language learner  
 **I want to** create a custom flashcard template  
-**So that** I can structure my learning materials according to my needs  
+**So that** I can structure my learning materials according to my needs
 
 **Acceptance Criteria:**
+
 - I can start creating a template from scratch
 - I can provide a template name and description
 - I can select my native and learning languages
@@ -19,20 +21,22 @@
 - I can save my template as a draft and return to edit later
 
 **Definition of Done:**
+
 - Template creation wizard is implemented
 - Basic validation is in place
-- User can navigate through creation steps
 - Template is saved to database
 - User is redirected to template editor
 
 ---
 
 #### Story 2: Template Field Configuration
+
 **As a** template creator  
 **I want to** define fields for my template  
-**So that** I can specify what information each flashcard will contain  
+**So that** I can specify what information each flashcard will contain
 
 **Acceptance Criteria:**
+
 - I can add different types of fields (text, image, audio)
 - I can specify which fields are for user input vs AI generation
 - I can set field labels, descriptions, and examples
@@ -42,6 +46,7 @@
 - The system prevents me from creating templates without input fields
 
 **Definition of Done:**
+
 - Field management interface is implemented
 - Drag-and-drop reordering works
 - Field validation prevents invalid configurations
@@ -50,11 +55,13 @@
 ---
 
 #### Story 3: Visual Layout Design
+
 **As a** template creator  
 **I want to** design how my flashcards will look  
-**So that** they are visually appealing and effective for learning  
+**So that** they are visually appealing and effective for learning
 
 **Acceptance Criteria:**
+
 - I can edit the front and back layouts using a rich text editor
 - I can insert field placeholders into the layout
 - I can see a live preview of my flashcard as I edit
@@ -64,6 +71,7 @@
 - I can flip between front and back preview
 
 **Definition of Done:**
+
 - Rich text editor is implemented with placeholder support
 - Live preview panel shows real-time updates
 - Theme and style customization controls work
@@ -72,11 +80,13 @@
 ---
 
 #### Story 4: Template Style Customization
+
 **As a** template creator  
 **I want to** customize the visual appearance of my flashcards  
-**So that** they match my learning preferences and style  
+**So that** they match my learning preferences and style
 
 **Acceptance Criteria:**
+
 - I can choose from predefined color themes
 - I can customize individual colors (primary, secondary, background, text, accent)
 - I can select font family, size, and weight
@@ -86,6 +96,7 @@
 - I can reset to default theme at any time
 
 **Definition of Done:**
+
 - Style customization panel is implemented
 - Color picker allows hex input and provides presets
 - Typography controls affect preview immediately
@@ -97,11 +108,13 @@
 ### Theme: Template Usage and AI Integration
 
 #### Story 5: Creating Flashcards from Templates
+
 **As a** language learner  
 **I want to** create flashcards using my templates  
-**So that** I can quickly generate study materials  
+**So that** I can quickly generate study materials
 
 **Acceptance Criteria:**
+
 - I can select a template when creating a new flashcard
 - I see a form with only the input fields from the template
 - I can provide values for required input fields
@@ -111,6 +124,7 @@
 - The flashcard is created with the template's styling
 
 **Definition of Done:**
+
 - Template selection interface is implemented
 - Dynamic form generation based on template fields
 - AI generation integration works
@@ -120,11 +134,13 @@
 ---
 
 #### Story 6: AI Content Generation
+
 **As a** language learner  
 **I want to** use AI to generate flashcard content  
-**So that** I can save time creating comprehensive learning materials  
+**So that** I can save time creating comprehensive learning materials
 
 **Acceptance Criteria:**
+
 - AI uses the template and field descriptions as context
 - I can see the generation progress and status
 - Generated content appears in editable fields
@@ -134,6 +150,7 @@
 - I can choose to input content manually if AI fails
 
 **Definition of Done:**
+
 - AI service integration is implemented
 - Loading states and progress indicators work
 - Generated content is editable
@@ -145,11 +162,13 @@
 ### Theme: Template Discovery and Management
 
 #### Story 7: Template Library Browsing
+
 **As a** language learner  
 **I want to** browse and use system-provided templates  
-**So that** I can get started quickly with proven template designs  
+**So that** I can get started quickly with proven template designs
 
 **Acceptance Criteria:**
+
 - I can view a library of system templates
 - I can filter templates by language pair, level, and category
 - I can search templates by name or description
@@ -159,6 +178,7 @@
 - System templates are clearly marked and cannot be deleted
 
 **Definition of Done:**
+
 - Template library interface is implemented
 - Filtering and search functionality works
 - Template preview shows structure and styling
@@ -168,11 +188,13 @@
 ---
 
 #### Story 8: Personal Template Management
+
 **As a** template creator  
 **I want to** manage my collection of templates  
-**So that** I can organize and maintain my learning tools  
+**So that** I can organize and maintain my learning tools
 
 **Acceptance Criteria:**
+
 - I can view all my personal templates
 - I can edit existing templates
 - I can duplicate templates to create variations
@@ -182,6 +204,7 @@
 - I can organize templates into categories
 
 **Definition of Done:**
+
 - Template management interface is implemented
 - Edit, duplicate, and delete operations work
 - Usage statistics are calculated and displayed
@@ -193,11 +216,13 @@
 ### Theme: Advanced Template Features
 
 #### Story 9: Template Validation and Error Handling
+
 **As a** template creator  
 **I want to** receive clear feedback about template issues  
-**So that** I can create functional and effective templates  
+**So that** I can create functional and effective templates
 
 **Acceptance Criteria:**
+
 - The system validates templates in real-time
 - I receive clear error messages for invalid configurations
 - I'm warned about missing placeholders or unused fields
@@ -206,6 +231,7 @@
 - Validation errors are highlighted in the appropriate sections
 
 **Definition of Done:**
+
 - Real-time validation is implemented
 - Error messages are clear and actionable
 - Visual indicators highlight problematic areas
@@ -215,11 +241,13 @@
 ---
 
 #### Story 10: Template Sharing and Collaboration
+
 **As a** teacher  
 **I want to** share templates with my students  
-**So that** we can use consistent learning materials in class  
+**So that** we can use consistent learning materials in class
 
 **Acceptance Criteria:**
+
 - I can mark templates as shareable with specific classes
 - Students can access shared templates from their teachers
 - Students can clone shared templates to customize them
@@ -228,6 +256,7 @@
 - Students cannot modify the original shared templates
 
 **Definition of Done:**
+
 - Template sharing interface is implemented
 - Class-based sharing permissions work
 - Students can access and clone shared templates
@@ -241,11 +270,13 @@
 ### Theme: Performance and User Experience
 
 #### Story 11: Template Editor Performance
+
 **As a** template creator  
 **I want to** have a responsive and fast template editor  
-**So that** I can work efficiently without delays  
+**So that** I can work efficiently without delays
 
 **Acceptance Criteria:**
+
 - Template editor loads in under 2 seconds
 - Preview updates appear within 500ms of changes
 - Auto-save works without interrupting my workflow
@@ -254,6 +285,7 @@
 - The editor works smoothly on tablet devices
 
 **Definition of Done:**
+
 - Performance benchmarks are met
 - Auto-save functionality is implemented
 - Undo/redo system works
@@ -263,11 +295,13 @@
 ---
 
 #### Story 12: Offline Template Creation
+
 **As a** template creator  
 **I want to** work on templates when offline  
-**So that** I can continue creating content without internet access  
+**So that** I can continue creating content without internet access
 
 **Acceptance Criteria:**
+
 - I can create and edit templates offline
 - Changes are saved locally until I'm back online
 - The system syncs changes when connection is restored
@@ -276,6 +310,7 @@
 - AI features gracefully degrade when offline
 
 **Definition of Done:**
+
 - Offline editing functionality is implemented
 - Local storage and sync mechanisms work
 - Conflict resolution handles edge cases
@@ -287,11 +322,13 @@
 ### Theme: Accessibility and Internationalization
 
 #### Story 13: Accessible Template Editor
+
 **As a** user with visual impairments  
 **I want to** use the template editor with screen readers  
-**So that** I can create templates independently  
+**So that** I can create templates independently
 
 **Acceptance Criteria:**
+
 - All interface elements have proper ARIA labels
 - Keyboard navigation works for all functions
 - Screen readers announce changes and status updates
@@ -300,6 +337,7 @@
 - Color is not the only way to convey information
 
 **Definition of Done:**
+
 - WCAG 2.1 AA compliance is achieved
 - Screen reader testing confirms usability
 - Keyboard navigation covers all features
@@ -309,11 +347,13 @@
 ---
 
 #### Story 14: Multi-language Template Interface
+
 **As a** non-English speaker  
 **I want to** use the template editor in my native language  
-**So that** I can understand all interface elements clearly  
+**So that** I can understand all interface elements clearly
 
 **Acceptance Criteria:**
+
 - Template editor interface is available in multiple languages
 - All error messages and help text are translated
 - Date and number formats adapt to user's locale
@@ -322,6 +362,7 @@
 - Translation quality is high and contextually appropriate
 
 **Definition of Done:**
+
 - Internationalization framework is implemented
 - Key languages are translated and reviewed
 - RTL language support works correctly
@@ -333,6 +374,7 @@
 ## Acceptance Test Scenarios
 
 ### Template Creation Flow
+
 ```
 Scenario: Creating a basic vocabulary template
 Given I am logged in as a language learner
@@ -349,6 +391,7 @@ And the template should be saved as a draft
 ```
 
 ### Field Management Flow
+
 ```
 Scenario: Adding fields to a template
 Given I am in the template editor
@@ -363,6 +406,7 @@ And a placeholder should be available in the layout editor
 ```
 
 ### AI Generation Flow
+
 ```
 Scenario: Generating flashcard content with AI
 Given I have a template with input and output fields

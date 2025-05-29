@@ -14,6 +14,7 @@ This journey shows how a teacher sets up their account, creates classes, and pre
 ![Teacher Onboarding Journey](images/Teacher%20Onboarding%20Journey.png)
 
 ### Key Steps:
+
 1. Teacher signs up for an account
 2. Creates a new class
 3. Sets up class settings and adds students
@@ -29,6 +30,7 @@ This journey illustrates how students join classes, access learning materials, a
 ![Student Participation Journey](images/Student%20Participation%20Journey.png)
 
 ### Key Steps:
+
 1. Student receives class invitation
 2. Creates account or logs in
 3. Joins the class
@@ -44,6 +46,7 @@ This journey shows the daily review process that is central to the spaced repeti
 ![Daily Repetition Journey](images/Daily%20Repetition%20Journey.png)
 
 ### Key Steps:
+
 1. User logs in to the application
 2. System presents due flashcards based on the SRS algorithm
 3. User reviews each flashcard
@@ -57,18 +60,21 @@ This journey shows the daily review process that is central to the spaced repeti
 Each user journey involves multiple interaction points with the BlendSphere application:
 
 ### Teacher Interactions
+
 - Class management interface
 - Template creation tools
 - Deck creation and management
 - Student progress monitoring dashboards
 
 ### Student Interactions
+
 - Class joining interface
 - Shared materials access
 - Review interface
 - Progress tracking dashboards
 
 ### Common Interactions
+
 - Authentication (login/signup)
 - Navigation
 - Settings and preferences

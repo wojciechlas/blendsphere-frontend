@@ -1,234 +1,416 @@
 <script lang="ts">
-	import { Card, CardHeader, CardTitle, CardContent } from '$lib/components/ui/card';
-	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import * as Select from '$lib/components/ui/select';
-	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { templateService, type Template } from '$lib/services/template.service';
-	import FieldManager from '$lib/components/template/field-manager.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle
+	} from '$lib/components/ui/card';
+	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
+	import EditIcon from '@tabler/icons-svelte/icons/edit';
+	import CopyIcon from '@tabler/icons-svelte/icons/copy';
+	import TrashIcon from '@tabler/icons-svelte/icons/trash';
+	import { getLanguageName } from '$lib/constants/template.constants';
+	import { templateService } from '$lib/services/template.service';
+	import { fieldService } from '$lib/services/field.service';
+	import { formatRelativeTime } from '$lib/utils';
+	import DeleteConfirmationModal from '$lib/components/delete-confirmation-modal.svelte';
+	import type { PageData } from './$types';
 
-	let template: Template | null = null;
-	let loading = true;
-	let error = '';
+	export let data: PageData;
+
 	$: templateId = $page.params.templateId;
 
-	const languages = [
-		{ value: 'EN', label: 'English' },
-		{ value: 'ES', label: 'Spanish' },
-		{ value: 'FR', label: 'French' },
-		{ value: 'DE', label: 'German' },
-		{ value: 'IT', label: 'Italian' },
-		{ value: 'PL', label: 'Polish' }
-	];
+	let isLoading = false;
+	let error = '';
+	let success = '';
+	let showDeleteConfirmation = false;
 
-	const levels = [
-		{ value: 'A1', label: 'A1 - Beginner' },
-		{ value: 'A2', label: 'A2 - Elementary' },
-		{ value: 'B1', label: 'B1 - Intermediate' },
-		{ value: 'B2', label: 'B2 - Upper-Intermediate' },
-		{ value: 'C1', label: 'C1 - Advanced' },
-		{ value: 'C2', label: 'C2 - Proficient' }
-	];
+	function handleBack() {
+		goto('/dashboard/templates');
+	}
 
-	onMount(async () => {
-		if (templateId) {
-			try {
-				template = await templateService.getById(templateId);
-			} catch (e) {
-				error = 'Failed to load template.';
-			} finally {
-				loading = false;
-			}
+	function handleEdit() {
+		goto(`/dashboard/templates/${templateId}/edit`);
+	}
+
+	async function handleDuplicate() {
+		if (!confirm(`Are you sure you want to duplicate "${data.template.name}"?`)) {
+			return;
 		}
-	});
-
-	let activeTab = 'info';
-
-	async function handleSave() {
-		if (!template) return;
 
 		try {
-			await templateService.update(template.id, template);
-			// TODO: Show success toast
-		} catch (e) {
-			error = 'Failed to save template.';
-			console.error('Error saving template:', e);
+			isLoading = true;
+			error = '';
+			success = '';
+
+			// Clone the template
+			const newTemplate = await templateService.clone(templateId, `Copy of ${data.template.name}`);
+
+			// Clone all fields as well
+			if (data.fields && data.fields.length > 0) {
+				for (const field of data.fields) {
+					const { id: _id, created: _created, updated: _updated, ...fieldData } = field;
+					await fieldService.create({
+						...fieldData,
+						template: newTemplate.id
+					});
+				}
+			}
+
+			success = 'Template duplicated successfully!';
+
+			// Redirect to the new template after a short delay
+			setTimeout(() => {
+				goto(`/dashboard/templates/${newTemplate.id}`);
+			}, 1500);
+		} catch (err: unknown) {
+			error = (err as Error)?.message || 'Failed to duplicate template. Please try again.';
+			console.error('Error duplicating template:', err);
+		} finally {
+			isLoading = false;
 		}
 	}
+
+	function handleDelete() {
+		showDeleteConfirmation = true;
+	}
+
+	async function confirmDelete() {
+		try {
+			isLoading = true;
+			error = '';
+			success = '';
+
+			// Delete all fields first
+			if (data.fields && data.fields.length > 0) {
+				for (const field of data.fields) {
+					await fieldService.delete(field.id);
+				}
+			}
+
+			// Then delete the template
+			await templateService.delete(templateId);
+
+			success = 'Template deleted successfully!';
+
+			// Redirect to templates list after a short delay
+			setTimeout(() => {
+				goto('/dashboard/templates');
+			}, 1000);
+		} catch (err: unknown) {
+			error = (err as Error)?.message || 'Failed to delete template. Please try again.';
+			console.error('Error deleting template:', err);
+		} finally {
+			isLoading = false;
+			showDeleteConfirmation = false;
+		}
+	}
+
+	function getFieldTypeLabel(type: string) {
+		return type.toLowerCase().charAt(0).toUpperCase() + type.toLowerCase().slice(1);
+	}
+
+	// Generate sample data for preview
+	function generateSampleData(fields: typeof data.fields) {
+		const sampleData: Record<string, string> = {};
+
+		fields.forEach((field) => {
+			switch (field.label.toLowerCase()) {
+				case 'word':
+				case 'vocabulary':
+				case 'term':
+					sampleData[field.label] = field.example || 'casa';
+					break;
+				case 'translation':
+				case 'meaning':
+					sampleData[field.label] = field.example || 'house';
+					break;
+				case 'sentence':
+				case 'example':
+				case 'context':
+					sampleData[field.label] = field.example || 'Mi casa es muy grande.';
+					break;
+				case 'pronunciation':
+				case 'phonetic':
+					sampleData[field.label] = field.example || '/ˈka.sa/';
+					break;
+				case 'definition':
+				case 'description':
+					sampleData[field.label] = field.example || 'A building for human habitation.';
+					break;
+				case 'notes':
+				case 'hint':
+					sampleData[field.label] = field.example || 'Remember: feminine noun (la casa)';
+					break;
+				default:
+					sampleData[field.label] = field.example || `Sample ${field.label}`;
+			}
+		});
+
+		return sampleData;
+	}
+
+	// Replace placeholders in layout with sample data
+	function renderLayout(layout: string, sampleData: Record<string, string>) {
+		let rendered = layout;
+
+		// Replace placeholders like {{fieldName}} with sample data
+		Object.entries(sampleData).forEach(([fieldName, value]) => {
+			const placeholder = new RegExp(`{{\\s*${fieldName}\\s*}}`, 'gi');
+			rendered = rendered.replace(placeholder, value);
+		});
+
+		// Clean up any remaining placeholders that don't have sample data
+		rendered = rendered.replace(
+			/{{[^}]+}}/g,
+			'<span class="text-muted-foreground italic">[Field placeholder]</span>'
+		);
+
+		return rendered;
+	}
+
+	// Reactive computations for previews
+	$: sampleData = generateSampleData(data.fields);
+	$: frontPreview = renderLayout(data.template.frontLayout, sampleData);
+	$: backPreview = renderLayout(data.template.backLayout, sampleData);
 </script>
 
-<div class="container mx-auto py-6">
+<svelte:head>
+	<title>{data.template.name} - BlendSphere</title>
+</svelte:head>
+
+<div class="container mx-auto max-w-4xl space-y-6 p-6">
+	<!-- Messages -->
+	{#if error}
+		<div class="bg-destructive/15 text-destructive rounded-md p-3 text-sm">
+			{error}
+		</div>
+	{/if}
+
+	{#if success}
+		<div class="rounded-md bg-green-500/15 p-3 text-sm text-green-600">
+			{success}
+		</div>
+	{/if}
+
 	<!-- Header -->
-	<div class="mb-6">
-		<h1 class="text-3xl font-bold tracking-tight">Template Editor</h1>
-		<p class="text-muted-foreground">Edit your flashcard template</p>
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-4">
+			<Button variant="ghost" size="sm" onclick={handleBack}>
+				<ArrowLeftIcon class="h-4 w-4" />
+			</Button>
+			<div>
+				<h1 class="text-3xl font-bold tracking-tight">{data.template.name}</h1>
+				<p class="text-muted-foreground">
+					{data.template.description || 'No description provided'}
+				</p>
+			</div>
+		</div>
+
+		<div class="flex items-center gap-2">
+			<Button variant="outline" size="sm" onclick={handleDuplicate} disabled={isLoading}>
+				<CopyIcon class="mr-2 h-4 w-4" />
+				{isLoading ? 'Duplicating...' : 'Duplicate'}
+			</Button>
+			<Button variant="outline" size="sm" onclick={handleEdit} disabled={isLoading}>
+				<EditIcon class="mr-2 h-4 w-4" />
+				Edit
+			</Button>
+			<Button variant="destructive" size="sm" onclick={handleDelete} disabled={isLoading}>
+				<TrashIcon class="mr-2 h-4 w-4" />
+				{isLoading ? 'Deleting...' : 'Delete'}
+			</Button>
+		</div>
 	</div>
 
-	{#if loading}
-		<Card><CardContent class="p-8 text-center">Loading...</CardContent></Card>
-	{:else if error}
-		<Card><CardContent class="text-destructive p-8 text-center">{error}</CardContent></Card>
-	{:else if template}
-		<Tabs bind:value={activeTab} class="w-full">
-			<TabsList class="grid w-full grid-cols-5">
-				<TabsTrigger value="info">Info</TabsTrigger>
-				<TabsTrigger value="fields">Fields</TabsTrigger>
-				<TabsTrigger value="layout">Layout</TabsTrigger>
-				<TabsTrigger value="style">Style</TabsTrigger>
-				<TabsTrigger value="preview">Preview</TabsTrigger>
-			</TabsList>
-			<TabsContent value="info">
-				<Card>
-					<CardHeader><CardTitle>Template Info</CardTitle></CardHeader>
-					<CardContent>
-						<form class="max-w-xl space-y-6">
-							<div class="space-y-2">
-								<Label for="name">Name <span class="text-destructive">*</span></Label>
-								<Input
-									id="name"
-									type="text"
-									maxlength={100}
-									required
-									bind:value={template.name}
-									placeholder="Template name"
-								/>
-							</div>
-							<div class="space-y-2">
-								<Label for="description">Description</Label>
-								<Textarea
-									id="description"
-									maxlength={500}
-									rows={3}
-									bind:value={template.description}
-									placeholder="Describe the purpose/context for AI (optional)"
-								/>
-								<div class="text-muted-foreground text-xs">
-									Used as context for AI generation. Max 500 characters.
+	<!-- Template Details -->
+	<div class="grid gap-6 md:grid-cols-2">
+		<!-- Basic Information -->
+		<Card>
+			<CardHeader>
+				<CardTitle>Template Information</CardTitle>
+				<CardDescription>Basic details about this template</CardDescription>
+			</CardHeader>
+			<CardContent class="space-y-4">
+				<div class="flex justify-between">
+					<span class="font-medium">Updated:</span>
+					<span>{formatRelativeTime(data.template.updated)}</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Native Language:</span>
+					<span>{getLanguageName(data.template.nativeLanguage)}</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Learning Language:</span>
+					<span>{getLanguageName(data.template.learningLanguage)}</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Language Level:</span>
+					<Badge variant="secondary">{data.template.languageLevel}</Badge>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Visibility:</span>
+					<Badge variant={data.template.isPublic ? 'default' : 'outline'}>
+						{data.template.isPublic ? 'Public' : 'Private'}
+					</Badge>
+				</div>
+			</CardContent>
+		</Card>
+
+		<!-- Fields -->
+		<Card>
+			<CardHeader>
+				<CardTitle>Fields ({data.fields.length})</CardTitle>
+				<CardDescription>Data fields defined for this template</CardDescription>
+			</CardHeader>
+			<CardContent>
+				{#if data.fields.length === 0}
+					<p class="text-muted-foreground text-sm">No fields defined</p>
+				{:else}
+					<div class="space-y-3">
+						{#each data.fields as field (field.id)}
+							<div class="flex items-center justify-between rounded-md border p-3">
+								<div>
+									<div class="font-medium">{field.label}</div>
+									{#if field.description}
+										<div class="text-muted-foreground text-sm">{field.description}</div>
+									{/if}
+								</div>
+								<div class="flex items-center gap-2">
+									<Badge variant="outline" class="text-xs">
+										{getFieldTypeLabel(field.type)}
+									</Badge>
+									<Badge variant={field.isInput ? 'default' : 'secondary'} class="text-xs">
+										{field.isInput ? 'Input' : 'Generated'}
+									</Badge>
+									<Badge variant="outline" class="text-xs">
+										{getLanguageName(field.language)}
+									</Badge>
 								</div>
 							</div>
-							<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-								<div class="space-y-2">
-									<Label for="nativeLanguage"
-										>Native Language <span class="text-destructive">*</span></Label
-									>
-									<Select.Root type="single" bind:value={template.nativeLanguage}>
-										<Select.Trigger>
-											{template?.nativeLanguage
-												? languages.find((l) => l.value === template?.nativeLanguage)?.label
-												: 'Select language'}
-										</Select.Trigger>
-										<Select.Content>
-											<Select.Item value="EN">English</Select.Item>
-											<Select.Item value="ES">Spanish</Select.Item>
-											<Select.Item value="FR">French</Select.Item>
-											<Select.Item value="DE">German</Select.Item>
-											<Select.Item value="IT">Italian</Select.Item>
-											<Select.Item value="PL">Polish</Select.Item>
-										</Select.Content>
-									</Select.Root>
-								</div>
-								<div class="space-y-2">
-									<Label for="learningLanguage"
-										>Learning Language <span class="text-destructive">*</span></Label
-									>
-									<Select.Root type="single" bind:value={template.learningLanguage}>
-										<Select.Trigger>
-											{template?.learningLanguage
-												? languages.find((l) => l.value === template?.learningLanguage)?.label
-												: 'Select language'}
-										</Select.Trigger>
-										<Select.Content>
-											<Select.Item value="EN">English</Select.Item>
-											<Select.Item value="ES">Spanish</Select.Item>
-											<Select.Item value="FR">French</Select.Item>
-											<Select.Item value="DE">German</Select.Item>
-											<Select.Item value="IT">Italian</Select.Item>
-											<Select.Item value="PL">Polish</Select.Item>
-										</Select.Content>
-									</Select.Root>
-								</div>
-								<div class="space-y-2">
-									<Label for="languageLevel">Level <span class="text-destructive">*</span></Label>
-									<Select.Root type="single" bind:value={template.languageLevel}>
-										<Select.Trigger>
-											{template?.languageLevel
-												? levels.find((l) => l.value === template?.languageLevel)?.label
-												: 'Select level'}
-										</Select.Trigger>
-										<Select.Content>
-											<Select.Item value="A1">A1 - Beginner</Select.Item>
-											<Select.Item value="A2">A2 - Elementary</Select.Item>
-											<Select.Item value="B1">B1 - Intermediate</Select.Item>
-											<Select.Item value="B2">B2 - Upper Intermediate</Select.Item>
-											<Select.Item value="C1">C1 - Advanced</Select.Item>
-											<Select.Item value="C2">C2 - Proficient</Select.Item>
-										</Select.Content>
-									</Select.Root>
-								</div>
-							</div>
-							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-								<div class="space-y-2">
-									<Label for="version">Version</Label>
-									<Input
-										id="version"
-										type="text"
-										maxlength={20}
-										bind:value={template.version}
-										placeholder="1.0.0"
-									/>
-									<div class="text-muted-foreground text-xs">Semantic versioning (e.g. 1.0.0)</div>
-								</div>
-								<div class="space-y-2">
-									<Label for="author">Author</Label>
-									<Input id="author" type="text" value={template.author} readonly disabled />
-								</div>
-							</div>
-							<div class="pt-4">
-								<Button type="submit" onclick={handleSave}>Save Changes</Button>
-							</div>
-						</form>
-					</CardContent>
-				</Card>
-			</TabsContent>
-			<TabsContent value="fields">
-				<Card>
-					<CardHeader><CardTitle>Field Management</CardTitle></CardHeader>
-					<CardContent>
-						<FieldManager templateId={template.id} />
-					</CardContent>
-				</Card>
-			</TabsContent>
-			<TabsContent value="layout">
-				<Card>
-					<CardHeader><CardTitle>Layout Editor</CardTitle></CardHeader>
-					<CardContent>
-						<!-- TODO: Add layout editor (rich text, placeholder insertion) -->
-						<div class="text-muted-foreground">Layout editor UI goes here.</div>
-					</CardContent>
-				</Card>
-			</TabsContent>
-			<TabsContent value="style">
-				<Card>
-					<CardHeader><CardTitle>Style Customizer</CardTitle></CardHeader>
-					<CardContent>
-						<!-- TODO: Add style customizer (theme, colors, typography, spacing, custom CSS) -->
-						<div class="text-muted-foreground">Style customizer UI goes here.</div>
-					</CardContent>
-				</Card>
-			</TabsContent>
-			<TabsContent value="preview">
-				<Card>
-					<CardHeader><CardTitle>Live Preview</CardTitle></CardHeader>
-					<CardContent>
-						<!-- TODO: Add live preview panel -->
-						<div class="text-muted-foreground">Live preview UI goes here.</div>
-					</CardContent>
-				</Card>
-			</TabsContent>
-		</Tabs>
-	{/if}
+						{/each}
+					</div>
+				{/if}
+			</CardContent>
+		</Card>
+	</div>
+
+	<!-- Layouts -->
+	<div class="grid gap-6 md:grid-cols-2">
+		<!-- Front Layout -->
+		<Card>
+			<CardHeader>
+				<CardTitle>Front Layout</CardTitle>
+				<CardDescription>HTML template for the front side of flashcards</CardDescription>
+			</CardHeader>
+			<CardContent class="space-y-4">
+				<!-- Rendered Preview -->
+				<div>
+					<div class="bg-card layout-preview min-h-[120px] rounded-md border p-4">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+						{@html frontPreview}
+					</div>
+				</div>
+
+				<!-- Raw HTML Source -->
+				<details class="space-y-2">
+					<summary
+						class="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium"
+					>
+						View HTML Source
+					</summary>
+					<div class="bg-muted rounded-md p-3 text-sm">
+						<pre class="font-mono text-xs whitespace-pre-wrap">{data.template.frontLayout}</pre>
+					</div>
+				</details>
+			</CardContent>
+		</Card>
+
+		<!-- Back Layout -->
+		<Card>
+			<CardHeader>
+				<CardTitle>Back Layout</CardTitle>
+				<CardDescription>HTML template for the back side of flashcards</CardDescription>
+			</CardHeader>
+			<CardContent class="space-y-4">
+				<!-- Rendered Preview -->
+				<div>
+					<div class="bg-card layout-preview min-h-[120px] rounded-md border p-4">
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+						{@html backPreview}
+					</div>
+				</div>
+
+				<!-- Raw HTML Source -->
+				<details class="space-y-2">
+					<summary
+						class="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium"
+					>
+						View HTML Source
+					</summary>
+					<div class="bg-muted rounded-md p-3 text-sm">
+						<pre class="font-mono text-xs whitespace-pre-wrap">{data.template.backLayout}</pre>
+					</div>
+				</details>
+			</CardContent>
+		</Card>
+	</div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<DeleteConfirmationModal
+	bind:open={showDeleteConfirmation}
+	title="Delete Template"
+	description="This will permanently delete the template and all associated fields. Any flashcards using this template will no longer have access to the template structure."
+	itemName={data.template.name}
+	itemType="template"
+	fieldCount={data.fields.length}
+	{isLoading}
+	onConfirm={confirmDelete}
+/>
+
+<style>
+	:global(.layout-preview) {
+		font-family: inherit;
+		line-height: 1.6;
+	}
+
+	:global(.layout-preview h1) {
+		font-size: 1.5em;
+		font-weight: bold;
+		margin-bottom: 0.5em;
+	}
+
+	:global(.layout-preview h2) {
+		font-size: 1.3em;
+		font-weight: bold;
+		margin-bottom: 0.4em;
+	}
+
+	:global(.layout-preview h3) {
+		font-size: 1.1em;
+		font-weight: bold;
+		margin-bottom: 0.3em;
+	}
+
+	:global(.layout-preview p) {
+		margin-bottom: 0.8em;
+	}
+
+	:global(.layout-preview strong) {
+		font-weight: 600;
+	}
+
+	:global(.layout-preview em) {
+		font-style: italic;
+	}
+
+	:global(.layout-preview .text-muted-foreground) {
+		color: rgb(100 116 139);
+	}
+</style>

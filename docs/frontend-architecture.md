@@ -67,6 +67,7 @@ BlendSphere uses Svelte's built-in store mechanisms for state management:
 - **Custom stores** for complex logic
 
 The store structure includes:
+
 - auth: User authentication state
 - templates: Template definitions
 - decks: User's flashcard decks
@@ -80,6 +81,7 @@ The store structure includes:
 ## UI Components
 
 BlendSphere uses shadcn/svelte components which are:
+
 - Based on Bits UI primitives
 - Styled with Tailwind CSS
 - Accessible by default (WCAG compliant)
@@ -89,6 +91,7 @@ BlendSphere uses shadcn/svelte components which are:
 ## API Client
 
 The API client features:
+
 - Automatic token management
 - Request/response interceptors
 - Error handling and retry logic

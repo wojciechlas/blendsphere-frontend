@@ -1,0 +1,28 @@
+echo "🔍 Running pre-commit checks..."
+
+# Source NVM to ensure Node.js is available
+if [ -f "$HOME/.nvm/nvm.sh" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+fi
+
+# Alternative: Add Node.js path directly if NVM sourcing fails
+if ! command -v npx >/dev/null 2>&1; then
+    export PATH="$HOME/.nvm/versions/node/v24.1.0/bin:$PATH"
+fi
+
+# Run lint-staged for staged files only
+echo "📝 Formatting and linting staged files..."
+npx lint-staged
+
+# Quick syntax check on staged TypeScript/Svelte files
+STAGED_TS_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|svelte)$' | head -5 || true)
+if [ -n "$STAGED_TS_FILES" ]; then
+    echo "🔧 Quick syntax check on staged files..."
+    npx svelte-check --threshold warning --tsconfig ./tsconfig.json $STAGED_TS_FILES 2>/dev/null || echo "⚠️  Type check warnings found (commit allowed)"
+else
+    echo "⏭️  No TypeScript/Svelte files to check"
+fi
+
+echo "✅ Pre-commit checks completed!"

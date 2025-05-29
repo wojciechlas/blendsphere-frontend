@@ -1,10 +1,10 @@
 import { requireGuest } from '$lib/utils/auth-guards';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ url }) => {
-    requireGuest();
+export const load: PageLoad = async ({ url: _url }) => {
+	requireGuest();
 
-    return {
-        title: 'Login - BlendSphere'
-    };
+	return {
+		title: 'Login - BlendSphere'
+	};
 };

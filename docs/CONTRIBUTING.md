@@ -80,6 +80,7 @@ We use several tools to maintain code quality:
 - **Husky & lint-staged**: For pre-commit hooks
 
 Your code should:
+
 - Follow the existing style of the codebase
 - Include proper TypeScript types
 - Use Svelte's best practices
@@ -99,6 +100,7 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) forma
 ```
 
 Types include:
+
 - `feat`: A new feature
 - `fix`: A bug fix
 - `docs`: Documentation only changes
@@ -109,6 +111,7 @@ Types include:
 - `chore`: Changes to the build process or auxiliary tools
 
 Example:
+
 ```
 feat(flashcards): add spaced repetition algorithm
 

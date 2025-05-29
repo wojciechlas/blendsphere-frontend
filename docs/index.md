@@ -113,7 +113,7 @@ BlendSphere is built with a modern web technology stack:
 - **State Management**: Svelte stores
 - **Styling**: Tailwind CSS
 - **API Communication**: Fetch API
-- **Backend**: 
+- **Backend**:
   - PocketBase for core application data
   - FastAPI for AI services
 

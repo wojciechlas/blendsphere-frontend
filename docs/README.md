@@ -5,12 +5,14 @@ This directory contains PlantUML diagrams that document the data structures, int
 ## Available Diagrams
 
 1. **Data Structure (data-structure.puml)**
+
    - Contains the main entities and their relationships
    - Includes class diagrams for all data models used in the application
    - Defines enums for various type definitions
    - Output: `BlendSphere Data Structure - PocketBase Compatible.png`
 
 2. **User Journeys (user-journeys.puml)**
+
    - Sequence diagrams for key user flows:
      - Teacher Onboarding
      - Student Participation
@@ -19,6 +21,7 @@ This directory contains PlantUML diagrams that document the data structures, int
    - Output: Multiple journey-specific PNG files
 
 3. **SRS Algorithm**
+
    - **Simple Overview (srs-algorithm-simple.puml)**
      - High-level overview of the SRS system
      - Output: `SRS Algorithm Simple.png`
@@ -31,6 +34,7 @@ This directory contains PlantUML diagrams that document the data structures, int
      - Output: `SRS Algorithm - Flashcard Lifecycle.png`
 
 4. **AI Integration**
+
    - **Complete Flow (ai-integration.puml)**
      - Components involved in AI integration
      - Data flow between frontend, backend, and AI service
@@ -41,6 +45,7 @@ This directory contains PlantUML diagrams that document the data structures, int
      - Focused on key components and interactions
 
 5. **Flashcard Data Flow (flashcard-data-flow.puml)**
+
    - Detailed data flow for flashcard creation and review
    - Request/response structures for flashcard operations
    - Synchronization process for offline support

@@ -42,6 +42,7 @@ One of the key AI features is the automatic generation of flashcards from variou
 ### Automatic Flashcard Generation
 
 Users can generate flashcards automatically from:
+
 - Text passages
 - Word lists
 - Images with text
@@ -53,6 +54,7 @@ The AI analyzes the input and creates appropriate question-answer pairs based on
 ### Content Personalization
 
 The AI personalizes content based on:
+
 - User proficiency level
 - Learning history
 - Personal interests
@@ -61,6 +63,7 @@ The AI personalizes content based on:
 ### Learning Optimization
 
 The AI helps optimize the learning process by:
+
 - Suggesting related content
 - Identifying knowledge gaps
 - Recommending review strategies

@@ -6,7 +6,6 @@
 	import BrainIcon from '@tabler/icons-svelte/icons/brain';
 	import ChartLineIcon from '@tabler/icons-svelte/icons/chart-line';
 	import TemplateIcon from '@tabler/icons-svelte/icons/template';
-	import FileAiIcon from '@tabler/icons-svelte/icons/file-ai';
 	import SettingsIcon from '@tabler/icons-svelte/icons/settings';
 	import HelpIcon from '@tabler/icons-svelte/icons/help';
 	import SearchIcon from '@tabler/icons-svelte/icons/search';
@@ -17,7 +16,6 @@
 	import NavUser from './nav-user.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 	import { user } from '$lib/stores/auth.store';
-	import type { ComponentProps } from 'svelte';
 
 	const data = {
 		navMain: [
