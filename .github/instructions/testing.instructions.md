@@ -4,12 +4,13 @@ applyTo: '**/*test.ts'
 
 # GitHub Copilot Testing Instructions for BlendSphere Frontend
 
-Follow these testing instructions when generating test code for the BlendSphere language learning application.
+Follow these testing instructions when generating test code for the BlendSphere language learning application. These instructions are based on the official [Svelte Testing Library documentation](https://testing-library.com/docs/svelte-testing-library/example) and [Svelte Society testing recipes](https://sveltesociety.dev/recipes/testing-and-debugging/unit-testing-svelte-component).
 
 ## Testing Stack Constraints
 
 - Use **Vitest** with workspace configuration - never use Jest
 - Write tests in **TypeScript** with strict typing
+- Make sure the tests are not generating any errors or warnings, especially **ESLint** warnings
 - Use **@testing-library/svelte** for component testing
 - Apply **@testing-library/jest-dom/vitest** matchers
 - Mock with **vi.mock()** utilities only
@@ -38,8 +39,8 @@ Use this exact import pattern for all component tests:
 ```typescript
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
-import { userEvent } from '@testing-library/user-event';
+import { render, screen } from '@testing-library/svelte';
+import userEvent from '@testing-library/user-event';
 import ComponentName from './ComponentName.svelte';
 ```
 
@@ -51,19 +52,34 @@ Use this structure for all Svelte component tests:
 describe('ComponentName', () => {
 	test('should render with default props', () => {
 		render(ComponentName, {
-			propName: 'value'
+			props: {
+				propName: 'value'
+			}
 		});
 
 		expect(screen.getByRole('button')).toBeInTheDocument();
 	});
 
-	test('should handle user interactions', async () => {
+	test('should handle user interactions with function props', async () => {
 		const user = userEvent.setup();
 		const mockHandler = vi.fn();
 
 		render(ComponentName, {
-			onclick: mockHandler
+			props: {
+				onClick: mockHandler
+			}
 		});
+
+		await user.click(screen.getByRole('button'));
+		expect(mockHandler).toHaveBeenCalledOnce();
+	});
+
+	test('should handle component events', async () => {
+		const user = userEvent.setup();
+		const mockHandler = vi.fn();
+
+		const { component } = render(ComponentName);
+		component.$on('customEvent', mockHandler);
 
 		await user.click(screen.getByRole('button'));
 		expect(mockHandler).toHaveBeenCalledOnce();
@@ -78,7 +94,9 @@ When testing components with $state, $derived, $effect:
 ```typescript
 test('should update derived state reactively', async () => {
 	const user = userEvent.setup();
-	render(ReactiveComponent, { initialValue: 0 });
+	render(ReactiveComponent, {
+		props: { initialValue: 0 }
+	});
 
 	const button = screen.getByRole('button', { name: /increment/i });
 	const display = screen.getByTestId('derived-value');
@@ -89,10 +107,12 @@ test('should update derived state reactively', async () => {
 
 test('should trigger effects on state changes', async () => {
 	const mockEffect = vi.fn();
-	render(ComponentWithEffect, { onEffect: mockEffect });
+	render(ComponentWithEffect, {
+		props: { onEffect: mockEffect }
+	});
 
 	const input = screen.getByRole('textbox');
-	await userEvent.type(input, 'test');
+	await user.type(input, 'test');
 
 	expect(mockEffect).toHaveBeenCalled();
 });
@@ -105,8 +125,10 @@ Test UI components with these patterns:
 ```typescript
 test('should apply variant classes correctly', () => {
 	render(ButtonComponent, {
-		variant: 'destructive',
-		children: 'Delete'
+		props: {
+			variant: 'destructive',
+			children: 'Delete'
+		}
 	});
 
 	const button = screen.getByRole('button', { name: /delete/i });
@@ -115,8 +137,10 @@ test('should apply variant classes correctly', () => {
 
 test('should forward props correctly', () => {
 	render(ButtonComponent, {
-		'data-testid': 'custom-button',
-		disabled: true
+		props: {
+			'data-testid': 'custom-button',
+			disabled: true
+		}
 	});
 
 	const button = screen.getByTestId('custom-button');
@@ -141,7 +165,7 @@ describe('FormComponent', () => {
 
 	test('should validate required fields', async () => {
 		const user = userEvent.setup();
-		render(FormComponent, { form: mockForm });
+		render(FormComponent, { props: { form: mockForm } });
 
 		await user.click(screen.getByRole('button', { name: /submit/i }));
 		expect(screen.getByText(/email is required/i)).toBeInTheDocument();
@@ -152,7 +176,7 @@ describe('FormComponent', () => {
 		const onSubmit = vi.fn();
 		mockForm.options.onSubmit = onSubmit;
 
-		render(FormComponent, { form: mockForm });
+		render(FormComponent, { props: { form: mockForm } });
 
 		await user.type(screen.getByLabelText(/email/i), 'test@example.com');
 		await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -160,6 +184,93 @@ describe('FormComponent', () => {
 
 		expect(onSubmit).toHaveBeenCalled();
 	});
+});
+```
+
+## Testing Slots
+
+Slots cannot be tested directly. Use wrapper components for testing slot functionality:
+
+```typescript
+// Create a test wrapper component file: TestComponent.test.svelte
+// <script>
+//   import ComponentWithSlots from './ComponentWithSlots.svelte';
+// </script>
+// <ComponentWithSlots>
+//   <span data-testid="slot-content">Slot Content</span>
+// </ComponentWithSlots>
+
+import { render, screen, within } from '@testing-library/svelte';
+import TestComponent from './TestComponent.test.svelte';
+
+test('should render slot content correctly', () => {
+	render(TestComponent);
+
+	const heading = screen.getByRole('heading');
+	const slotContent = within(heading).getByTestId('slot-content');
+
+	expect(slotContent).toBeInTheDocument();
+	expect(slotContent).toHaveTextContent('Slot Content');
+});
+```
+
+## Testing Two-Way Data Binding
+
+Use wrapper components with stores to test two-way binding:
+
+```typescript
+// Create a test wrapper component file: BindingTest.test.svelte
+// <script>
+//   import { writable } from 'svelte/store';
+//   import InputComponent from './InputComponent.svelte';
+//   export let valueStore;
+// </script>
+// <InputComponent bind:value={$valueStore} />
+
+import { render, screen } from '@testing-library/svelte';
+import userEvent from '@testing-library/user-event';
+import { get, writable } from 'svelte/store';
+import BindingTest from './BindingTest.test.svelte';
+
+test('should update bound value on user input', async () => {
+	const user = userEvent.setup();
+	const valueStore = writable('');
+
+	render(BindingTest, {
+		props: { valueStore }
+	});
+
+	const input = screen.getByRole('textbox');
+	await user.type(input, 'hello world');
+
+	expect(get(valueStore)).toBe('hello world');
+});
+```
+
+## Testing Components with Contexts
+
+Pass contexts when rendering components that require them:
+
+```typescript
+import { render, screen } from '@testing-library/svelte';
+import { readable } from 'svelte/store';
+import ComponentWithContext from './ComponentWithContext.svelte';
+
+test('should access context values correctly', () => {
+	const mockMessages = readable([
+		{ id: 'abc', text: 'hello' },
+		{ id: 'def', text: 'world' }
+	]);
+
+	render(ComponentWithContext, {
+		context: new Map([['messages', mockMessages]]),
+		props: {
+			label: 'Notifications'
+		}
+	});
+
+	const status = screen.getByRole('status', { name: 'Notifications' });
+	expect(status).toHaveTextContent('hello world');
 });
 ```
 
@@ -263,7 +374,9 @@ Always include these accessibility tests:
 
 ```typescript
 test('should have proper ARIA labels', () => {
-	render(ComponentName);
+	render(ComponentName, {
+		props: { label: 'Submit form' }
+	});
 
 	const element = screen.getByRole('button');
 	expect(element).toHaveAttribute('aria-label');
@@ -293,17 +406,23 @@ Always test error scenarios:
 ```typescript
 test('should display error state', () => {
 	render(ComponentName, {
-		error: 'Something went wrong'
+		props: {
+			error: 'Something went wrong'
+		}
 	});
 
 	expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
 });
 
 test('should handle async errors', async () => {
+	const user = userEvent.setup();
 	const mockError = vi.fn().mockRejectedValue(new Error('API Error'));
-	render(ComponentName, { onSubmit: mockError });
 
-	await userEvent.click(screen.getByRole('button'));
+	render(ComponentName, {
+		props: { onSubmit: mockError }
+	});
+
+	await user.click(screen.getByRole('button'));
 	expect(screen.getByText(/api error/i)).toBeInTheDocument();
 });
 ```
@@ -314,7 +433,9 @@ test('should handle async errors', async () => {
 test('should complete full user flow', async () => {
 	const user = userEvent.setup();
 	render(FlashcardStudySession, {
-		flashcards: mockFlashcards
+		props: {
+			flashcards: mockFlashcards
+		}
 	});
 
 	// Step 1: Show answer
@@ -392,7 +513,9 @@ test('should render efficiently with large datasets', () => {
 	const largeData = Array.from({ length: 1000 }, (_, i) => ({ id: i }));
 
 	const startTime = performance.now();
-	render(DataTable, { data: largeData });
+	render(DataTable, {
+		props: { data: largeData }
+	});
 	const endTime = performance.now();
 
 	expect(endTime - startTime).toBeLessThan(100);
@@ -414,9 +537,12 @@ test('should render efficiently with large datasets', () => {
 When generating tests:
 
 1. Always include proper TypeScript types
-2. Use userEvent for interactions, not fireEvent
-3. Include both success and error scenarios
-4. Add accessibility tests for UI components
-5. Mock all external dependencies
-6. Follow exact import patterns shown above
-7. Include proper setup and cleanup
+2. Use `userEvent` (default import) for interactions, not fireEvent
+3. Use `props` object when passing props to components
+4. Use `{ component }` destructuring when testing component events
+5. Include both success and error scenarios
+6. Add accessibility tests for UI components
+7. Mock all external dependencies
+8. Follow exact import patterns shown above
+9. Include proper setup and cleanup
+10. Test slots and contexts using wrapper components when needed

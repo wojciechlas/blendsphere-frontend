@@ -79,7 +79,7 @@ Use this exact structure for all components:
 - Use `$state()` for local component state
 - Use `$derived()` for computed values
 - Use `$effect()` for side effects and cleanup
-- Never use `let` for reactive variables
+- State variables that need to trigger UI updates or other reactive effects must be declared using Svelte 5 runes (e.g., `let count = $state(0);`). Plain `let` variables are not inherently reactive in this way.
 - Always destructure props with defaults
 
 ```typescript
@@ -306,7 +306,7 @@ test('renders correctly', () => {
 - ❌ Don't skip error handling
 - ❌ Don't ignore TypeScript errors
 - ❌ Don't create deeply nested components
-- ❌ Don't use `let` for reactive variables
+- ❌ Don't expect plain `let` variables (those not initialized with a Svelte 5 rune like `$state`) to trigger Svelte's reactivity.
 
 ## Code Generation Preferences
 
