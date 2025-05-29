@@ -1,0 +1,195 @@
+@startuml Teacher Onboarding Journey
+
+actor Teacher
+participant Frontend
+participant "Auth API" as Auth
+participant "BlendSphere API" as API
+participant "GenAI Service" as AI
+
+== User Authentication ==
+Teacher -> Frontend: Sign up with email
+Frontend -> Auth: Create account request
+Auth --> Frontend: Return auth token
+Frontend --> Teacher: Display success message
+
+== Class Creation ==
+Teacher -> Frontend: Create new class
+Frontend -> API: POST /classes
+API --> Frontend: Return class details
+Frontend --> Teacher: Display class information
+
+== Lesson Creation ==
+Teacher -> Frontend: Create lesson for class
+Frontend -> API: POST /classes/{classId}/lessons
+API --> Frontend: Return lesson details
+Frontend --> Teacher: Display lesson page
+
+== Template Creation ==
+Teacher -> Frontend: Create flashcard template
+Frontend -> API: POST /templates
+API --> Frontend: Return template details
+Frontend --> Teacher: Display template editor
+
+== Flashcard Creation ==
+Teacher -> Frontend: Create flashcards for lesson
+alt Manual Creation
+    Teacher -> Frontend: Fill in flashcard data
+    Frontend -> API: POST /decks/{deckId}/flashcards
+    API --> Frontend: Return flashcard details
+else AI-Assisted Creation
+    Teacher -> Frontend: Provide source content
+    Frontend -> AI: Send content for processing
+    AI --> Frontend: Return suggested flashcards
+    Teacher -> Frontend: Review and modify flashcards
+    Frontend -> API: POST /decks/{deckId}/flashcards (bulk)
+    API --> Frontend: Return flashcards details
+end
+Frontend --> Teacher: Display created flashcards
+
+@enduml
+
+@startuml Student Participation Journey
+
+actor Student
+participant Frontend
+participant "Auth API" as Auth
+participant "BlendSphere API" as API
+
+== User Authentication ==
+Student -> Frontend: Sign up with email
+Frontend -> Auth: Create account request
+Auth --> Frontend: Return auth token
+Frontend --> Student: Display success message
+
+== Joining a Class ==
+Student -> Frontend: Enter class code
+Frontend -> API: POST /classes/join
+API --> Frontend: Return class enrollment details
+Frontend --> Student: Display class dashboard
+
+== Accessing Class Materials ==
+Student -> Frontend: View class lessons
+Frontend -> API: GET /classes/{classId}/lessons
+API --> Frontend: Return lessons list
+Frontend --> Student: Display lessons
+
+Student -> Frontend: View lesson materials
+Frontend -> API: GET /lessons/{lessonId}
+API --> Frontend: Return lesson details and resources
+Frontend --> Student: Display lesson materials
+
+== Flashcard Management ==
+Student -> Frontend: View teacher's flashcards
+Frontend -> API: GET /classes/{classId}/decks
+API --> Frontend: Return decks list
+Frontend --> Student: Display available decks
+
+Student -> Frontend: Copy teacher's flashcards to personal deck
+Frontend -> API: POST /decks/copy
+API --> Frontend: Return new personal deck
+Frontend --> Student: Display personal deck
+
+Student -> Frontend: Create personal flashcards
+Frontend -> API: POST /decks/{deckId}/flashcards
+API --> Frontend: Return flashcard details
+Frontend --> Student: Display created flashcards
+
+@enduml
+
+@startuml Daily Repetition Journey
+
+actor User
+participant Frontend
+participant "BlendSphere API" as API
+participant "FSRS Algorithm" as FSRS
+
+== Login ==
+User -> Frontend: Log in
+Frontend -> API: Authenticate user
+API --> Frontend: Return auth token
+Frontend --> User: Display dashboard
+
+== Flashcard Review ==
+User -> Frontend: Start daily review
+Frontend -> API: GET /review/due
+API -> FSRS: Calculate due cards and retrievability
+FSRS --> API: Return due flashcards with states
+API --> Frontend: Return flashcards for review with states
+Frontend --> User: Display first flashcard
+
+loop For each flashcard
+    User -> Frontend: View flashcard front
+    Frontend -> Frontend: Start thinking time timer
+    Frontend --> User: Display flashcard front
+    User -> Frontend: Request answer
+    Frontend -> Frontend: Record thinking time
+    Frontend --> User: Display flashcard back
+    User -> Frontend: Rate recall (Again/Hard/Good/Easy)
+    Frontend -> API: POST /flashcards/{id}/review
+    note right
+        Includes:
+        - Rating
+        - Thinking time
+        - Current state
+        - Elapsed days
+    end note
+    API -> FSRS: Calculate new parameters
+    note right
+        Updates:
+        - State
+        - Difficulty
+        - Stability
+        - Retrievability
+        - Next review date
+    end note
+    FSRS --> API: Return updated scheduling
+    API --> Frontend: Return updated flashcard details
+    Frontend --> User: Show next flashcard or state transition
+end
+
+== Review Summary ==
+Frontend -> API: GET /sessions/{sessionId}
+API --> Frontend: Return session statistics with FSRS metrics    Frontend --> User: Display review summary with:
+note right
+    Shows:
+    - Cards by state
+    - Average difficulty
+    - Stability trends
+    - Retention score
+end note
+
+@enduml
+
+@enduml
+
+@startuml AI-Assisted Flashcard Creation
+
+actor User
+participant Frontend
+participant "BlendSphere API" as API
+participant "GenAI Service" as AI
+
+== Content Input ==
+User -> Frontend: Input text content for flashcard generation
+Frontend --> User: Display content preview
+
+== AI Processing ==
+User -> Frontend: Request AI-generated flashcards
+Frontend -> API: POST /ai/generate-flashcards
+API -> AI: Send content for processing
+AI -> AI: Process content and generate flashcards
+AI --> API: Return generated flashcards
+API --> Frontend: Return AI suggestions
+Frontend --> User: Display suggested flashcards
+
+== Review and Refinement ==
+User -> Frontend: Review and edit suggestions
+Frontend --> User: Update flashcard display
+
+== Save to Deck ==
+User -> Frontend: Save selected flashcards to deck
+Frontend -> API: POST /decks/{deckId}/flashcards (bulk)
+API --> Frontend: Return saved flashcards
+Frontend --> User: Display success message and deck
+
+@enduml

@@ -1,0 +1,288 @@
+@startuml "BlendSphere Data Structure - PocketBase Compatible"
+' Define the entities
+
+' User related
+class Users {
+  +id: string
+  +name: string (optional) ' Username can be used if name is not provided
+  +email: string
+  +avatar: string
+  +role: UserRole
+  +nativeLanguage: Language
+  +aboutMe: string (optional)
+  +created: DateTime
+  +updated: DateTime
+  +verified: boolean
+  +username: string
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STUDENT
+  INDIVIDUAL_LEARNER
+}
+
+
+
+' Template and Field related
+class Templates {
+  +id: string
+  +name: string
+  +description: string
+  +version: string
+  +author: string
+  +nativeLanguage: Language
+  +learningLanguage: Language
+  +languageLevel: LanguageLevel
+  +frontLayout: string
+  +backLayout: string
+  +styles: JSON
+  +created: DateTime
+  +updated: DateTime
+  +isPublic: boolean
+  +user: string (relation)
+}
+
+class Fields {
+  +id: string
+  +template: string (relation)
+  +type: FieldType
+  +isInput: boolean
+  +language: Language
+  +label: string
+  +description: string
+  +example: string
+  +created: DateTime
+  +updated: DateTime
+}
+
+enum FieldType {
+  TEXT
+  IMAGE
+  AUDIO
+}
+
+enum Language {
+  EN
+  ES
+  FR
+  DE
+  IT
+  PL
+}
+
+enum LanguageLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+' Deck and Flashcard related
+class Decks {
+  +id: string
+  +name: string
+  +description: string
+  +user: string (relation)
+  +isPublic: boolean
+  +created: DateTime
+  +updated: DateTime
+}
+
+class Flashcards {
+  +id: string
+  +deck: string (relation)
+  +template: string (relation)
+  +data: JSON
+  +state: FSRSState
+  +difficulty: number
+  +stability: number
+  +retrievability: number
+  +lastReview: DateTime (optional)
+  +nextReview: DateTime (optional)
+  +created: DateTime
+  +updated: DateTime
+}
+
+enum FSRSState {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
+
+' Class related (for group learning)
+class Classes {
+  +id: string
+  +name: string
+  +description: string
+  +teacher: string (relation)
+  +created: DateTime
+  +updated: DateTime
+}
+
+class ClassEnrollments {
+  +id: string
+  +class: string (relation)
+  +student: string (relation)
+  +joinedAt: DateTime
+  +status: EnrollmentStatus
+  +created: DateTime
+  +updated: DateTime
+}
+
+enum EnrollmentStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+class Lessons {
+  +id: string
+  +class: string (relation)
+  +title: string
+  +description: string
+  +teacher: string (relation)
+  +created: DateTime
+  +updated: DateTime
+}
+
+' SRS related
+class StudySessions {
+  +id: string
+  +user: string (relation)
+  +startTime: DateTime
+  +endTime: DateTime (optional)
+  +cardsReviewed: number
+  +correctAnswers: number
+  +incorrectAnswers: number
+  +created: DateTime
+  +updated: DateTime
+}
+
+class FlashcardReviews {
+  +id: string
+  +flashcard: string (relation)
+  +user: string (relation)
+  +session: string (relation)
+  +reviewedAt: DateTime
+  +rating: RecallRating
+  +timeTaken: number (ms)
+  +scheduledDays: number
+  +elapsedDays: number
+  +thinking_time: number
+  +state: FSRSState
+  +difficulty: number
+  +stability: number
+  +retrievability: number
+  +created: DateTime
+}
+
+enum RecallRating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
+' Lesson Discussion related
+class Posts {
+  +id: string
+  +user: string (relation)
+  +lesson: string (relation)
+  +title: string
+  +content: string
+  +type: PostType
+  +created: DateTime
+  +updated: DateTime
+}
+
+enum PostType {
+  RESOURCE
+  QUESTION
+  ANNOUNCEMENT
+  DISCUSSION
+  ACHIEVEMENT
+  STUDY_NOTE
+}
+
+class Comments {
+  +id: string
+  +post: string (relation)
+  +user: string (relation)
+  +content: string
+  +created: DateTime
+  +updated: DateTime
+}
+
+class Reactions {
+  +id: string
+  +user: string (relation)
+  +targetType: ReactionTargetType
+  +targetId: string
+  +type: ReactionType
+  +created: DateTime
+  +updated: DateTime
+}
+
+enum ReactionTargetType {
+  POST
+  COMMENT
+}
+
+enum ReactionType {
+  LIKE
+  HELPFUL
+  CELEBRATE
+  CONFUSED
+}
+
+' AI Integration
+class AIPrompts {
+  +id: string
+  +user: string (relation)
+  +prompt: string
+  +created: DateTime
+  +response: string
+  +responseTime: number (ms)
+  +type: PromptType
+  +updated: DateTime
+}
+
+enum PromptType {
+  FLASHCARD_GENERATION
+  EXPLANATION_HELP
+  TRANSLATION
+}
+
+' Define relationships - PocketBase uses string IDs for relations
+Users "1" -- "0..*" Templates : creates
+Users "1" -- "0..*" Decks : owns
+Users "1" -- "0..*" Classes : teaches as
+Users "1" -- "0..*" ClassEnrollments : enrolls via
+Users "1" -- "0..*" StudySessions : participates in
+Users "1" -- "0..*" FlashcardReviews : provides
+Users "1" -- "0..*" Posts : creates
+Users "1" -- "0..*" Comments : writes
+Users "1" -- "0..*" Reactions : gives
+Users "1" -- "0..*" AIPrompts : submits
+
+Templates "1" -- "0..*" Fields : contains
+Templates "1" -- "0..*" Flashcards : used by
+
+Decks "1" -- "0..*" Flashcards : contains
+Classes "1" -- "0..*" ClassEnrollments : has
+Classes "1" -- "0..*" Lessons : contains
+
+Lessons "1" -- "0..*" Posts : contains
+
+StudySessions "1" -- "0..*" FlashcardReviews : includes
+
+Posts "1" -- "0..*" Comments : has
+Posts "1" -- "0..*" Reactions : receives
+Comments "1" -- "0..*" Reactions : receives
+
+@enduml
