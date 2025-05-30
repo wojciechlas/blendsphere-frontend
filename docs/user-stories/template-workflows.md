@@ -329,131 +329,79 @@ const previewContent = $derived(() => {
 
 ## Theme 2: AI Integration and Content Generation
 
-### STORY-TMPL-004: AI Content Generation
+### STORY-TMPL-004: AI Content Generation (in Flashcard Creator)
 
-**As a** language learner  
-**I want to** use AI to generate flashcard content from templates  
-**So that** I can save time creating comprehensive learning materials
+**As a** language learner using the Flashcard Creator  
+**I want to** use AI to generate content for multiple flashcards in a batch based on a selected template and my inputs  
+**So that** I can save time creating comprehensive learning materials efficiently.
 
 #### Acceptance Criteria
 
-- **AC-TMPL-004-01**: AI uses template context and field descriptions
-- **AC-TMPL-004-02**: User sees generation progress and status
-- **AC-TMPL-004-03**: Generated content appears in editable fields
-- **AC-TMPL-004-04**: User can regenerate unsatisfactory content
-- **AC-TMPL-004-05**: User can edit generated content before saving
-- **AC-TMPL-004-06**: System handles AI service errors gracefully
-- **AC-TMPL-004-07**: Manual input fallback available if AI fails
+- **AC-TMPL-004-01**: In the "Create & Refine Cards" table, AI uses the selected template context, field descriptions, a global "Batch Context" (if provided), and per-row input field data.
+- **AC-TMPL-004-02**: User sees an overall progress bar and status when "[Generate AI for All Eligible Rows]" is clicked.
+- **AC-TMPL-004-03**: Generated content appears in the respective editable cells of the table for each processed row.
+- **AC-TMPL-004-04**: User can trigger AI regeneration for an individual row via its "..." menu, using its current data and any feedback comments.
+- **AC-TMPL-004-05**: User can edit any generated content directly in the table cells before saving.
+- **AC-TMPL-004-06**: System handles AI service errors gracefully: batch errors are shown as general notifications, row-specific errors are shown within the table for the affected row/cell.
+- **AC-TMPL-004-07**: Feedback icons (👍/👎/💬) appear for AI-generated fields after content population, allowing users to rate and comment.
 
 #### Implementation Hints
 
 ```typescript
-// AI generation service integration
-interface AIGenerationRequest {
-	templateId: string;
-	inputData: Record<string, string>;
-	targetFields: string[];
-	context: {
-		nativeLanguage: LanguageCode;
-		learningLanguage: LanguageCode;
-		proficiencyLevel: CEFRLevel;
-		category: TemplateCategory;
-	};
+// AI batch generation service integration (within FlashcardTableCreator.svelte)
+interface AIBatchGenerationRequest {
+  templateId: string;
+  batchContext?: string;
+  items: Array<{
+    rowId: string; // To map results back
+    inputFields: Record<string, any>; // User-provided input data for this item
+    existingComments?: Record<string, string>; // fieldId: comment from feedback for regeneration
+  }>;
+  // ... other context like language, level from template
 }
 
-interface AIGenerationResponse {
-	success: boolean;
-	generatedContent: Record<string, string>;
-	confidence: Record<string, number>;
-	error?: string;
+interface AIBatchGenerationResponse {
+  results: Array<{
+    rowId: string;
+    success: boolean;
+    generatedFields?: Record<string, any>;
+    error?: string;
+  }>;
+  batchError?: string;
 }
 
-class AIContentService {
-	async generateContent(request: AIGenerationRequest): Promise<AIGenerationResponse> {
-		try {
-			const response = await fetch('/api/ai/generate-flashcard', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(request)
-			});
-
-			if (!response.ok) {
-				throw new Error(`AI service error: ${response.status}`);
-			}
-
-			return await response.json();
-		} catch (error) {
-			return {
-				success: false,
-				generatedContent: {},
-				confidence: {},
-				error: error.message
-			};
-		}
-	}
+class AIService {
+  async generateBatchFlashcardContent(request: AIBatchGenerationRequest): Promise<AIBatchGenerationResponse> {
+    // ... call FastAPI backend ...
+  }
 }
 
-// Generation state management
-let generationState = $state<{
-	isGenerating: boolean;
-	progress: number;
-	error: string | null;
-	results: Record<string, string>;
-}>({
-	isGenerating: false,
-	progress: 0,
-	error: null,
-	results: {}
-});
+// State for batch generation in FlashcardTableCreator.svelte
+let batchGenerationState = $state<{
+  isGenerating: boolean;
+  progress: number; // 0-100 for overall progress bar
+  statusText: string; // e.g., "X of Y rows processed"
+  error: string | null;
+}>({ /* initial state */ });
 
-async function generateContent(inputData: Record<string, string>) {
-	generationState.isGenerating = true;
-	generationState.progress = 0;
-	generationState.error = null;
-
-	try {
-		// Simulate progress updates
-		const progressInterval = setInterval(() => {
-			if (generationState.progress < 90) {
-				generationState.progress += 10;
-			}
-		}, 200);
-
-		const result = await aiService.generateContent({
-			templateId: template.id,
-			inputData,
-			targetFields: outputFields.map((f) => f.id),
-			context: {
-				nativeLanguage: template.nativeLanguage,
-				learningLanguage: template.learningLanguage,
-				proficiencyLevel: template.proficiencyLevel,
-				category: template.category
-			}
-		});
-
-		clearInterval(progressInterval);
-		generationState.progress = 100;
-
-		if (result.success) {
-			generationState.results = result.generatedContent;
-		} else {
-			generationState.error = result.error || 'Generation failed';
-		}
-	} catch (error) {
-		generationState.error = error.message;
-	} finally {
-		generationState.isGenerating = false;
-	}
+async function triggerBatchAIGeneration(rowsToProcess: FlashcardRow[]) {
+  // 1. Set batchGenerationState.isGenerating = true, reset progress/error
+  // 2. Prepare AIBatchGenerationRequest payload from rowsToProcess and batchContext
+  // 3. Call aiService.generateBatchFlashcardContent(payload)
+  //    - Update progress based on streaming or polling if possible, or estimate
+  // 4. On response, update flashcardRows with generated content or errors
+  // 5. Set batchGenerationState.isGenerating = false, update final status/error
 }
 ```
 
 #### Validation Criteria
 
-- [ ] AI integration communicates with FastAPI backend
-- [ ] Progress indicators show generation status
-- [ ] Generated content populates correct fields
-- [ ] Error handling covers network and service failures
-- [ ] Regeneration clears previous results
+- [ ] AI integration communicates with FastAPI backend using the batch request format.
+- [ ] Overall progress bar and status text are displayed during batch generation.
+- [ ] Generated content populates correct cells in the table for each row.
+- [ ] Row-level and batch-level AI errors are handled and displayed appropriately.
+- [ ] Individual row regeneration uses existing data and feedback comments.
+- [ ] Feedback icons (👍/👎/💬) are functional after AI generation
 
 ---
 
@@ -756,6 +704,32 @@ Scenario: Student cloning a shared template
   Then I should have a personal copy of the template
   And I should be able to customize my copy
   And the original template should remain unchanged
+```
+
+### AI Content Generation (Batch Mode in Flashcard Creator)
+
+```gherkin
+Feature: AI Content Generation in Flashcard Creator
+  As a language learner using the Flashcard Creator
+  I want to use AI to generate content for multiple flashcards in a batch based on a selected template and my inputs
+  So that I can save time creating comprehensive learning materials efficiently.
+
+Scenario: Generating AI content for multiple rows
+  Given I have a complete vocabulary template selected in the Flashcard Creator
+  And I am in the "Create & Refine Cards" step (table view)
+  And I have added two rows with Spanish words:
+    | Row | Spanish Word |
+    | 1   | hola         |
+    | 2   | adiós        |
+  And I have entered "Greetings chapter" in the "Batch Context" field
+  When I click "Generate AI for All Eligible Rows"
+  Then I should see an overall progress bar
+  And the English Translation field for row 1 should populate (e.g., with "hello")
+  And the Example Sentence field for row 1 should populate with a Spanish sentence
+  And the English Translation field for row 2 should populate (e.g., with "goodbye")
+  And the Example Sentence field for row 2 should populate with a Spanish sentence
+  And I should be able to edit the generated content in any cell
+  And I should see feedback icons (👍/👎/💬) next to the AI-generated fields for both rows
 ```
 
 ---

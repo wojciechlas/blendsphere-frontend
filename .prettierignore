@@ -43,5 +43,6 @@ Thumbs.db
 .gitattributes
 
 # Documentation (PlantUML and generated images)
-docs/**/*.puml
-docs/images/
+docs/
+*.puml
+*.md

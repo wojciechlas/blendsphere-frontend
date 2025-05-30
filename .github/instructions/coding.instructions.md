@@ -12,7 +12,8 @@ Follow these coding instructions when generating code for the BlendSphere langua
 - Write **TypeScript** with strict typing - avoid `any` type
 - Import UI components from `$lib/components/ui/` using established patterns
 - Use **Tailwind CSS** classes only - no inline styles or custom CSS
-- Apply **shadcn-svelte@next** component patterns consistently
+- Apply **shadcn-svelte@next** component patterns consistently. Before creating new components, check the [shadcn-svelte documentation](https://next.shadcn-svelte.com/docs/components) for existing components that can be reused. You can install the latest version of shadcn-svelte using [shadcn-svelte documentation](https://next.shadcn-svelte.com/docs/components) for existing components that can be reused. You can install shadcn-svelte components using `npx shadcn-svelte@next add {component_name}`, e.g. `npx shadcn-svelte@next add progress`.
+- Use **@tabler/icons-svelte** for icons - import them as Svelte components
 
 ## Import Patterns
 

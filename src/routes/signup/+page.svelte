@@ -125,35 +125,41 @@
 				return;
 			}
 			// Handle specific PocketBase errors
-			if (error && typeof error === 'object' && 'data' in error && error.data) {
-				const errorData = error.data as Record<string, unknown>;
+			if (error && typeof error === 'object' && error !== null && 'data' in error) {
+				const errorRecord = error as { data?: Record<string, unknown> };
+				const errorData = errorRecord.data;
 
-				// Handle field-specific errors
-				if (errorData.username) {
-					errors = [
-						...errors,
-						{ field: 'username', message: 'Username already exists or is invalid.' }
-					];
-				}
-				if (errorData.email) {
-					errors = [
-						...errors,
-						{
-							field: 'email',
-							message:
-								'This email is already registered. Please use a different email or try logging in.'
-						}
-					];
-				} else if (errorData.password) {
-					errors = [
-						...errors,
-						{ field: 'password', message: 'Password does not meet requirements.' }
-					];
+				if (errorData && typeof errorData === 'object') {
+					// Handle field-specific errors
+					if ('username' in errorData) {
+						errors = [
+							...errors,
+							{ field: 'username', message: 'Username already exists or is invalid.' }
+						];
+					}
+					if ('email' in errorData) {
+						errors = [
+							...errors,
+							{
+								field: 'email',
+								message:
+									'This email is already registered. Please use a different email or try logging in.'
+							}
+						];
+					} else if ('password' in errorData) {
+						errors = [
+							...errors,
+							{ field: 'password', message: 'Password does not meet requirements.' }
+						];
+					} else {
+						submitError = 'Registration failed. Please try again.';
+					}
 				} else {
 					submitError = 'Registration failed. Please try again.';
 				}
-			} else if (error && typeof error === 'object' && 'status' in error) {
-				switch (error.status) {
+			} else if (error && typeof error === 'object' && error !== null && 'status' in error) {
+				const statusError = error as { status?: number };
+				switch (statusError.status) {
 					case 400:
 						submitError = 'Registration failed. Please check your information and try again.';
 						break;
@@ -185,13 +191,19 @@
 
 	// Helper function to get display label for role
 	const getRoleLabel = (role: UserRole): string => {
-		const labels: Record<UserRole, string> = {
+		const labels = {
 			[UserRole.ADMIN]: 'Admin',
 			[UserRole.TEACHER]: 'Teacher',
 			[UserRole.STUDENT]: 'Student',
 			[UserRole.INDIVIDUAL_LEARNER]: 'Individual Learner'
-		};
-		return labels[role] || role;
+		} as const;
+
+		// Use Object.hasOwnProperty or 'in' operator for safe property access
+		if (role in labels) {
+			return labels[role as keyof typeof labels];
+		}
+
+		return role;
 	};
 </script>
 

@@ -1,5 +1,6 @@
 import { pb } from '../pocketbase';
 import type { RecordModel } from 'pocketbase';
+import type { FlashcardRow } from '$lib/types/flashcard-creator.js';
 
 export interface Flashcard extends RecordModel {
 	deck: string;
@@ -109,5 +110,63 @@ export const flashcardService = {
 			console.error('Error getting due flashcards:', error);
 			throw error;
 		}
+	},
+
+	/**
+	 * Create multiple flashcards in batch
+	 */
+	createBatch: async (
+		flashcardsData: Omit<Flashcard, 'id' | 'created' | 'updated'>[]
+	): Promise<Flashcard[]> => {
+		try {
+			const promises = flashcardsData.map((flashcard) =>
+				pb.collection('flashcards').create(flashcard)
+			);
+			const results = await Promise.all(promises);
+			return results as unknown as Flashcard[];
+		} catch (error) {
+			console.error('Error creating flashcards batch:', error);
+			throw error;
+		}
+	},
+
+	/**
+	 * Convert FlashcardRows to Flashcard data for creation
+	 */
+	convertRowsToFlashcards: (
+		rows: FlashcardRow[],
+		deckId: string,
+		templateId: string
+	): Omit<Flashcard, 'id' | 'created' | 'updated'>[] => {
+		return rows.map((row) => {
+			// Convert row cells to template field data
+			const data = Object.fromEntries(
+				Object.entries(row.cells)
+					.filter(([, cell]) => cell && cell.content)
+					.map(([fieldId, cell]) => [fieldId, cell.content])
+			);
+
+			return {
+				deck: deckId,
+				template: templateId,
+				data,
+				state: 'NEW' as const,
+				difficulty: 0,
+				stability: 0,
+				retrievability: 0
+			};
+		});
+	},
+
+	/**
+	 * Create flashcards from FlashcardRows
+	 */
+	createFromRows: async (
+		rows: FlashcardRow[],
+		deckId: string,
+		templateId: string
+	): Promise<Flashcard[]> => {
+		const flashcardsData = flashcardService.convertRowsToFlashcards(rows, deckId, templateId);
+		return flashcardService.createBatch(flashcardsData);
 	}
 };

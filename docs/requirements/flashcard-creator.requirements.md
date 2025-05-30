@@ -4,28 +4,24 @@
 
 component: FlashcardCreator
 type: requirements
-version: 2.0.0
+version: 2.1.0
 dependencies:
 
 - template-system
 - ai-integration
 - deck-management
-- media-upload
-- bulk-processing
-  context_tags:
+context_tags:
 - flashcard
 - ai-generation
 - template
 - bulk-creation
-- media-handling
-- content-creation
 - user-interface
-  last_updated: 2025-05-29
-  ai_context: |
+last_updated: 2025-05-30
+ai_context: |
   Flashcard Creator System for BlendSphere that enables users to create flashcards
-  using templates with AI-powered content generation, bulk creation capabilities,
-  and comprehensive media handling. Integrates with template system and AI services
-  for enhanced content creation workflow.
+  using a three-step process: Select Template, Create & Refine Cards (table-based UI),
+  and Save to Deck. Features AI-powered content generation for batches of cards,
+  and supports adding multiple cards via direct input or pasting.
 
 ---
 
@@ -33,22 +29,27 @@ dependencies:
 
 ### 1.1 Purpose
 
-Provide an intuitive and powerful interface for creating flashcards using the template system, with AI-assisted content generation, bulk creation capabilities, and seamless integration with deck management for the BlendSphere language learning platform.
+Provide an intuitive and powerful interface for creating flashcards using a three-step process:
+1.  **Select Template**: Choose a flashcard structure.
+2.  **Create & Refine Cards**: Input content into a table, utilize batch AI generation, and refine cards.
+3.  **Save to Deck**: Save the created flashcards to a new or existing deck.
+This system integrates with the template system, AI services, and deck management.
 
 ### 1.2 Scope
 
-- Template-based flashcard creation interface
-- AI content generation with context awareness
-- Bulk creation from clipboard and file upload
-- Media handling (images, audio) with validation
-- Real-time preview and validation
-- Session management with auto-save
-- Integration with deck management system
-- Test mode for flashcard simulation
+- Three-step flashcard creation lifecycle (Select Template, Create & Refine, Save to Deck)
+- Table-based interface for creating and refining multiple flashcards simultaneously.
+- Batch AI content generation for all eligible flashcards in the table.
+- Manual card addition and pasting multiple lines to create rows.
+- Inline editing and review of flashcard content.
+- Row-level actions (regenerate AI, preview, delete).
+- AI content feedback mechanism (ratings, comments).
+- Saving created flashcards to new or existing decks.
+- Session management for the creation process.
 
 ### 1.3 Dependencies
 
-- **Frontend**: Template selection, dynamic forms, AI generation UI, media upload
+- **Frontend**: Template selection UI, interactive table component for card creation, AI generation controls, deck selection modal
 - **Backend**: PocketBase flashcards collection, FastAPI AI service, media storage
 - **External**: File processing libraries, media optimization services
 
@@ -59,15 +60,16 @@ Provide an intuitive and powerful interface for creating flashcards using the te
 #### REQ-FC-001: Template Selection Interface
 
 **Priority**: P0 (Critical)
-**Component**: TemplateSelector, FlashcardCreator
+**Component**: TemplateSelector, FlashcardCreatorStep1
 **Dependencies**: TemplateService, TemplateStore
 
 **Description**:
-Users must be able to select from available templates when creating flashcards with proper filtering and preview capabilities.
+Users must be able to select from available templates as the first step in the flashcard creation process.
+The selection interface should allow filtering and previewing.
 
 **AI Context**:
 
-- Component type: Svelte 5 component with template selection
+- Component type: Svelte 5 component for template selection step
 - UI library: shadcn-svelte components (Dialog, Card, Button)
 - Data source: PocketBase templates collection
 - State management: Template selection store
@@ -117,488 +119,195 @@ async function selectTemplate(template: Template) {
 - `src/lib/components/flashcard/FlashcardCreator.svelte`
 - `src/lib/services/template.service.ts`
 
-#### REQ-FC-002: Dynamic Form Generation
+#### REQ-FC-002: Dynamic Table for Card Creation & Refinement
 
 **Priority**: P0 (Critical)
-**Component**: DynamicForm, FieldRenderer
-**Dependencies**: Template fields, form validation
+**Component**: FlashcardCreatorStep2, FlashcardTable, TableRowActions
+**Dependencies**: Selected template, form validation, AI service
 
 **Description**:
-System must generate forms dynamically based on template field definitions with proper validation and type handling.
+System must render an interactive table based on the selected template's fields. Each row represents a flashcard, and columns represent template fields, feedback, and actions. Users can add rows, input data, trigger batch AI generation, and refine content directly in the table.
 
 **AI Context**:
 
-- Form generation: Dynamic Svelte components based on field types
-- Validation: Zod schemas generated from field definitions
-- UI components: Input, Textarea, FileUpload from shadcn-svelte
-- State: Reactive form data with field-level validation
+- UI: Interactive table (shadcn-svelte Table or custom) where rows are flashcards and columns are template fields.
+- Data Entry: Direct input into table cells. Pasting multiple lines creates new rows.
+- State: Reactive state for table rows, cell content, AI generation status, and batch context.
+- Validation: Zod schemas for cell-level validation based on template field definitions.
 
 **Acceptance Criteria**:
 
-1. Generate form fields based on template field definitions
-2. Distinguish between input fields and AI-generated output fields
-3. Required field validation and visual indicators
-4. Field type-specific validation (text, image, audio)
-5. Language-specific input handling
-6. Real-time validation feedback
+1.  Display a table with columns derived from the selected template (input fields, AI-generatable fields, feedback, actions).
+2.  Allow users to add new rows manually (`[+ Add Row]` button).
+3.  Support pasting multiple lines of text into an input cell to create multiple new rows.
+4.  Input fields are directly editable. AI-generated fields become editable after population.
+5.  Provide a "Batch Context" input field to guide AI generation for all cards in the session.
+6.  Implement real-time validation for input cells with visual cues for errors.
+7.  Each row must have an actions menu ("...") with options: "Regenerate AI", "Preview Card", "Delete Row".
 
 **Implementation Hints**:
 
 ```typescript
-// Dynamic form generation
-let formData = $state<Record<string, unknown>>({});
-let fieldErrors = $state<Record<string, string>>({});
-let inputFields = $derived(fields.filter((f) => f.isInput));
-let outputFields = $derived(fields.filter((f) => !f.isInput));
-
-// Field validation schema generation
-function generateValidationSchema(fields: Field[]) {
-	const schema: Record<string, z.ZodSchema> = {};
-
-	fields.forEach((field) => {
-		switch (field.type) {
-			case FieldType.TEXT:
-				schema[field.label] = z.string().min(1, `${field.label} is required`);
-				break;
-			case FieldType.IMAGE:
-				schema[field.label] = z
-					.instanceof(File)
-					.refine((file) => file.size <= 5 * 1024 * 1024, 'File must be less than 5MB')
-					.refine(
-						(file) => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type),
-						'Invalid file type'
-					);
-				break;
-			// ... other field types
-		}
-	});
-
-	return z.object(schema);
+// Flashcard table row data structure
+interface FlashcardRowData {
+  id: string; // Unique ID for the row
+  cells: Record<string, { value: any; isInput: boolean; error?: string; aiStatus?: 'pending' | 'generated' | 'error' }>;
+  // ... other row-specific state
 }
 
-// Dynamic field rendering
-function renderField(field: Field) {
-	switch (field.type) {
-		case FieldType.TEXT:
-			return TextInput;
-		case FieldType.IMAGE:
-			return ImageUpload;
-		case FieldType.AUDIO:
-			return AudioUpload;
-	}
+let flashcardRows = $state<FlashcardRowData[]>([]);
+let batchContext = $state<string>('');
+
+function addRow() {
+  // Logic to add a new empty row based on selected template
+}
+
+function handlePaste(event: ClipboardEvent, rowIndex: number, cellKey: string) {
+  // Logic to parse pasted text and add new rows
 }
 ```
 
 ### 2.2 AI Content Generation
 
-#### REQ-FC-003: AI Generation Workflow
+#### REQ-FC-003: Batch AI Generation Workflow
 
 **Priority**: P0 (Critical)
-**Component**: AIGenerationPanel, ContentGenerator
-**Dependencies**: FastAPI AI service, template context
+**Component**: FlashcardCreatorStep2, AIService
+**Dependencies**: FastAPI AI service, selected template, flashcard table data
 
 **Description**:
-Users must be able to trigger AI generation for output fields with comprehensive context and feedback mechanisms.
+Users must be able to trigger AI content generation for all eligible rows in the flashcard table using a single action. The system should use the "Batch Context" and individual row inputs to generate content.
 
 **AI Context**:
 
-- Service integration: FastAPI AI service calls
-- Context building: Template + field descriptions + user input
-- UI patterns: Loading states, progress indicators, error handling
-- Generation workflow: Input validation → Context building → AI call → Result display
+- Service integration: Single batch API call to FastAPI AI service for all eligible rows.
+- Context building: Template details, "Batch Context" field, and input field values for each row.
+- UI patterns: A global "[Generate AI for All Eligible Rows]" button. Overall progress bar for batch generation.
+- Workflow: User fills input fields -> Clicks "Generate AI for All Eligible Rows" -> System sends batch request -> AI-generated content populates table cells upon completion.
 
 **Acceptance Criteria**:
 
-1. Trigger AI generation after input field completion
-2. Loading indicators during AI processing
-3. Generated content displayed in editable fields
-4. Individual field regeneration capabilities
-5. Generation history and alternatives
-6. Context-aware generation based on template and user data
+1.  A single "[Generate AI for All Eligible Rows]" button triggers AI generation for all rows with necessary inputs.
+2.  Display an overall progress bar and status text (e.g., "X of Y rows processed") during batch AI generation.
+3.  AI-generated content populates the respective cells in the table upon successful completion of the batch request.
+4.  Row-level errors from the AI service are displayed within the table (e.g., in the cell or as a row annotation).
+5.  Global AI service errors (e.g., network failure for the batch) are communicated via general notifications.
+6.  The "Batch Context" field content is sent to the AI service as part of the generation request for all rows.
+7.  Individual rows can be re-generated using the "Regenerate AI" option in the row's "..." menu, using existing row data and batch context.
 
 **Implementation Hints**:
 
 ```typescript
-// AI generation workflow
-let generating = $state(false);
-let generatedContent = $state<Record<string, unknown>>({});
-let generationHistory = $state<GenerationResult[]>([]);
-
-async function generateContent() {
-	if (!validateInputFields()) return;
-
-	generating = true;
-	try {
-		const prompt = buildGenerationPrompt();
-		const response = await aiService.generateContent(prompt);
-
-		generatedContent = { ...generatedContent, ...response.generatedFields };
-		generationHistory = [...generationHistory, response];
-
-		// Apply generated content to form
-		Object.entries(response.generatedFields).forEach(([field, value]) => {
-			formData[field] = value;
-		});
-	} catch (error) {
-		handleGenerationError(error);
-	} finally {
-		generating = false;
-	}
+// AI generation service call for batch
+async function generateForAllEligibleRows(rows: FlashcardRowData[], batchContext: string, template: Template) {
+  // 1. Identify eligible rows
+  // 2. Construct batch request payload
+  // 3. Call AI service (e.g., aiService.generateBatchContent(payload))
+  // 4. Update rows with results or errors
 }
 
-function buildGenerationPrompt(): AIGenerationRequest {
-	return {
-		templateId: selectedTemplate.id,
-		inputFields: getInputFieldValues(),
-		language: {
-			native: selectedTemplate.nativeLanguage,
-			learning: selectedTemplate.learningLanguage,
-			level: selectedTemplate.languageLevel
-		},
-		context: {
-			userAbout: currentUser.aboutMe,
-			templateDescription: selectedTemplate.description
-		}
-	};
-}
-
-async function regenerateField(fieldName: string) {
-	generating = true;
-	try {
-		const response = await aiService.regenerateField(fieldName, buildGenerationPrompt());
-		formData[fieldName] = response.value;
-		generatedContent[fieldName] = response.value;
-	} catch (error) {
-		handleGenerationError(error);
-	} finally {
-		generating = false;
-	}
+// Row-level AI regeneration
+async function regenerateAIRow(row: FlashcardRowData, batchContext: string, template: Template) {
+  // Similar to batch, but for a single row
 }
 ```
 
-#### REQ-FC-004: Content Quality Management
+#### REQ-FC-004: AI Content Quality Feedback
 
 **Priority**: P1 (High)
-**Component**: ContentReview, QualityFeedback
-**Dependencies**: Generation service, user feedback system
+**Component**: FlashcardCreatorStep2, FeedbackControls
+**Dependencies**: AI service, user feedback system
 
 **Description**:
-System must provide mechanisms for users to review, rate, and provide feedback on AI-generated content quality.
+System must provide mechanisms for users to review and provide feedback (ratings, comments) on AI-generated content within the table.
 
 **AI Context**:
 
-- Feedback collection: Rating system, alternative requests
-- Quality tracking: Success rates, user satisfaction
-- UI components: Rating stars, feedback forms, regeneration buttons
-- Analytics: Generation quality metrics
+- Feedback UI: 👍/👎/💬 icons/buttons next to AI-generated fields in each row, active after generation.
+- Data Collection: Store feedback associated with the specific flashcard content and AI generation request.
+- Purpose: Feedback can be used to improve AI models or for user's own reference.
 
 **Acceptance Criteria**:
 
-1. Content quality rating system (1-5 stars)
-2. Alternative generation requests
-3. Feedback collection for improvement
-4. Generation success rate tracking
-5. Error handling for AI service failures
-6. Content editing capabilities post-generation
+1.  After AI content is generated for a row, display feedback icons (e.g., 👍, 👎, 💬) for each AI-generated field.
+2.  Clicking 👍/👎 records a positive/negative rating for the AI content.
+3.  Clicking 💬 allows the user to add a textual comment or suggestion for the AI-generated content.
+4.  Feedback is associated with the specific row and field.
+5.  Comments provided via 💬 can be used as additional context if "Regenerate AI" is triggered for that row.
 
 **Implementation Hints**:
 
 ```typescript
-// Content quality management
-let contentRatings = $state<Record<string, number>>({});
-let qualityFeedback = $state<Record<string, string>>({});
-
-async function rateContent(fieldName: string, rating: number, feedback?: string) {
-	contentRatings[fieldName] = rating;
-	if (feedback) qualityFeedback[fieldName] = feedback;
-
-	// Send feedback to analytics
-	await analyticsService.recordContentRating({
-		fieldName,
-		rating,
-		feedback,
-		templateId: selectedTemplate.id,
-		generationId: generationHistory[generationHistory.length - 1]?.id
-	});
+// Storing feedback per AI-generated cell
+interface AIGeneratedCellFeedback {
+  rating?: 'good' | 'bad';
+  comment?: string;
 }
 
-async function requestAlternative(fieldName: string) {
-	try {
-		const alternatives = await aiService.generateAlternatives(fieldName, buildGenerationPrompt());
-		// Show alternatives selection UI
-		showAlternativesDialog(fieldName, alternatives);
-	} catch (error) {
-		handleGenerationError(error);
-	}
+// Part of FlashcardRowData.cells for AI fields
+// cells: Record<string, { value: any; isInput: boolean; feedback?: AIGeneratedCellFeedback ... }>;
+```
+
+### 2.3 Flashcard Saving and Deck Management
+
+#### REQ-FC-005: Save to Deck Workflow
+
+**Priority**: P0 (Critical)
+**Component**: FlashcardCreatorStep3, DeckSelectionModal
+**Dependencies**: DeckService, FlashcardService
+
+**Description**:
+Users must be able to save the created and refined flashcards from the table to a new or existing deck in the final step of the workflow.
+
+**AI Context**:
+
+- UI: Modal dialog for deck selection. Decks displayed as selectable cards showing name and card count.
+- Functionality: Option to select an existing deck or create a new one.
+- Data Flow: Validated flashcard data from the table is packaged and sent to the backend for saving.
+
+**Acceptance Criteria**:
+
+1.  A "[Proceed to Save to Deck →]" button in the "Create & Refine Cards" stage, active when at least one valid flashcard exists.
+2.  Clicking this button navigates to the "Save to Deck" stage/modal.
+3.  The modal displays a list of existing decks as selectable cards (showing deck name, card count).
+4.  The modal provides an option to input a name and create a new deck.
+5.  User selects or creates a deck, then confirms saving (e.g., "[Save [N] Cards]" button).
+6.  Successfully saved flashcards are added to the chosen deck.
+7.  Appropriate feedback is provided upon successful save or if errors occur.
+
+**Implementation Hints**:
+
+```typescript
+// Deck selection modal
+// State for selected deck or new deck name
+let targetDeckId = $state<string | null>(null);
+let newDeckName = $state<string>('');
+
+async function saveFlashcardsToDeck(flashcards: FlashcardData[], deckIdOrNewName: string | { newName: string }) {
+  // Logic to either use existing deckId or create new deck, then save flashcards
 }
 ```
 
-### 2.3 Bulk Creation Capabilities
+### 2.4 Removed/Modified Requirements from v2.0.0
 
-#### REQ-FC-005: Clipboard and Text Import
+-   **REQ-FC-005 (Clipboard and Text Import - v2.0.0)**: Modified. Pasting multiple lines into a table cell is the primary mechanism for bulk-like entry from text. Dedicated "Bulk Import" mode/component using textarea is removed in favor of unified table.
+-   **REQ-FC-006 (File Upload Support - v2.0.0)**: Deprecated/Removed for this iteration of Flashcard Creator. Focus is on manual and paste-based input into the table.
+-   **REQ-FC-007 (File Upload and Validation - v2.0.0 for Media)**: Media handling (image/audio upload directly into table cells) is deferred. Template fields might still *describe* media, but direct upload in this specific creator UI is not a P0 for v2.1.0.
+-   **REQ-FC-008 (Auto-Save and Session Persistence)**: Retained but adapted. Auto-save applies to the current state of the flashcard table (rows, content, batch context).
+
+### 2.5 Session Management and Performance (Adapted for Table UI)
+
+#### REQ-FC-008: Auto-Save and Session Persistence for Table
 
 **Priority**: P1 (High)
-**Component**: BulkImport, TextProcessor
-**Dependencies**: Text parsing, validation system
-
-**Description**:
-Users must be able to create multiple flashcards from clipboard text or manual input with proper parsing and validation.
-
-**AI Context**:
-
-- Text processing: Line-by-line parsing, delimiter detection
-- Validation: Format validation, field mapping
-- UI components: Textarea, import preview, validation feedback
-- Batch processing: Queue management for AI generation
-
-**Acceptance Criteria**:
-
-1. Paste newline-separated text for bulk creation
-2. Automatic format detection and parsing
-3. Preview and validation before processing
-4. Batch AI generation for all items
-5. Individual item editing capabilities
-6. Progress indicators for bulk operations
-
-**Implementation Hints**:
-
-```typescript
-// Bulk import functionality
-let bulkText = $state('');
-let parsedItems = $state<BulkItem[]>([]);
-let bulkMode = $state<'text' | 'file'>('text');
-let processingBulk = $state(false);
-
-function parseBulkText(text: string): BulkItem[] {
-	const lines = text.split('\n').filter((line) => line.trim());
-
-	return lines.map((line, index) => {
-		// Parse based on template input fields
-		const values = detectDelimiter(line);
-		const mappedValues: Record<string, unknown> = {};
-
-		inputFields.forEach((field, fieldIndex) => {
-			if (values[fieldIndex]) {
-				mappedValues[field.label] = values[fieldIndex];
-			}
-		});
-
-		return {
-			id: `bulk-${index}`,
-			inputValues: mappedValues,
-			isValid: validateBulkItem(mappedValues),
-			errors: []
-		};
-	});
-}
-
-async function processBulkItems() {
-	processingBulk = true;
-	const results: FlashcardData[] = [];
-
-	try {
-		for (let i = 0; i < parsedItems.length; i++) {
-			const item = parsedItems[i];
-			if (!item.isValid) continue;
-
-			// Generate content for this item
-			const generatedContent = await generateContentForItem(item.inputValues);
-
-			results.push({
-				...item.inputValues,
-				...generatedContent,
-				template: selectedTemplate.id
-			});
-
-			// Update progress
-			bulkProgress = (i + 1) / parsedItems.length;
-		}
-
-		// Save all flashcards
-		await flashcardService.createBulk(results, selectedDeck.id);
-	} catch (error) {
-		handleBulkProcessingError(error);
-	} finally {
-		processingBulk = false;
-	}
-}
-```
-
-#### REQ-FC-006: File Upload Support
-
-**Priority**: P2 (Medium)
-**Component**: FileUpload, CSVProcessor
-**Dependencies**: File processing, CSV parsing
-
-**Description**:
-System must support CSV/TSV file upload for bulk flashcard creation with proper validation and processing.
-
-**AI Context**:
-
-- File handling: CSV parsing, validation, preview
-- UI components: File upload, drag-and-drop, progress indicators
-- Processing: Stream processing for large files
-- Validation: File format, size limits, content validation
-
-**Acceptance Criteria**:
-
-1. CSV/TSV file upload support
-2. File size limit (1MB maximum)
-3. Format validation and error reporting
-4. Column mapping to template fields
-5. Upload progress indicators
-6. Preview before processing
-
-**Implementation Hints**:
-
-```typescript
-// File upload and processing
-let uploadedFile = $state<File | null>(null);
-let csvData = $state<string[][]>([]);
-let columnMapping = $state<Record<number, string>>({});
-let uploadProgress = $state(0);
-
-async function handleFileUpload(file: File) {
-	if (file.size > 1024 * 1024) {
-		throw new Error('File size must be less than 1MB');
-	}
-
-	if (!['text/csv', 'text/tab-separated-values'].includes(file.type)) {
-		throw new Error('Only CSV and TSV files are supported');
-	}
-
-	uploadedFile = file;
-	csvData = await parseCSVFile(file);
-
-	// Auto-detect column mapping
-	autoMapColumns();
-}
-
-function parseCSVFile(file: File): Promise<string[][]> {
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onprogress = (event) => {
-			uploadProgress = (event.loaded / event.total) * 100;
-		};
-		reader.onload = (event) => {
-			const csv = event.target?.result as string;
-			const rows = csv.split('\n').map((row) => row.split(','));
-			resolve(rows);
-		};
-		reader.onerror = reject;
-		reader.readAsText(file);
-	});
-}
-```
-
-### 2.4 Media Handling
-
-#### REQ-FC-007: File Upload and Validation
-
-**Priority**: P1 (High)
-**Component**: MediaUpload, FileValidator
-**Dependencies**: File storage, media processing
-
-**Description**:
-System must support image and audio file uploads with proper validation, optimization, and preview capabilities.
-
-**AI Context**:
-
-- File types: JPEG, PNG, WebP for images; MP3, WAV, OGG for audio
-- Validation: File size, type, integrity checks
-- Processing: Image optimization, thumbnail generation
-- UI components: Drag-and-drop upload, preview, progress indicators
-
-**Acceptance Criteria**:
-
-1. Support image uploads (JPEG, PNG, WebP)
-2. Support audio uploads (MP3, WAV, OGG)
-3. File size limits (5MB per file)
-4. File validation and error handling
-5. Preview capabilities for all media types
-6. Progress indicators during upload
-
-**Implementation Hints**:
-
-```typescript
-// Media upload component
-let uploadingFiles = $state<Map<string, number>>(new Map());
-let uploadedMedia = $state<Record<string, MediaFile>>({});
-
-interface MediaFile {
-	id: string;
-	filename: string;
-	url: string;
-	type: 'image' | 'audio';
-	size: number;
-	thumbnail?: string;
-}
-
-async function handleMediaUpload(fieldName: string, file: File) {
-	// Validate file
-	validateMediaFile(file);
-
-	// Start upload with progress tracking
-	uploadingFiles.set(fieldName, 0);
-
-	try {
-		const mediaFile = await mediaService.uploadFile(file, {
-			onProgress: (progress) => {
-				uploadingFiles.set(fieldName, progress);
-				uploadingFiles = new Map(uploadingFiles);
-			}
-		});
-
-		// Process uploaded file
-		if (file.type.startsWith('image/')) {
-			mediaFile.thumbnail = await generateThumbnail(mediaFile);
-		}
-
-		uploadedMedia[fieldName] = mediaFile;
-		formData[fieldName] = mediaFile.url;
-	} catch (error) {
-		handleUploadError(fieldName, error);
-	} finally {
-		uploadingFiles.delete(fieldName);
-		uploadingFiles = new Map(uploadingFiles);
-	}
-}
-
-function validateMediaFile(file: File) {
-	const maxSize = 5 * 1024 * 1024; // 5MB
-	const allowedTypes = [
-		'image/jpeg',
-		'image/png',
-		'image/webp',
-		'audio/mpeg',
-		'audio/wav',
-		'audio/ogg'
-	];
-
-	if (file.size > maxSize) {
-		throw new Error(`File size must be less than ${maxSize / 1024 / 1024}MB`);
-	}
-
-	if (!allowedTypes.includes(file.type)) {
-		throw new Error('Unsupported file type');
-	}
-}
-```
-
-### 2.5 Session Management and Performance
-
-#### REQ-FC-008: Auto-Save and Session Persistence
-
-**Priority**: P1 (High)
-**Component**: SessionManager, AutoSave
+**Component**: SessionManager, AutoSaveTable
 **Dependencies**: Local storage, network handling
 
 **Description**:
-System must provide automatic saving of form data with session persistence and network interruption handling.
+System must provide automatic saving of the current flashcard creation session (table rows, content, batch context) with session persistence and network interruption handling.
 
 **AI Context**:
-
-- Auto-save: Periodic saving every 30 seconds
+- Auto-save: Periodically save the state of the `flashcardRows` and `batchContext`.
 - Storage: Browser localStorage for session persistence
 - Network handling: Retry mechanisms, offline support
 - UI feedback: Save status indicators
@@ -682,59 +391,60 @@ function restoreSession() {
 
 ```typescript
 // Flashcard creation interfaces (src/lib/types/flashcard-creator.ts)
-interface FlashcardCreationSession {
-	id: string;
-	templateId: string;
-	formData: Record<string, unknown>;
-	generatedContent: Record<string, unknown>;
-	status: 'draft' | 'generating' | 'complete';
-	created: string;
-	updated: string;
+interface FlashcardCreationSession { // Represents the overall state of the creator
+  id: string; // Session ID
+  templateId: string | null;
+  batchContext: string;
+  rows: FlashcardRow[]; // Array of flashcards being created/refined
+  status: 'template-selection' | 'create-refine' | 'saving';
+  created: string;
+  updated: string;
 }
 
-interface BulkCreationItem {
-	id: string;
-	inputValues: Record<string, unknown>;
-	generatedValues?: Record<string, unknown>;
-	isValid: boolean;
-	errors: string[];
-	status: 'pending' | 'processing' | 'complete' | 'error';
+interface FlashcardRow { // Represents a single row in the creation table
+  rowId: string; // Unique ID for this row in the current session
+  templateFields: Record<string, { // Keyed by template field ID/name
+    value: any;
+    isInput: boolean; // True if this field is an input field from the template
+    aiStatus?: 'idle' | 'pending' | 'generated' | 'error'; // Status for AI-generatable fields
+    error?: string; // Validation or AI error for this cell
+    feedback?: {
+      rating?: 'good' | 'bad';
+      comment?: string;
+    };
+  }>;
+  // Potentially other row-specific metadata, e.g., isMarkedForDeletion
 }
 
-interface MediaFile {
-	id: string;
-	filename: string;
-	url: string;
-	type: 'image' | 'audio';
-	size: number;
-	mimeType: string;
-	thumbnail?: string;
-	duration?: number; // for audio files
+interface AIBatchGenerationRequest {
+  templateId: string;
+  batchContext?: string;
+  items: Array<{
+    rowId: string; // To map results back
+    inputFields: Record<string, any>; // User-provided input data for this item
+    // Include existing comments from feedback if re-generating
+    existingComments?: Record<string, string>; // fieldId: comment
+  }>;
+  language: {
+    native: string;
+    learning: string;
+    level: CEFRLevel;
+  };
 }
 
-interface AIGenerationRequest {
-	templateId: string;
-	inputFields: Record<string, unknown>;
-	language: {
-		native: string;
-		learning: string;
-		level: CEFRLevel;
-	};
-	context?: {
-		userAbout?: string;
-		templateDescription?: string;
-		previousCards?: string[];
-	};
+interface AIBatchGenerationResponse {
+  results: Array<{
+    rowId:string;
+    success: boolean;
+    generatedFields?: Record<string, any>; // AI-generated content for this item
+    error?: string; // Item-specific error
+  }>;
+  batchError?: string; // Error affecting the whole batch
 }
 
-interface AIGenerationResponse {
-	success: boolean;
-	generatedFields: Record<string, unknown>;
-	confidence: number;
-	alternatives?: Record<string, unknown[]>;
-	error?: string;
-	generationId: string;
-}
+// MediaFile interface can remain if templates can *reference* media,
+// but direct upload in this UI is deferred.
+// interface MediaFile { ... }
 ```
 
 ### 3.2 Component Architecture
@@ -742,129 +452,74 @@ interface AIGenerationResponse {
 ```svelte
 <!-- Main flashcard creator component (src/lib/components/flashcard/FlashcardCreator.svelte) -->
 <script lang="ts">
-	import type { Template, Field } from '$lib/types/template.js';
-	import { flashcardCreationStore } from '$lib/stores/flashcard-creation.store.js';
-	import { TemplateSelector } from './TemplateSelector.svelte';
-	import { DynamicForm } from './DynamicForm.svelte';
-	import { AIGenerationPanel } from './AIGenerationPanel.svelte';
-	import { FlashcardPreview } from './FlashcardPreview.svelte';
-	import { BulkImport } from './BulkImport.svelte';
+  import type { Template } from '$lib/types/template.js';
+  import { TemplateSelector } from './TemplateSelector.svelte'; // Step 1
+  import { FlashcardTableCreator } from './FlashcardTableCreator.svelte'; // Step 2
+  import { SaveToDeckModal } from './SaveToDeckModal.svelte'; // Step 3
 
-	interface Props {
-		deckId: string;
-		mode?: 'single' | 'bulk';
-	}
+  type CreatorStep = 'template-selection' | 'create-refine' | 'save-to-deck';
 
-	let { deckId, mode = 'single' }: Props = $props();
+  let currentStep = $state<CreatorStep>('template-selection');
+  let selectedTemplate = $state<Template | null>(null);
+  let flashcardsToSave = $state<FlashcardRow[]>([]); // Populated from Step 2
 
-	let selectedTemplate = $state<Template | null>(null);
-	let fields = $state<Field[]>([]);
-	let formData = $state<Record<string, unknown>>({});
-	let generatedContent = $state<Record<string, unknown>>({});
-	let currentStep = $state<'template' | 'form' | 'generate' | 'preview'>('template');
+  function handleTemplateSelected(template: Template) {
+    selectedTemplate = template;
+    currentStep = 'create-refine';
+  }
 
-	let canProceed = $derived(() => {
-		switch (currentStep) {
-			case 'template':
-				return !!selectedTemplate;
-			case 'form':
-				return validateFormData(
-					formData,
-					fields.filter((f) => f.isInput)
-				);
-			case 'generate':
-				return Object.keys(generatedContent).length > 0;
-			default:
-				return true;
-		}
-	});
+  function handleProceedToSave(cards: FlashcardRow[]) {
+    flashcardsToSave = cards.filter(card => /* card is valid and not empty */);
+    if (flashcardsToSave.length > 0) {
+      currentStep = 'save-to-deck';
+    } else {
+      // Show notification: No cards to save
+    }
+  }
 
-	async function handleTemplateSelected(template: Template) {
-		selectedTemplate = template;
-		fields = await fieldService.getByTemplate(template.id);
-		initializeFormData();
-		currentStep = 'form';
-	}
+  function handleSaveComplete() {
+    // Reset state, navigate away, or show success message
+    selectedTemplate = null;
+    flashcardsToSave = [];
+    currentStep = 'template-selection';
+  }
 
-	async function handleFormComplete() {
-		if (
-			validateFormData(
-				formData,
-				fields.filter((f) => f.isInput)
-			)
-		) {
-			currentStep = 'generate';
-		}
-	}
+  function handleBackToTemplates() {
+    currentStep = 'template-selection';
+    selectedTemplate = null;
+    // Potentially clear or ask to save draft from create-refine step
+  }
 
-	async function handleGenerationComplete(generated: Record<string, unknown>) {
-		generatedContent = generated;
-		currentStep = 'preview';
-	}
-
-	async function handleSaveFlashcard() {
-		const flashcardData = {
-			...formData,
-			...generatedContent,
-			template: selectedTemplate.id,
-			deck: deckId
-		};
-
-		await flashcardService.create(flashcardData);
-
-		// Reset for next card or close
-		resetCreator();
-	}
 </script>
 
-<div class="flashcard-creator">
-	<header class="creator-header">
-		<h1>Create Flashcard</h1>
-		<div class="mode-selector">
-			<Button variant={mode === 'single' ? 'default' : 'outline'} onclick={() => (mode = 'single')}>
-				Single
-			</Button>
-			<Button variant={mode === 'bulk' ? 'default' : 'outline'} onclick={() => (mode = 'bulk')}>
-				Bulk
-			</Button>
-		</div>
-	</header>
-
-	{#if mode === 'bulk'}
-		<BulkImport
-			{selectedTemplate}
-			{fields}
-			{deckId}
-			on:template-selected={handleTemplateSelected}
-		/>
-	{:else}
-		<div class="creator-steps">
-			{#if currentStep === 'template'}
-				<TemplateSelector on:selected={handleTemplateSelected} />
-			{:else if currentStep === 'form'}
-				<DynamicForm {fields} bind:formData on:complete={handleFormComplete} />
-			{:else if currentStep === 'generate'}
-				<AIGenerationPanel
-					{selectedTemplate}
-					{fields}
-					{formData}
-					on:generated={handleGenerationComplete}
-				/>
-			{:else if currentStep === 'preview'}
-				<FlashcardPreview
-					{selectedTemplate}
-					{fields}
-					data={{ ...formData, ...generatedContent }}
-					on:save={handleSaveFlashcard}
-					on:edit={() => (currentStep = 'form')}
-				/>
-			{/if}
-		</div>
-	{/if}
+<div class="flashcard-creator-lifecycle">
+  {#if currentStep === 'template-selection'}
+    <TemplateSelector on:selected={handleTemplateSelected} />
+  {:else if currentStep === 'create-refine' && selectedTemplate}
+    <FlashcardTableCreator
+      bind:template={selectedTemplate}
+      on:proceedToSave={handleProceedToSave}
+      on:backToTemplates={handleBackToTemplates}
+    />
+  {:else if currentStep === 'save-to-deck'}
+    <SaveToDeckModal
+      cardsToSave={flashcardsToSave}
+      on:saved={handleSaveComplete}
+      on:cancel={() => currentStep = 'create-refine'}
+    />
+  {/if}
 </div>
 ```
 
-## 4. Implementation Guidelines
+<!-- FlashcardTableCreator.svelte (Conceptual for Step 2) -->
+<script lang="ts">
+  // Props: template, on:proceedToSave, on:backToTemplates
+  // Internal state: batchContext, flashcardRows
+  // Methods: addRow, handlePaste, generateForAllEligibleRows, handleRowAction (delete, preview, regenerate)
+  // UI: Batch context input, Table for flashcardRows, [+ Add Row], [Generate AI], [Save Draft], [Back], [Proceed to Save]
+</script>
+
+### 4. Implementation Guidelines
 
 ### 4.1 File Structure
 
@@ -872,23 +527,20 @@ interface AIGenerationResponse {
 src/lib/
 ├── components/
 │   └── flashcard/
-│       ├── FlashcardCreator.svelte
-│       ├── TemplateSelector.svelte
-│       ├── DynamicForm.svelte
-│       ├── AIGenerationPanel.svelte
-│       ├── FlashcardPreview.svelte
-│       ├── BulkImport.svelte
-│       └── MediaUpload.svelte
+│       ├── FlashcardCreator.svelte       // Main lifecycle component
+│       ├── TemplateSelector.svelte       // Step 1
+│       ├── FlashcardTableCreator.svelte  // Step 2 - Table UI
+│       ├── FlashcardRowActions.svelte    // "..." menu for table rows
+│       ├── SaveToDeckModal.svelte        // Step 3
+│       └── FlashcardPreviewModal.svelte  // For row preview action
 ├── services/
 │   ├── flashcard.service.ts
-│   ├── ai.service.ts
-│   ├── media.service.ts
-│   └── session.service.ts
+│   ├── ai.service.ts // Updated for batch generation
+│   └── deck.service.ts
 ├── stores/
-│   ├── flashcard-creation.store.ts
-│   └── bulk-import.store.ts
+│   └── flashcard-creation.store.ts // Manages state for the creation lifecycle
 ├── types/
-│   └── flashcard-creator.ts
+│   └── flashcard-creator.ts // Updated interfaces (FlashcardCreationSession, FlashcardRow etc.)
 └── utils/
     ├── file-validation.ts
     └── text-processing.ts
@@ -914,13 +566,23 @@ src/lib/
 
 ### 5.1 Functional Validation
 
-- [ ] Template selection and form generation
-- [ ] Dynamic form validation and submission
-- [ ] AI content generation with context
-- [ ] Bulk creation from text and files
-- [ ] Media upload and processing
-- [ ] Session management and auto-save
-- [ ] Real-time preview functionality
+- [ ] **Step 1: Template Selection**: User can select a template.
+- [ ] **Step 2: Create & Refine Cards (Table UI)**:
+  - [ ] Table renders correctly based on selected template.
+  - [ ] User can add rows manually.
+  - [ ] User can paste multiple lines to create rows.
+  - [ ] Direct editing of cell content works.
+  - [ ] "Batch Context" field is available and used by AI.
+  - [ ] Batch AI generation for all eligible rows is triggered by a single button.
+  - [ ] Overall progress bar shown during batch AI generation.
+  - [ ] AI content populates table cells; errors are shown at row/cell level.
+  - [ ] Row actions (Regenerate AI, Preview, Delete) function correctly.
+  - [ ] AI content feedback (👍/👎/💬) can be provided per AI field.
+- [ ] **Step 3: Save to Deck**:
+  - [ ] User can select an existing deck or create a new one via modal.
+  - [ ] Flashcards are saved to the chosen deck.
+- [ ] Session management (auto-save of table state) works.
+- [ ] Navigation between steps (Back, Proceed) is logical.
 
 ### 5.2 Technical Validation
 
@@ -943,21 +605,20 @@ src/lib/
 ### Requirements
 
 - [Template System Requirements](./template-system.requirements.md)
-- [AI Integration Requirements](../architecture/ai-integration.md)
-- [Deck Management Requirements](./deck-management.requirements.md)
+- [AI Integration Requirements](../architecture/ai-integration.md) // Ensure this reflects batch AI for flashcards
+- [Deck Management Requirements](./deck-management.requirements.md) // Ensure this covers deck selection UI
 
 ### API Documentation
 
-- [Flashcard Service API](../api/services/flashcard.service.md)
-- [AI Service API](../api/services/ai.service.md)
-- [Media Service API](../api/services/media.service.md)
+- [Flashcard Service API](../api/services/flashcard.service.md) // Needs to support saving batch of cards
+- [AI Service API](../api/services/ai.service.md) // Needs to support batch generation request/response
 
 ### Component Documentation
 
-- [Flashcard Creator Component](../components/feature/flashcard-creator.component.md)
-- [Dynamic Form Component](../components/ui/dynamic-form.component.md)
+- [Flashcard Creator Component](../components/feature/flashcard-creator.component.md) // Overall wrapper
+- [FlashcardTableCreator Component](../components/feature/flashcard-table-creator.component.md) // Specific to Step 2
+- [SaveToDeckModal Component](../components/ui/save-to-deck-modal.component.md)
 
 ### User Stories
 
-- [Flashcard Creation Workflow](../user-stories/teacher-workflows.md#flashcard-creation)
-- [Bulk Content Import](../user-stories/teacher-workflows.md#bulk-import)
+- [Flashcard Creation Workflow](../user-stories/user-journeys.md#flashcard-creation) // Update to reflect 3-step, table UI

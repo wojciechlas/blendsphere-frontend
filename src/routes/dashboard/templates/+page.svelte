@@ -95,9 +95,8 @@
 			const fieldsResult = await fieldService.listByTemplate(template.id);
 			if (fieldsResult.items && fieldsResult.items.length > 0) {
 				for (const field of fieldsResult.items) {
-					const { id: _id, created: _created, updated: _updated, ...fieldData } = field;
 					await fieldService.create({
-						...fieldData,
+						...field,
 						template: newTemplate.id
 					});
 				}
@@ -131,15 +130,21 @@
 	function getLevelBadgeVariant(
 		level: string
 	): 'default' | 'destructive' | 'outline' | 'secondary' {
-		const variants: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
+		const variants = {
 			A1: 'default',
 			A2: 'secondary',
 			B1: 'outline',
 			B2: 'default',
 			C1: 'secondary',
 			C2: 'destructive'
-		};
-		return variants[level] || 'default';
+		} as const;
+
+		// Use safe property access with 'in' operator
+		if (level in variants) {
+			return variants[level as keyof typeof variants];
+		}
+
+		return 'default';
 	}
 
 	// Filter templates based on search and filters
@@ -220,7 +225,7 @@
 	<!-- Templates Grid -->
 	{#if loading}
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-			{#each Array(8) as _, index (index)}
+			{#each Array(8)}
 				<Card class="animate-pulse">
 					<CardHeader>
 						<div class="bg-muted h-4 w-3/4 rounded"></div>

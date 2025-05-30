@@ -97,7 +97,9 @@ export const templateService = {
 
 			const resultList = await pb.collection('templates').getList(page, limit, {
 				filter: filterString || undefined,
-				sort: '-created'
+				sort: '-created',
+				// Add request options to prevent auto-cancellation
+				requestKey: `templates-list-${page}-${limit}-${JSON.stringify(filter)}`
 			});
 
 			return {
