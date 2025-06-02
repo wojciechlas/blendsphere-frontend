@@ -40,7 +40,6 @@
 	}
 
 	function safeHasFormData(data: Record<string, unknown>, key: string): boolean {
-		 
 		return Object.prototype.hasOwnProperty.call(data, key);
 	}
 

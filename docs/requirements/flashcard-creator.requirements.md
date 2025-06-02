@@ -19,9 +19,9 @@ context_tags:
 last_updated: 2025-05-30
 ai_context: |
   Flashcard Creator System for BlendSphere that enables users to create flashcards
-  using a three-step process: Select Template, Create & Refine Cards (table-based UI),
-  and Save to Deck. Features AI-powered content generation for batches of cards,
-  and supports adding multiple cards via direct input or pasting.
+  using a unified single-step interface that integrates template selection, content creation,
+  AI generation, and deck management. Features real-time AI-powered content generation,
+  immediate saving capabilities, and supports bulk card creation via direct input or pasting.
 
 ---
 
@@ -29,23 +29,26 @@ ai_context: |
 
 ### 1.1 Purpose
 
-Provide an intuitive and powerful interface for creating flashcards using a three-step process:
-1.  **Select Template**: Choose a flashcard structure.
-2.  **Create & Refine Cards**: Input content into a table, utilize batch AI generation, and refine cards.
-3.  **Save to Deck**: Save the created flashcards to a new or existing deck.
-This system integrates with the template system, AI services, and deck management.
+Provide an intuitive and powerful interface for creating flashcards using a unified single-step workflow that integrates:
+- **Template Selection**: Choose and switch flashcard structure within the main interface
+- **Content Creation**: Input content into a dynamic table with real-time validation  
+- **AI Generation**: Batch AI content generation with immediate feedback and refinement
+- **Deck Management**: Pre-select target deck and save cards as they become ready
+
+This system provides a seamless, iterative creation experience that integrates with the template system, AI services, and deck management.
 
 ### 1.2 Scope
 
-- Three-step flashcard creation lifecycle (Select Template, Create & Refine, Save to Deck)
-- Table-based interface for creating and refining multiple flashcards simultaneously.
-- Batch AI content generation for all eligible flashcards in the table.
-- Manual card addition and pasting multiple lines to create rows.
-- Inline editing and review of flashcard content.
-- Row-level actions (regenerate AI, preview, delete).
-- AI content feedback mechanism (ratings, comments).
-- Saving created flashcards to new or existing decks.
-- Session management for the creation process.
+- Single-step unified flashcard creation interface with integrated template and deck selection
+- Table-based interface for creating and refining multiple flashcards simultaneously
+- Real-time AI content generation with immediate status feedback per card
+- Incremental saving - save ready cards without waiting for entire batch completion
+- Manual card addition and pasting multiple lines to create rows
+- Inline editing and review of flashcard content with real-time validation
+- Row-level actions (regenerate AI, preview, delete) with contextual availability
+- AI content feedback mechanism (ratings, comments) for continuous improvement
+- Integrated deck selection and immediate saving of completed flashcards
+- Enhanced session management with auto-save and draft capabilities
 
 ### 1.3 Dependencies
 

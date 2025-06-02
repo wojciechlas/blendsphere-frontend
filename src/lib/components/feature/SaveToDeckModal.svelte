@@ -8,10 +8,12 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
+	import FlashcardRenderer from '$lib/components/ui/flashcard/flashcard-renderer.svelte';
 	import BookIcon from '@tabler/icons-svelte/icons/book';
 	import TagIcon from '@tabler/icons-svelte/icons/tag';
 	import SaveIcon from '@tabler/icons-svelte/icons/device-floppy';
 	import type { Template } from '$lib/services/template.service.js';
+	import type { Field } from '$lib/services/field.service.js';
 	import type { Deck } from '$lib/services/deck.service.js';
 	import type { FlashcardRow } from '$lib/types/flashcard-creator.js';
 
@@ -87,6 +89,28 @@
 			selectedCards = new Set(cards.map((c) => c.id));
 		}
 	}
+
+	// Convert FlashcardRow to data format for renderer
+	function convertRowToData(row: FlashcardRow): Record<string, unknown> {
+		const data: Record<string, unknown> = {};
+
+		if (template) {
+			// Convert cell data to field label-based data (Field interface uses 'label', not 'name')
+			template.fields?.forEach((field: Field) => {
+				const fieldIdSafe = String(field.id);
+				const cell = row.cells[fieldIdSafe];
+				if (cell) {
+					data[field.label] = cell.content;
+				}
+			});
+		} else {
+			// Fallback to front/back content
+			data.front = row.front.content;
+			data.back = row.back.content;
+		}
+
+		return data;
+	}
 </script>
 
 <Card.Root class="w-full max-w-4xl">
@@ -147,16 +171,28 @@
 							onCheckedChange={() => toggleCard(card.id)}
 						/>
 						<div class="min-w-0 flex-1">
-							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-								<div>
-									<div class="text-muted-foreground mb-1 text-sm font-medium">Front</div>
-									<div class="text-sm">{card.front.content}</div>
+							{#if template}
+								<FlashcardRenderer
+									{template}
+									data={convertRowToData(card)}
+									mode="compact"
+									interactive={false}
+									showFieldLabels={false}
+									minHeight="auto"
+								/>
+							{:else}
+								<!-- Fallback display when no template -->
+								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+									<div>
+										<div class="text-muted-foreground mb-1 text-sm font-medium">Front</div>
+										<div class="text-sm">{card.front.content}</div>
+									</div>
+									<div>
+										<div class="text-muted-foreground mb-1 text-sm font-medium">Back</div>
+										<div class="text-sm">{card.back.content}</div>
+									</div>
 								</div>
-								<div>
-									<div class="text-muted-foreground mb-1 text-sm font-medium">Back</div>
-									<div class="text-sm">{card.back.content}</div>
-								</div>
-							</div>
+							{/if}
 						</div>
 					</div>
 				{/each}

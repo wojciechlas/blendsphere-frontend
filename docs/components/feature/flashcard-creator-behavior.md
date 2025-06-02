@@ -1,6 +1,8 @@
 # Flashcard Creator System Behavior Specification
 
-## 1. Flashcard Creation Lifecycle
+## 1. Single-Step Flashcard Creation Lifecycle
+
+The BlendSphere flashcard creation system uses a unified, single-step interface that integrates template selection, content creation, AI generation, and deck management into one seamless workflow. This approach eliminates the complexity of multi-step wizards while providing a more natural, iterative creation experience.
 
 ### 1.1 Entry Points and Navigation
 
@@ -9,8 +11,8 @@
 ```
 Entry Point 1: Main Navigation
 1. User clicks "Create Flashcard" in sidebar navigation
-2. User selects template or creates a new one
-3. System navigates to flashcard creator 
+2. System opens unified flashcard creator interface
+3. User selects template and deck, then begins creating cards
 
 Entry Point 2: Deck Management
 1. User browses to specific deck page
@@ -26,7 +28,7 @@ Entry Point 4: Quick Actions
 1. User clicks floating "+" button on dashboard
 2. System shows quick action menu
 3. User selects "New Flashcard"
-4. System navigates to flashcard creator
+4. System opens unified flashcard creator
 ```
 
 #### Navigation Flow Layout
@@ -35,81 +37,100 @@ Entry Point 4: Quick Actions
 Breadcrumb Navigation:
 Home > Flashcards > Create
 
-Progress Indicator:
-[1. Select Template] → [2. Create & Refine Cards] → [3. Save to Deck]
-     ✓ Complete         🔄 Current                     ⏸ Pending
+Single-Step Interface:
+Create Flashcards
+ 🔄 Active
 ```
 
-### 1.2 Deck and Template Selection Process
+### 1.2 Single-Step Unified Interface
 
-#### Template Selection Interface
+The flashcard creation process is now consolidated into a single, comprehensive interface that combines template selection, content creation, and deck management in one view.
+
+#### Unified Creator Layout
 
 ```
 Main Creator Layout:
-┌─────────────────┬───────────────────────────────────┐
-│ Template        │                                   │
-│ Selection       │         Content Creator           │
-│                 │                                   │
-│ [Search...]     │    Select a template to begin    │
-│                 │                                   │
-│ My Templates:   │              [🎴]                │
-│ ┌─────────────┐ │                                   │
-│ │ Basic Vocab │ │     Choose from templates on      │
-│ │ ⭐⭐⭐⭐⭐     │ │     the left to start creating   │
-│ │ EN → ES     │ │           your flashcard          │
-│ └─────────────┘ │                                   │
-│ ┌─────────────┐ │                                   │
-│ │ Grammar     │ │                                   │
-│ │ ⭐⭐⭐⭐⚬     │ │                                   │
-│ │ EN → FR     │ │                                   │
-│ └─────────────┘ │                                   │
-│                 │                                   │
-│ Public:         │                                   │
-│ ┌─────────────┐ │                                   │
-│ │ Spanish     │ │                                   │
-│ │ Starter     │ │                                   │
-│ │ ⭐⭐⭐⭐⭐     │ │                                   │
-│ └─────────────┘ │                                   │
-└─────────────────┴───────────────────────────────────┘
+┌─────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Settings Panel  │                                    Content Creator                                                     │
+│                 │                                                                                                         │
+│ Template:       │ Create Flashcards: Basic Spanish Vocabulary                                                             │
+│ ┌─────────────┐ │                                                                                                         │
+│ │ Basic Vocab │ │ Deck: [My Spanish Vocab ▼] [+ New Deck]                                                               │
+│ │ ⭐⭐⭐⭐⭐     │ │                                                                                                         │
+│ │ EN → ES     │ │ Batch Context (Optional): [Chapter 5 vocabulary - basic greetings and farewells______________]       │
+│ │ [Change]    │ │ 💡 Provide overall context for this batch to improve AI generation                                     │
+│ └─────────────┘ │                                                                                                         │
+│                 │ Flashcard Table:                                                                                        │
+│ Deck:           │ ┌───┬────────────────┬──────────────────────────────┬──────────────────────────────┬─────────┬──────┐│
+│ ┌─────────────┐ │ │ # │ Spanish Word*  │ English Translation          │ Example Sentence (ES)        │ Status  │ Actions││
+│ │ My Spanish  │ │ │   │ (Input)        │ (AI Generated)               │ (AI Generated)               │         │      ││
+│ │ Vocab       │ │ ├───┼────────────────┼──────────────────────────────┼──────────────────────────────┼─────────┼──────┤│
+│ │ (250 cards) │ │ │ 1 │ [hola_______]  │ [hello, hi_____________]     │ [¡Hola! ¿Cómo estás?]       │ ✅ Ready│ [...] ││
+│ │ [Change]    │ │ ├───┼────────────────┼──────────────────────────────┼──────────────────────────────┼─────────┼──────┤│
+│ └─────────────┘ │ │ 2 │ [adiós______]  │ [goodbye, bye_____________]  │ [Adiós, nos vemos mañana.]   │ ✅ Ready│ [...] ││
+│                 │ ├───┼────────────────┼──────────────────────────────┼──────────────────────────────┼─────────┼──────┤│
+│ Templates:      │ │ 3 │ [qué tal?___]  │                              │                              │ ⏳ Input│ [...] ││
+│ ┌─────────────┐ │ └───┴────────────────┴──────────────────────────────┴──────────────────────────────┴─────────┴──────┘│
+│ │ Basic Vocab │ │                                                                               [+ Add Row]           │
+│ │ Grammar     │ │                                                                                                         │
+│ │ Sentences   │ │ [🤖 Generate AI for Eligible Rows] [💾 Save All Ready Cards] [📝 Save as Draft]                      │
+│ │ [Browse...] │ │                                                                                                         │
+│ └─────────────┘ │ AI Progress: [██████░░░░░░░░░░░░░░░] 40% (2 of 5 rows processed)                                      │
+│                 │                                                                                                         │
+│ Quick Actions:  │ Status Legend: ✅ Ready to save | ⏳ Needs input | 🤖 AI generating | ❌ Has errors                    │
+│ [+ Quick Card]  │                                                                                                         │
+│ [📄 Templates]  │                                                                                                         │
+│ [📚 My Decks]   │                                                                                                         │
+└─────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-Template Card Behavior:
-- Hover shows preview tooltip with field structure
-- Click selects template and loads form
-- Star ratings show community feedback
-- Language pair clearly displayed
-- Recent usage indicated with "Recently Used" badge
+Panel Behavior:
+- Template selection updates the table structure immediately
+- Deck selection determines where cards will be saved
+- Template browser allows quick switching between templates
+- Quick Actions provide shortcuts to common tasks
+- Settings persist within the session
 ```
 
-### 1.3 Create & Refine Cards
+### 1.3 Integrated Content Creation & Management
 
-Once a template is selected, the user enters the primary "Create & Refine Cards" stage. This stage utilizes a unified, table-based interface for inputting content, leveraging AI for generation, and iteratively reviewing and editing flashcards.
+The single-step interface combines content creation, AI generation, and deck management in one unified workflow. Users can work with multiple flashcards simultaneously while having immediate access to template switching and deck selection.
 
-#### Unified Table Interface
+#### Real-Time Content Creation
 
-The core of this stage is an interactive table where each row represents a flashcard, and columns correspond to the fields from the selected template, plus controls for actions and feedback.
+The main content area features an enhanced table interface with integrated settings and immediate feedback:
 
 ```
-Layout (e.g., "Basic Spanish Vocabulary" template):
+Enhanced Table Features:
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ Create Flashcards: Basic Spanish Vocabulary                                                                                 │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ Step 2 of 3: Create & Refine Cards                                                                                          │
+│ Deck: [My Spanish Vocab ▼] [+ New Deck]                    Template: [Basic Vocab ▼] [📝 Edit Template]                   │
 │                                                                                                                             │
-│ Batch Context (Optional): [_________________________________________________________]                                       │
-│ 💡 Provide overall context for this batch, e.g., "Chapter 5 vocabulary" or "Today's lesson on greetings"                   │
+│ Batch Context (Optional): [Chapter 5 vocabulary - basic greetings and farewells____________________]                      │
+│ 💡 Provide overall context for this batch to improve AI generation quality                                                 │
 │                                                                                                                             │
 │ Flashcard Table:                                                                                                            │
-│ ┌───┬──────────────────┬──────────────────────────────────┬──────────────────────────────────┬──────────────────┬───────────┐│
-│ │ # │ Spanish Word*    │ English Translation              │ Example Sentence (ES)            │ Feedback         │ Actions   ││
-│ │   │ (Input)          │ (AI Generated)                   │ (AI Generated)                   │ (AI Fields)      │           ││
-│ ├───┼──────────────────┼──────────────────────────────────┼──────────────────────────────────┼──────────────────┼───────────┤│
-│ │ 1 │ [hola________]   │                                  │                                  │                  │ [...]     ││
-│ ├───┼──────────────────┼──────────────────────────────────┼──────────────────────────────────┼──────────────────┼───────────┤│
-│ │ 2 │ [adiós_______]   │ [hello, hi___________]           │ [Adiós, amigo.]                  │ [👍][👎][💬]      │ [...]     ││
-│ ├───┼──────────────────┼──────────────────────────────────┼──────────────────────────────────┼──────────────────┼───────────┤│
-│ │ 3 │ [qué tal?____]   │                                  │ <Row Error: AI gen failed>       │                  │ [...]     ││
-│ └───┴──────────────────┴──────────────────────────────────┴──────────────────────────────────┴──────────────────┴───────────┘│
-│                                                                                                 [+ Add Row]                 │
+│ ┌───┬────────────────┬──────────────────────────────┬──────────────────────────────┬─────────────────┬─────────┬──────────┐│
+│ │ # │ Spanish Word*  │ English Translation          │ Example Sentence (ES)        │ Feedback        │ Status  │ Actions  ││
+│ │   │ (Input)        │ (AI Generated)               │ (AI Generated)               │ (AI Fields)     │         │          ││
+│ ├───┼────────────────┼──────────────────────────────┼──────────────────────────────┼─────────────────┼─────────┼──────────┤│
+│ │ 1 │ [hola_______]  │ [hello, hi_____________]     │ [¡Hola! ¿Cómo estás?]       │ [👍][👎][💬]    │ ✅ Ready│ [...]    ││
+│ ├───┼────────────────┼──────────────────────────────┼──────────────────────────────┼─────────────────┼─────────┼──────────┤│
+│ │ 2 │ [adiós______]  │ [goodbye, bye_____________]  │ [Adiós, nos vemos mañana.]   │ [👍][👎][💬]    │ ✅ Ready│ [...]    ││
+│ ├───┼────────────────┼──────────────────────────────┼──────────────────────────────┼─────────────────┼─────────┼──────────┤│
+│ │ 3 │ [qué tal?___]  │                              │                              │                 │ ⏳ Input│ [...]    ││
+│ ├───┼────────────────┼──────────────────────────────┼──────────────────────────────┼─────────────────┼─────────┼──────────┤│
+│ │ 4 │ [gracias____]  │ 🤖 Generating...             │ 🤖 Generating...             │                 │🤖 AI Gen│ [...]    ││
+│ └───┴────────────────┴──────────────────────────────┴──────────────────────────────┴─────────────────┴─────────┴──────────┘│
+│                                                                                                          [+ Add Row]       │
+│                                                                                                                             │
+│ 🤖 [Generate AI for Eligible Rows (2)]  💾 [Save All Ready Cards (2)]  📝 [Save as Draft]  🔄 [Clear All]               │
+│                                                                                                                             │
+│ AI Progress: [██████░░░░░░░░░░░░░░░] 40% (1 of 4 rows processed) - Processing: "gracias"                                  │
+│                                                                                                                             │
+│ Status Legend: ✅ Ready to save | ⏳ Needs input | 🤖 AI generating | ❌ Has errors | 📝 Draft saved                       │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 │                                                                                                                             │
 │ Overall AI Progress (when batch generating): [██████░░░░░░░░░░░░░░░] 33% (1 of 3 rows processed)                            │
 │                                                                                                                             │
@@ -122,6 +143,15 @@ Layout (e.g., "Basic Spanish Vocabulary" template):
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Enhanced Single-Step Workflow:**
+
+**Key Features:**
+-   **Integrated Template & Deck Selection:** Template and deck selection happen within the main interface, allowing users to switch contexts without losing their work.
+-   **Real-Time Status Tracking:** Each row shows its current status (✅ Ready, ⏳ Needs input, 🤖 AI generating, ❌ Has errors).
+-   **Immediate Saving:** Cards can be saved to the selected deck as soon as they're ready, without needing to complete all cards.
+-   **Batch Context:** Global context field helps AI generate more cohesive content across all cards in the session.
+-   **Smart Action Buttons:** Action buttons show counts and are enabled/disabled based on current card states.
+
 **Table Behavior & Content Input:**
 -   **Batch Context:** An optional field at the top allows users to provide a general context for the entire batch of flashcards being created. This context can be used by the AI to generate more relevant content.
 -   **Rows & Columns:** Each row is a flashcard. Columns include user input fields (defined by the template), AI-generated fields (also defined by the template), a feedback section for AI content, and an actions menu.
@@ -133,11 +163,12 @@ Layout (e.g., "Basic Spanish Vocabulary" template):
 -   **Validation:** Real-time validation applies to input fields. Visual cues indicate errors on a per-cell/row basis.
 
 **AI Content Generation:**
--   **Primary Trigger ("[Generate AI for All Eligible Rows]"):** A single, prominent button is available to trigger AI content generation for all rows that have the necessary input fields filled and haven't been processed yet (or are marked for re-generation). The global "Batch Context" is used by the AI for all items in this single batch request.
+-   **Primary Trigger ("Generate AI for Eligible Rows (N)"):** A smart button that shows the count of eligible rows and triggers AI content generation for all rows that have the necessary input fields filled and haven't been processed yet. The global "Batch Context" is used by the AI for all items in this batch request.
 -   **Loading State & Progress Visualization:**
-    -   **Overall Progress (Batch Mode):** When "[Generate AI for All Eligible Rows]" is clicked, an overall progress bar and text (e.g., `[████░░░░░░] 40% (X of Y rows processed)`) will appear below the table or in a noticeable area, indicating the batch processing status.
-    -   Upon completion of the batch request, the AI-generated fields in the table are populated with the content received from the AI service.
-    -   Feedback icons (👍/👎/💬) become active for AI-generated fields after content is successfully populated.
+    -   **Real-Time Progress:** When "Generate AI for Eligible Rows" is clicked, an overall progress bar shows current processing status (e.g., `40% (1 of 4 rows processed) - Processing: "gracias"`).
+    -   Individual rows show "🤖 Generating..." in their AI fields during processing.
+    -   Upon completion, AI-generated fields are populated and feedback icons (👍/👎/💬) become active.
+    -   Row status updates to ✅ Ready when AI generation completes successfully.
 
 **Review and Refinement (Inline within the Table):**
 -   **Actions Menu ("..."):** Each row has an ellipsis button that opens a menu with the following actions:
@@ -150,62 +181,59 @@ Layout (e.g., "Basic Spanish Vocabulary" template):
     -   `💬`: Allows textual comments/suggestions for AI regeneration or personal notes related to the AI content.
 -   **Manual Edits:** Users can directly type into any cell to correct, complete, or override any content.
 
-After users have inputted data, utilized AI generation, and refined their flashcards within the table, they can proceed to the final saving step. The "[Proceed to Save to Deck →]" button typically becomes active once there is at least one valid flashcard ready for saving.
+After users have inputted data, utilized AI generation, and refined their flashcards within the table, they can save completed cards directly using the "Save All Ready Cards" button. The deck is pre-selected in the interface, making the save process immediate and seamless.
 
 **Error Handling:**
 -   **Validation Errors:** Clearly displayed at the cell or row level, preventing invalid data from being saved without user attention.
 -   **AI Generation Errors:** If the batch AI generation fails for specific rows, an error message or indicator (e.g., `<Row Error: AI gen failed>`) is shown in the relevant cells or an annotation for that row. Users can then choose to retry generation for those rows (possibly individually via the "..." menu) or manually fill the content. Global AI service errors (network issues, rate limits for the batch) are communicated through general notifications, possibly indicating which rows were affected or if the entire batch failed.
 
-### 1.4 Saving to Deck
+### 1.4 Integrated Saving & Deck Management
 
-This is the final stage in the flashcard creation workflow, where the batch of created and refined flashcards is saved to a user-selected deck.
+In the single-step interface, saving is integrated directly into the main workflow. Users pre-select their target deck and can save cards as they become ready, without needing a separate save step.
 
-#### Deck Selection and Confirmation Process
+#### Seamless Save Process
 
-1.  The user initiates the save process by clicking the "[Proceed to Save to Deck →]" button (or a similar "Save All Cards" button) from the "Create & Refine Cards" stage.
-2.  A modal dialog appears, prompting the user for deck selection:
-    ```
-    ┌──────────────────────────────────────────────────┐
-    │ Save Flashcards to Deck                          │
-    ├──────────────────────────────────────────────────┤
-    │ You are about to save [N] flashcards.            │
-    │                                                  │
-    │ Select Deck:                                     │
-    │   ┌─────────────┐  ┌─────────────┐             │
-    │   │ My Vocab    │  │ Spanish 101 │             │
-    │   │ (250 cards) │  │ (75 cards)  │             │
-    │   │ [Select]    │  │ [Select]    │             │
-    │   └─────────────┘  └─────────────┘             │
-    │   ┌─────────────┐                              │
-    │   │ Travel Phrs │                              │
-    │   │ (30 cards)  │                              │
-    │   │ [Select]    │                              │
-    │   └─────────────┘                              │
-    │                                                  │
-    │ Or, Create New Deck:                             │
-    │ [________________________] [Create & Select]     │
-    │                                                  │
-    │ Options:                                         │
-    │ [ ] Clear table after saving                     │
-    │                                                  │
-    │                      [Cancel] [Save [N] Cards]   │
-    └──────────────────────────────────────────────────┘
-    ```
-3.  The user selects an existing deck by clicking its corresponding "[Select]" button or types a name to create a new deck and selects it.
-4.  The user confirms the action by clicking the "[Save [N] Cards]" button.
+1. **Pre-Selected Deck:** Users select their target deck from the dropdown in the main interface header
+2. **Real-Time Save:** The "Save All Ready Cards (N)" button saves all cards with ✅ Ready status immediately  
+3. **Incremental Workflow:** Users can continue adding and refining cards while previously completed cards are already saved
+4. **Quick Deck Switching:** Users can change target deck at any time without losing work in progress
 
-**Saving Operation:**
--   A visual progress indicator (e.g., a progress bar or spinner) is displayed during the save operation, especially if a large number of cards are being processed.
--   The system saves all valid and completed flashcards from the table to the chosen deck. Rows with critical validation errors or those explicitly marked for exclusion might be skipped, with a summary notification provided to the user.
+#### Save Operation Behavior
 
-**Post-Save Actions and Notifications:**
--   Upon successful completion, a confirmation message is displayed (e.g., "[N] flashcards successfully saved to [Deck Name]!").
--   The user is typically presented with options such as:
-    -   "Create More Flashcards" (which might clear the table if the option was selected, or return to the template selection/cleared table for the same template).
-    -   "View Deck" (navigates the user to the deck page where the cards were saved).
-    -   "Close" (dismisses the confirmation).
--   If the "Clear table after saving" option was checked, the flashcard creation table is reset, ready for a new batch.
+**Immediate Save:**
+- Clicking "Save All Ready Cards (N)" immediately saves all ready cards to the pre-selected deck
+- A brief success notification appears: "3 cards saved to My Spanish Vocab"
+- Saved cards remain in the table but their status changes to "📝 Saved"
+- Users can continue working on remaining cards or add new ones
 
-**Draft Management:**
--   The "[Save Draft]" button, available during the "Create & Refine Cards" stage, allows users to save the current state of their flashcard table (including all inputs, AI-generated content, comments, etc.) as a draft.
--   Drafts can be resumed later, allowing users to continue their work without losing progress. This functionality is distinct from saving finalized cards to a deck.
+**Deck Management:**
+- **Change Deck:** Click the deck dropdown to select a different target deck
+- **New Deck:** Click "[+ New Deck]" to create and immediately select a new deck
+- **Deck Info:** Current deck shows card count for context
+
+#### Post-Save Experience
+
+**Continuous Workflow:**
+- After saving, the interface remains active for continued card creation
+- "Save All Ready Cards" button updates to reflect remaining unsaved cards
+- Users can mix saved and unsaved cards in the same session
+- Clear indicators show which cards have been saved vs. still in progress
+
+**Session Management:**
+- **Save as Draft:** Preserves entire session (saved and unsaved cards) for later resumption
+- **Clear All:** Removes all cards and resets to clean state
+- **Auto-save:** Draft is automatically saved every few minutes to prevent data loss
+
+**Quick Actions:**
+- "View Deck" link appears after first save to quickly navigate to the updated deck
+- "Create Similar" button allows rapid creation of cards using the same template and context
+- Session statistics show total cards created, saved, and remaining
+
+**Enhanced Draft Management:**
+- **Auto-Save Drafts:** The system automatically saves session state every few minutes
+- **Manual Draft Save:** Users can explicitly save current session state including template, deck selection, all card data, and AI feedback
+- **Resume Sessions:** Draft sessions can be resumed from the dashboard or a "Recent Drafts" quick action
+- **Cross-Template Drafts:** Users can save drafts that span multiple templates if they switch during a session
+- **Draft Indicators:** Clear visual indicators show when a session has unsaved changes vs. is fully saved/drafted
+
+This single-step approach eliminates the complexity of multi-stage workflows while providing a more fluid, iterative creation experience that matches natural content creation patterns.

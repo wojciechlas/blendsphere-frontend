@@ -12,6 +12,7 @@
 	import EyeIcon from '@tabler/icons-svelte/icons/eye';
 	import ThumbUpIcon from '@tabler/icons-svelte/icons/thumb-up';
 	import ThumbDownIcon from '@tabler/icons-svelte/icons/thumb-down';
+	import FlashcardPreview from './FlashcardPreview.svelte';
 	import type { Template } from '$lib/services/template.service.js';
 	import type { Deck } from '$lib/services/deck.service.js';
 	import type { Field } from '$lib/services/field.service.js';
@@ -28,10 +29,13 @@
 		fields: Field[];
 		deck?: Deck;
 		session: FlashcardCreationSession;
-		onCardsCreated: (cards: FlashcardRow[]) => void;
 	}
 
-	let { template, fields, deck, session, onCardsCreated }: Props = $props();
+	let { template, fields, deck, session }: Props = $props();
+
+	// Preview modal state
+	let previewModalOpen = $state(false);
+	let previewRowData = $state<FlashcardRow | null>(null);
 
 	// Helper functions for safe object access
 	function safeGetCell(
@@ -299,8 +303,11 @@
 	}
 
 	function previewCard(rowId: string) {
-		// TODO: Implement card preview modal
-		console.log('Previewing card:', rowId);
+		const row = flashcardRows.find((r) => r.id === rowId);
+		if (!row) return;
+
+		previewRowData = row;
+		previewModalOpen = true;
 	}
 
 	function provideFeedback(rowId: string, fieldId: string, rating: 'positive' | 'negative') {
@@ -329,25 +336,20 @@
 		updateSession();
 	}
 
-	function proceedToSave() {
-		// Validate that we have at least one complete card
-		const completedCards = flashcardRows.filter((row) =>
-			templateFields.every((field) => {
-				const fieldIdSafe = String(field.id);
-				const cell = safeGetCell(row.cells, fieldIdSafe);
-				return cell && cell.content.trim();
-			})
-		);
+	// Convert FlashcardRow to preview data format
+	function convertRowToPreviewData(row: FlashcardRow): Record<string, unknown> {
+		const previewData: Record<string, unknown> = {};
 
-		if (completedCards.length === 0) {
-			generationError = 'Please complete at least one flashcard before proceeding';
-			return;
-		}
+		// Convert cells to field label-based data (Field interface uses 'label', not 'name')
+		templateFields.forEach((field) => {
+			const fieldIdSafe = String(field.id);
+			const cell = safeGetCell(row.cells, fieldIdSafe);
+			if (cell) {
+				previewData[field.label] = cell.content;
+			}
+		});
 
-		// Update session and call the callback
-		session.cards = completedCards;
-		updateSession();
-		onCardsCreated(completedCards);
+		return previewData;
 	}
 </script>
 
@@ -532,27 +534,18 @@
 			</div>
 		</Card.Content>
 	</Card.Root>
-
-	<!-- Summary and Actions -->
-	<div class="flex items-center justify-between rounded-lg border p-4">
-		<div class="space-y-1">
-			<div class="text-sm font-medium">
-				{flashcardRows.filter((row) =>
-					templateFields.every((field) => {
-						const fieldIdSafe = String(field.id);
-						const cell = safeGetCell(row.cells, fieldIdSafe);
-						return cell && cell.content.trim();
-					})
-				).length} of {flashcardRows.length} cards completed
-			</div>
-			<div class="text-muted-foreground text-sm">
-				{#if deck}
-					Cards will be saved to "{deck.name}" deck
-				{:else}
-					Cards will be saved to a deck of your choice
-				{/if}
-			</div>
-		</div>
-		<Button onclick={proceedToSave} class="gap-2">Continue to Save</Button>
-	</div>
 </div>
+
+<!-- Flashcard Preview Modal -->
+{#if previewRowData}
+	<FlashcardPreview
+		{template}
+		data={convertRowToPreviewData(previewRowData)}
+		deckName={deck?.name || 'Selected Deck'}
+		bind:open={previewModalOpen}
+		onClose={() => {
+			previewModalOpen = false;
+			previewRowData = null;
+		}}
+	/>
+{/if}

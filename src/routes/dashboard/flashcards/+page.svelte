@@ -10,15 +10,10 @@
 	} from '$lib/components/ui/card/index.js';
 	import PlusIcon from '@tabler/icons-svelte/icons/plus';
 	import CardsIcon from '@tabler/icons-svelte/icons/cards';
-	import BulkIcon from '@tabler/icons-svelte/icons/stack-2';
 	import BookIcon from '@tabler/icons-svelte/icons/book';
 
 	function handleCreateSingle() {
 		goto('/dashboard/flashcards/create');
-	}
-
-	function handleCreateBulk() {
-		goto('/dashboard/flashcards/create?mode=bulk');
 	}
 
 	function handleViewDecks() {
@@ -59,19 +54,14 @@
 			</CardContent>
 		</Card>
 
-		<!-- Bulk Create -->
-		<Card class="cursor-pointer transition-shadow hover:shadow-md" onclick={handleCreateBulk}>
+		<!-- Browse Decks -->
+		<Card>
 			<CardHeader>
-				<CardTitle class="flex items-center gap-2">
-					<BulkIcon class="h-5 w-5" />
-					Bulk Create
-				</CardTitle>
-				<CardDescription>
-					Create multiple flashcards from text, CSV files, or clipboard content
-				</CardDescription>
+				<CardTitle class="text-lg">My Decks</CardTitle>
+				<CardDescription>Organize your flashcards into collections</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<Button variant="outline" class="w-full" onclick={handleCreateBulk}>Bulk Import</Button>
+				<Button variant="outline" class="w-full" onclick={handleViewDecks}>Manage Decks</Button>
 			</CardContent>
 		</Card>
 
@@ -94,37 +84,26 @@
 		</Card>
 	</div>
 
-	<!-- Recent Activity Section -->
-	<Card>
-		<CardHeader>
-			<CardTitle class="flex items-center gap-2">
-				<CardsIcon class="h-5 w-5" />
-				Recent Activity
-			</CardTitle>
-			<CardDescription>Your recently created flashcards and decks</CardDescription>
-		</CardHeader>
-		<CardContent>
-			<div class="rounded-lg border border-dashed border-gray-300 p-8 text-center">
-				<p class="text-muted-foreground">No recent flashcard activity.</p>
-				<p class="text-muted-foreground mt-1 text-sm">
-					Create your first flashcard to see activity here.
-				</p>
-			</div>
-		</CardContent>
-	</Card>
-
 	<!-- Quick Links -->
 	<div class="grid gap-4 md:grid-cols-2">
+		<!-- Recent Activity Section -->
 		<Card>
 			<CardHeader>
-				<CardTitle class="text-lg">My Decks</CardTitle>
-				<CardDescription>Organize your flashcards into collections</CardDescription>
+				<CardTitle class="flex items-center gap-2">
+					<CardsIcon class="h-5 w-5" />
+					Recent Activity
+				</CardTitle>
+				<CardDescription>Your recently created flashcards and decks</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<Button variant="outline" class="w-full" onclick={handleViewDecks}>Manage Decks</Button>
+				<div class="rounded-lg border border-dashed border-gray-300 p-8 text-center">
+					<p class="text-muted-foreground">No recent flashcard activity.</p>
+					<p class="text-muted-foreground mt-1 text-sm">
+						Create your first flashcard to see activity here.
+					</p>
+				</div>
 			</CardContent>
 		</Card>
-
 		<Card>
 			<CardHeader>
 				<CardTitle class="text-lg">Study Session</CardTitle>

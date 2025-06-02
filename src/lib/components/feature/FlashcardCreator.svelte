@@ -1,18 +1,23 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { cn } from '$lib/utils.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
-	import { Progress } from '$lib/components/ui/progress/index.js';
-	import TemplateSelector from './TemplateSelector.svelte';
+	import { Textarea } from '$lib/components/ui/textarea/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import { toast } from 'svelte-sonner';
+	import { flashcardService } from '$lib/services/flashcard.service.js';
 	import FlashcardTableCreator from './FlashcardTableCreator.svelte';
-	import SaveToDeckModal from './SaveToDeckModal.svelte';
-	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
-	import CheckIcon from '@tabler/icons-svelte/icons/check';
+	import DeckSelector from './DeckSelector.svelte';
+	import TemplateSelector from './TemplateSelector.svelte';
+	import PlusIcon from '@tabler/icons-svelte/icons/plus';
+	import EditIcon from '@tabler/icons-svelte/icons/edit';
+	import SaveIcon from '@tabler/icons-svelte/icons/device-floppy';
+	import BookIcon from '@tabler/icons-svelte/icons/book';
 	import type { Template } from '$lib/services/template.service.js';
 	import type { Deck } from '$lib/services/deck.service.js';
 	import type { Field } from '$lib/services/field.service.js';
-	import type { FlashcardCreationSession, FlashcardRow } from '$lib/types/flashcard-creator.js';
+	import type { FlashcardRow, FlashcardCell } from '$lib/types/flashcard-creator.js';
 
 	interface Props {
 		templates: Template[];
@@ -28,279 +33,428 @@
 		cancel: void;
 	}>();
 
-	// Session management
-	let session = $state<FlashcardCreationSession>({
-		id: crypto.randomUUID(),
-		templateId: initialTemplate?.id || null,
-		template: initialTemplate || null,
-		selectedTemplate: initialTemplate || null,
-		flashcardRows: [],
-		cards: [],
-		selectedDeckId: null, // No deck selected initially
-		metadata: {
-			tags: [],
-			difficulty: 'beginner'
-		},
-		createdAt: new Date(),
-		batchContext: '',
-		currentStep: initialTemplate ? 'create-refine' : 'template-selection',
-		created: new Date().toISOString(),
-		updated: new Date().toISOString()
-	});
+	// Single-step state management
+	let selectedTemplate = $state<Template | null>(initialTemplate || null);
+	let selectedDeck = $state<Deck | null>(null);
+	let selectedDeckId = $state<string>('');
+	let batchContext = $state('');
+	let flashcardRows = $state<FlashcardRow[]>([]);
 
+	// Modal states
+	let showTemplateSelector = $state(false);
+	let showDeckSelector = $state(false);
+
+	// Loading states
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 
-	// Computed properties
-	let currentStep = $derived(session.currentStep);
-	let progress = $derived(() => {
-		switch (currentStep) {
-			case 'template-selection':
-				return 33;
-			case 'create-refine':
-				return 66;
-			case 'saving':
-				return 100;
-			default:
-				return 0;
+	// Get template fields
+	let templateFields = $derived(() => {
+		if (!selectedTemplate) return [];
+		return fields.filter((field) => field.template === selectedTemplate!.id);
+	});
+
+	// Count ready cards
+	let readyCards = $derived(() => {
+		const tFields = templateFields();
+		return flashcardRows.filter((row) =>
+			tFields.every((field: Field) => {
+				const fieldIdSafe = String(field.id);
+				const cell = row.cells?.[fieldIdSafe];
+				return cell && cell.content.trim();
+			})
+		);
+	});
+
+	// Initialize session when template is selected
+	$effect(() => {
+		if (selectedTemplate && flashcardRows.length === 0) {
+			addNewRow();
 		}
 	});
 
-	// Step indicators
-	let steps = $derived([
-		{
-			id: 'template-selection',
-			label: 'Select Template',
-			completed: currentStep !== 'template-selection',
-			current: currentStep === 'template-selection'
-		},
-		{
-			id: 'create-refine',
-			label: 'Create & Refine Cards',
-			completed: currentStep === 'saving',
-			current: currentStep === 'create-refine'
-		},
-		{
-			id: 'saving',
-			label: 'Save to Deck',
-			completed: false,
-			current: currentStep === 'saving'
-		}
-	]);
-
-	let showTemplateSelector = $state(true); // Control modal visibility
-
-	// Handle step transitions
+	// Template selection handlers
 	function handleTemplateSelect(template: Template) {
-		session.selectedTemplate = template;
-		session.templateId = template.id;
-		session.currentStep = 'create-refine';
-		session.updated = new Date().toISOString();
+		selectedTemplate = template;
 		showTemplateSelector = false;
+		// Reset flashcard rows when template changes
+		flashcardRows = [];
+		addNewRow();
 	}
 
-	function handleCardsCreated(cards: FlashcardRow[]) {
-		session.cards = cards;
-		session.currentStep = 'saving';
-		session.updated = new Date().toISOString();
-	}
-
-	function handleBackToTemplateSelection() {
-		session.currentStep = 'template-selection';
-		session.selectedTemplate = null;
-		session.templateId = null;
-		session.updated = new Date().toISOString();
+	function handleChangeTemplate() {
 		showTemplateSelector = true;
 	}
 
-	function handleBackToCreation() {
-		session.currentStep = 'create-refine';
-		session.updated = new Date().toISOString();
+	// Deck selection handlers
+	function handleDeckSelect(deck: Deck) {
+		selectedDeck = deck;
+		selectedDeckId = deck.id;
+		showDeckSelector = false;
 	}
 
-	// General step change handler
-	function handleStepChange(step: 'template-selection' | 'create-refine' | 'saving') {
-		session.currentStep = step;
-		session.updated = new Date().toISOString();
-		if (step === 'template-selection') {
-			showTemplateSelector = true;
+	function handleChangeDeck() {
+		showDeckSelector = true;
+	}
+
+	function handleCreateNewDeck() {
+		showDeckSelector = false;
+		// TODO: Implement create new deck functionality
+		toast.info('Create new deck functionality coming soon');
+	}
+
+	// Flashcard row management
+	function addNewRow() {
+		if (!selectedTemplate) return;
+
+		const newId = crypto.randomUUID();
+		const cells: Record<string, FlashcardCell> = {};
+		const tFields = templateFields();
+
+		// Initialize cells for all template fields
+		tFields.forEach((field: Field) => {
+			cells[field.id] = {
+				fieldId: field.id,
+				content: '',
+				aiGenerated: false,
+				isAIGenerated: false
+			};
+		});
+
+		const frontField = tFields.find((f: Field) => f.isInput);
+		const backField = tFields.find((f: Field) => !f.isInput);
+
+		const newRow: FlashcardRow = {
+			id: newId,
+			front: cells[frontField?.id || ''] || {
+				fieldId: '',
+				content: '',
+				aiGenerated: false,
+				isAIGenerated: false
+			},
+			back: cells[backField?.id || ''] || {
+				fieldId: '',
+				content: '',
+				aiGenerated: false,
+				isAIGenerated: false
+			},
+			cells,
+			isSelected: true,
+			status: 'manual',
+			metadata: {
+				createdAt: new Date(),
+				aiGenerated: false
+			}
+		};
+
+		flashcardRows = [...flashcardRows, newRow];
+	}
+
+	// Save ready cards
+	async function saveReadyCards() {
+		if (!selectedTemplate || !selectedDeck) {
+			toast.error('Please select a template and deck before saving');
+			return;
 		}
-	}
 
-	// Handle final card saving
-	async function handleCardsSaved(
-		event: CustomEvent<{
-			deckId: string;
-			selectedCards: FlashcardRow[];
-			tags: string[];
-			difficulty: string;
-		}>
-	) {
+		// Get cards from flashcardRows that have content
+		const completedCards = flashcardRows.filter((row) =>
+			templateFields().every((field) => {
+				const fieldIdSafe = String(field.id);
+				const cell = row.cells[fieldIdSafe];
+				return cell && cell.content.trim();
+			})
+		);
+
+		if (completedCards.length === 0) {
+			toast.error('Please complete at least one flashcard before saving');
+			return;
+		}
+
 		isLoading = true;
 		error = null;
 
 		try {
-			const { deckId, selectedCards, tags, difficulty } = event.detail;
+			// Save flashcards to PocketBase using the flashcard service
+			const savedCards = await flashcardService.createFromRows(
+				completedCards,
+				selectedDeck.id,
+				selectedTemplate.id
+			);
 
-			// Convert FlashcardRows to createable flashcards
-			const flashcardsToCreate = selectedCards.map((row) => ({
-				front: row.front.content,
-				back: row.back.content,
-				tags,
-				difficulty
-				// Add other necessary fields based on your flashcard service requirements
-			}));
-
-			// Save flashcards using your existing service
-			// await flashcardService.createMultiple(deckId, flashcardsToCreate);
-
-			// Dispatch success event to parent
+			// Dispatch success event
 			dispatch('cardsCreated', {
-				cards: flashcardsToCreate,
-				deckId,
-				template: session.selectedTemplate!
+				cards: savedCards,
+				deckId: selectedDeck.id,
+				template: selectedTemplate
 			});
+
+			toast.success(`${savedCards.length} cards saved to ${selectedDeck.name}`);
+
+			// Reset the form after successful save
+			flashcardRows = [];
+			addNewRow();
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to save flashcards';
+			toast.error('Failed to save cards');
 		} finally {
 			isLoading = false;
 		}
 	}
 
-	function handleCancel() {
-		dispatch('cancel');
+	// Save draft
+	function saveDraft() {
+		// TODO: Implement draft saving
+		toast.info('Draft saved');
+	}
+
+	// Clear all
+	function clearAll() {
+		flashcardRows = [];
+		batchContext = '';
+		if (selectedTemplate) {
+			addNewRow();
+		}
+		toast.info('All cards cleared');
 	}
 </script>
 
-<div class="space-y-6">
-	<!-- Progress Bar -->
-	<div class="space-y-2">
-		<div class="flex items-center justify-between text-sm">
-			<span class="font-medium">Create Flashcards</span>
-			<span class="text-muted-foreground">{progress()}%</span>
-		</div>
-		<Progress value={progress()} class="h-2" />
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+	<!-- Settings Panel (Left Side) -->
+	<div class="space-y-4 lg:col-span-1">
+		<!-- Template Selection -->
+		<Card.Root>
+			<Card.Header>
+				<Card.Title class="text-base">Template</Card.Title>
+			</Card.Header>
+			<Card.Content class="space-y-3">
+				{#if selectedTemplate}
+					<div class="space-y-2">
+						<div class="rounded-lg border p-3">
+							<div class="font-medium">{selectedTemplate.name}</div>
+							{#if selectedTemplate.description}
+								<div class="text-muted-foreground mt-1 text-sm">
+									{selectedTemplate.description}
+								</div>
+							{/if}
+							<div class="mt-2 flex gap-2">
+								<Badge variant="secondary" class="text-xs">
+									{templateFields().length} fields
+								</Badge>
+								{#if selectedTemplate.learningLanguage}
+									<Badge variant="outline" class="text-xs">
+										{selectedTemplate.nativeLanguage} → {selectedTemplate.learningLanguage}
+									</Badge>
+								{/if}
+							</div>
+						</div>
+						<Button variant="outline" size="sm" onclick={handleChangeTemplate} class="w-full gap-2">
+							<EditIcon class="h-4 w-4" />
+							Change Template
+						</Button>
+					</div>
+				{:else}
+					<div class="space-y-3 text-center">
+						<div class="text-muted-foreground text-sm">No template selected</div>
+						<Button onclick={() => (showTemplateSelector = true)} size="sm" class="w-full gap-2">
+							<BookIcon class="h-4 w-4" />
+							Select Template
+						</Button>
+					</div>
+				{/if}
+			</Card.Content>
+		</Card.Root>
+
+		<!-- Deck Selection -->
+		<Card.Root>
+			<Card.Header>
+				<Card.Title class="text-base">Destination Deck</Card.Title>
+			</Card.Header>
+			<Card.Content class="space-y-3">
+				{#if selectedDeck}
+					<div class="space-y-2">
+						<div class="rounded-lg border p-3">
+							<div class="font-medium">{selectedDeck.name}</div>
+							{#if selectedDeck.description}
+								<div class="text-muted-foreground mt-1 text-sm">
+									{selectedDeck.description}
+								</div>
+							{/if}
+							<div class="text-muted-foreground mt-2 text-xs">
+								{selectedDeck.cards?.length || 0} cards
+							</div>
+						</div>
+						<div class="flex gap-1">
+							<Button variant="outline" size="sm" onclick={handleChangeDeck} class="flex-1 gap-2">
+								<EditIcon class="h-4 w-4" />
+								Change
+							</Button>
+						</div>
+					</div>
+				{:else}
+					<div class="space-y-3 text-center">
+						<div class="text-muted-foreground text-sm">No deck selected</div>
+						<div class="flex flex-col gap-2">
+							<Button onclick={() => (showDeckSelector = true)} size="sm" class="w-full">
+								Select Deck
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								onclick={handleCreateNewDeck}
+								class="w-full gap-2"
+							>
+								<PlusIcon class="h-4 w-4" />
+								New Deck
+							</Button>
+						</div>
+					</div>
+				{/if}
+			</Card.Content>
+		</Card.Root>
 	</div>
 
-	<!-- Step Indicators -->
-	<div class="flex items-center justify-between">
-		<div class="flex items-center space-x-4">
-			{#each steps as step, index (step.id)}
-				<div class="flex items-center">
-					<div
-						class={cn(
-							'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors',
-							step.completed
-								? 'bg-primary border-primary text-primary-foreground'
-								: step.current
-									? 'border-primary text-primary'
-									: 'border-muted text-muted-foreground'
-						)}
-					>
-						{#if step.completed}
-							<CheckIcon class="h-4 w-4" />
-						{:else}
-							<span class="text-sm font-medium">{index + 1}</span>
-						{/if}
+	<!-- Main Content Area (Right Side) -->
+	<div class="space-y-6 lg:col-span-3">
+		{#if !selectedTemplate}
+			<!-- Template Selection Prompt -->
+			<Card.Root>
+				<Card.Content class="py-12 text-center">
+					<div class="space-y-4">
+						<BookIcon class="text-muted-foreground mx-auto h-12 w-12" />
+						<div>
+							<h3 class="text-lg font-medium">Select a Template</h3>
+							<p class="text-muted-foreground mt-2 text-sm">
+								Choose a template to get started with creating flashcards
+							</p>
+						</div>
+						<Button onclick={() => (showTemplateSelector = true)} class="gap-2">
+							<BookIcon class="h-4 w-4" />
+							Browse Templates
+						</Button>
 					</div>
-					<span
-						class={cn(
-							'ml-2 text-sm font-medium',
-							step.completed || step.current ? 'text-foreground' : 'text-muted-foreground'
-						)}
-					>
-						{step.label}
-					</span>
-					{#if index < steps.length - 1}
-						<div class={cn('mx-4 h-px w-12', step.completed ? 'bg-primary' : 'bg-muted')}></div>
+				</Card.Content>
+			</Card.Root>
+		{:else}
+			<!-- Flashcard Creator Interface -->
+			<Card.Root>
+				<Card.Header>
+					<div class="flex items-center justify-between">
+						<div>
+							<Card.Title>Create Flashcards: {selectedTemplate.name}</Card.Title>
+							<Card.Description>
+								{#if selectedDeck}
+									Cards will be saved to "{selectedDeck.name}"
+								{:else}
+									Select a deck to save your cards
+								{/if}
+							</Card.Description>
+						</div>
+					</div>
+				</Card.Header>
+				<Card.Content class="space-y-6">
+					<!-- Batch Context -->
+					<div class="space-y-2">
+						<Label for="batch-context">Batch Context (Optional)</Label>
+						<Textarea
+							id="batch-context"
+							bind:value={batchContext}
+							placeholder="Provide overall context for this batch to improve AI generation quality..."
+							rows={2}
+							class="min-h-[60px]"
+						/>
+						<p class="text-muted-foreground text-xs">
+							💡 Provide overall context for this batch to improve AI generation quality
+						</p>
+					</div>
+
+					<!-- Flashcard Table Integration -->
+					{#if selectedTemplate && templateFields().length > 0}
+						<FlashcardTableCreator
+							template={selectedTemplate}
+							fields={templateFields()}
+							deck={selectedDeck ?? undefined}
+							session={{
+								id: crypto.randomUUID(),
+								templateId: selectedTemplate.id,
+								template: selectedTemplate,
+								selectedTemplate: selectedTemplate,
+								flashcardRows: flashcardRows,
+								cards: flashcardRows,
+								selectedDeckId: selectedDeckId,
+								metadata: { tags: [], difficulty: 'beginner' },
+								createdAt: new Date(),
+								created: new Date().toISOString(),
+								updated: new Date().toISOString(),
+								currentStep: 'create-refine',
+								batchContext: batchContext
+							}}
+						/>
 					{/if}
-				</div>
-			{/each}
-		</div>
+				</Card.Content>
+			</Card.Root>
 
-		<!-- Navigation Buttons -->
-		<div class="flex gap-2">
-			{#if currentStep === 'create-refine'}
-				<Button variant="outline" onclick={handleBackToTemplateSelection} class="gap-2">
-					<ArrowLeftIcon class="h-4 w-4" />
-					Back to Templates
-				</Button>
-			{:else if currentStep === 'saving'}
-				<Button variant="outline" onclick={handleBackToCreation} class="gap-2">
-					<ArrowLeftIcon class="h-4 w-4" />
-					Back to Cards
-				</Button>
-			{/if}
+			<!-- Unified Action Bar -->
 
-			<Button variant="outline" onclick={handleCancel}>Cancel</Button>
-		</div>
+			<Card.Root>
+				<Card.Content>
+					<div class="flex items-center justify-between">
+						<div class="flex gap-2">
+							<Button variant="outline" onclick={saveDraft} class="gap-2">
+								<SaveIcon class="h-4 w-4" />
+								Save Draft
+							</Button>
+							<Button variant="outline" onclick={clearAll} class="gap-2">Clear All</Button>
+						</div>
+
+						<div class="flex items-center gap-4">
+							<!-- Status Summary -->
+							<div class="text-muted-foreground text-sm">
+								{readyCards().length} of {flashcardRows.length} cards ready
+							</div>
+
+							<!-- Primary Save Action -->
+							{#if readyCards().length > 0}
+								<Button onclick={saveReadyCards} disabled={isLoading} class="gap-2">
+									<SaveIcon class="h-4 w-4" />
+									{isLoading ? 'Saving...' : `Save ${readyCards().length} Cards`}
+								</Button>
+							{:else}
+								<Button disabled class="gap-2">
+									<SaveIcon class="h-4 w-4" />
+									No Cards Ready
+								</Button>
+							{/if}
+						</div>
+					</div>
+				</Card.Content>
+			</Card.Root>
+		{/if}
+
+		<!-- Error Display -->
+		{#if error}
+			<div class="bg-destructive/10 border-destructive/20 rounded-lg border p-3">
+				<p class="text-destructive text-sm">{error}</p>
+			</div>
+		{/if}
 	</div>
-
-	<!-- Content Area -->
-	<Card.Root>
-		<Card.Content class="p-6">
-			{#if currentStep === 'template-selection'}
-				<!-- Step 1: Template Selection -->
-				<div class="space-y-6">
-					<div class="text-center">
-						<h2 class="text-xl font-semibold">Choose a Template</h2>
-						<p class="text-muted-foreground mt-2">
-							Select a template to structure your flashcard content.
-						</p>
-					</div>
-
-					<TemplateSelector
-						open={showTemplateSelector}
-						{templates}
-						onSelect={handleTemplateSelect}
-						onClose={() => (showTemplateSelector = false)}
-						selectedTemplateId={session.templateId || undefined}
-					/>
-				</div>
-			{:else if currentStep === 'create-refine' && session.selectedTemplate}
-				<!-- Step 2: Create & Refine Cards -->
-				<div class="space-y-6">
-					<div class="text-center">
-						<h2 class="text-xl font-semibold">Create & Refine Cards</h2>
-						<p class="text-muted-foreground mt-2">
-							Use AI to generate flashcards and refine them as needed.
-						</p>
-					</div>
-
-					<FlashcardTableCreator
-						template={session.selectedTemplate}
-						{fields}
-						{session}
-						onCardsCreated={handleCardsCreated}
-					/>
-				</div>
-			{:else if currentStep === 'saving'}
-				<!-- Step 3: Save to Deck -->
-				<div class="space-y-6">
-					<div class="text-center">
-						<h2 class="text-xl font-semibold">Save to Deck</h2>
-						<p class="text-muted-foreground mt-2">
-							Review and save your flashcards to the selected deck.
-						</p>
-					</div>
-
-					<SaveToDeckModal
-						{availableDecks}
-						cards={session.cards}
-						template={session.selectedTemplate}
-						on:save={handleCardsSaved}
-						on:cancel={() => handleStepChange('create-refine')}
-						{isLoading}
-					/>
-				</div>
-			{/if}
-
-			<!-- Error Display -->
-			{#if error}
-				<div class="bg-destructive/10 border-destructive/20 mt-4 rounded-lg border p-3">
-					<p class="text-destructive text-sm">{error}</p>
-				</div>
-			{/if}
-		</Card.Content>
-	</Card.Root>
 </div>
+
+<!-- Template Selector Modal -->
+<TemplateSelector
+	bind:open={showTemplateSelector}
+	{templates}
+	onSelect={handleTemplateSelect}
+	onClose={() => (showTemplateSelector = false)}
+	selectedTemplateId={selectedTemplate?.id}
+/>
+
+<!-- Deck Selector Modal -->
+<DeckSelector
+	bind:open={showDeckSelector}
+	decks={availableDecks}
+	onSelect={handleDeckSelect}
+	onCreateNew={handleCreateNewDeck}
+	onClose={() => (showDeckSelector = false)}
+	selectedDeckId={selectedDeck?.id}
+/>
