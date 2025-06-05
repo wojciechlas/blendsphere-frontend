@@ -113,26 +113,38 @@ export function validateUrl(url: string, allowedDomains?: string[]): boolean {
  * SQL injection prevention for dynamic queries
  */
 export function escapeForSQL(input: string): string {
-	return (
-		input
-			.replace(/'/g, "''")
-			.replace(/"/g, '""')
-			.replace(/\\/g, '\\\\')
-			// eslint-disable-next-line security/detect-non-literal-regexp
-			.replace(new RegExp(String.fromCharCode(0), 'g'), '\\0')
-			.replace(/\n/g, '\\n')
-			.replace(/\r/g, '\\r')
-			// eslint-disable-next-line security/detect-non-literal-regexp
-			.replace(new RegExp(String.fromCharCode(26), 'g'), '\\Z')
-			.replace(/;/g, '\\;')
-			.replace(/--/g, '\\-\\-')
-	);
+	return input
+		.replace(/'/g, "''")
+		.replace(/"/g, '""')
+		.replace(/\\/g, '\\\\')
+		.replace(new RegExp(String.fromCharCode(0), 'g'), '\\0')
+		.replace(/\n/g, '\\n')
+		.replace(/\r/g, '\\r')
+		.replace(new RegExp(String.fromCharCode(26), 'g'), '\\Z')
+		.replace(/;/g, '\\;')
+		.replace(/--/g, '\\-\\-');
+}
+
+/**
+ * Type for sanitizable values that can be processed by NoSQL sanitization
+ */
+type SanitizableValue =
+	| string
+	| number
+	| boolean
+	| null
+	| undefined
+	| SanitizableObject
+	| SanitizableValue[];
+
+interface SanitizableObject {
+	[key: string]: SanitizableValue;
 }
 
 /**
  * NoSQL injection prevention
  */
-export function sanitizeForNoSQL(input: any): any {
+export function sanitizeForNoSQL(input: SanitizableValue): SanitizableValue {
 	if (typeof input === 'string') {
 		return sanitizeInput(input, { strict: true });
 	}
@@ -142,7 +154,7 @@ export function sanitizeForNoSQL(input: any): any {
 	}
 
 	if (typeof input === 'object' && input !== null) {
-		const sanitized: Record<string, any> = {};
+		const sanitized: Record<string, SanitizableValue> = {};
 		for (const [key, value] of Object.entries(input)) {
 			// Prevent prototype pollution
 			if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
@@ -247,7 +259,7 @@ export interface SecurityEvent {
 	type: string;
 	severity: 'low' | 'medium' | 'high' | 'critical';
 	message: string;
-	details: Record<string, any>;
+	details: Record<string, unknown>;
 	timestamp: string;
 	userAgent?: string;
 	ip?: string;
@@ -331,6 +343,15 @@ export function getEnhancedFingerprint(): string {
 }
 
 /**
+ * Interface for stored data with expiration
+ */
+interface StoredData {
+	value: unknown;
+	timestamp: number;
+	expiration: number | null;
+}
+
+/**
  * Secure local storage with encryption and integrity checks
  */
 export class SecureLocalStorage {
@@ -364,9 +385,9 @@ export class SecureLocalStorage {
 		}
 	}
 
-	setItem(key: string, value: any, expirationMs?: number): void {
+	setItem(key: string, value: unknown, expirationMs?: number): void {
 		try {
-			const data = {
+			const data: StoredData = {
 				value,
 				timestamp: Date.now(),
 				expiration: expirationMs ? Date.now() + expirationMs : null
@@ -384,7 +405,7 @@ export class SecureLocalStorage {
 		}
 	}
 
-	getItem(key: string): any {
+	getItem(key: string): unknown {
 		try {
 			const encrypted = localStorage.getItem(key);
 			if (!encrypted) return null;
@@ -392,7 +413,7 @@ export class SecureLocalStorage {
 			const decrypted = this.decrypt(encrypted);
 			if (!decrypted) return null;
 
-			const data = JSON.parse(decrypted);
+			const data: StoredData = JSON.parse(decrypted) as StoredData;
 
 			// Check expiration
 			if (data.expiration && Date.now() > data.expiration) {

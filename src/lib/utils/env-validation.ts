@@ -15,6 +15,14 @@ const envSchema = z.object({
 	// PocketBase configuration
 	PUBLIC_POCKETBASE_URL: z.string().url('Invalid PocketBase URL'),
 
+	// AI Service configuration
+	VITE_AI_SERVICE_URL: z.string().url('Invalid AI Service URL').optional(),
+	VITE_SRS_API_URL: z.string().url('Invalid SRS API URL').optional(),
+	VITE_ENABLE_MOCK_AI: z
+		.string()
+		.transform((val) => val === 'true')
+		.optional(),
+
 	// Security configuration
 	VITE_DEBUG_MODE: z
 		.string()
@@ -339,5 +347,12 @@ export function generateSecurityReport(): string {
 	return report;
 }
 
-// Export the validated environment for use throughout the app
-export const appEnv = validateEnv();
+// Lazy environment validation - only validates when accessed
+let _appEnv: AppEnv | null = null;
+
+export function getAppEnv(): AppEnv {
+	if (!_appEnv) {
+		_appEnv = validateEnv();
+	}
+	return _appEnv;
+}

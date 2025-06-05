@@ -12,8 +12,8 @@ fi
 # Create images directory if it doesn't exist
 mkdir -p images
 
-# Generate diagrams for all .puml files
-for file in *.puml; do
+# Generate diagrams for all .puml files in the diagrams directory
+for file in diagrams/*.puml; do
   echo "Generating diagram from $file..."
   java -jar "$PLANTUML_JAR" "$file" -o images
 done

@@ -88,17 +88,14 @@
 			// Update or create fields
 			for (const field of fields) {
 				if (field.id && !field.id.startsWith('temp-') && currentFieldIds.has(field.id)) {
-					// Update existing field
-					const { id: _id, ...fieldData } = field;
 					await fieldService.update(field.id, {
-						...fieldData,
+						...field,
 						template: templateId
 					});
 				} else {
 					// Create new field (either no ID or temp ID)
-					const { id: _id, ...fieldData } = field;
 					await fieldService.create({
-						...fieldData,
+						...field,
 						template: templateId
 					});
 				}

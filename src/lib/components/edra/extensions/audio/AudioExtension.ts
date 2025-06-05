@@ -24,7 +24,7 @@ declare module '@tiptap/core' {
 	}
 }
 
-const AUDIO_INPUT_REGEX = /!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\)/;
+const AUDIO_INPUT_REGEX = /!\[([^\]]*)\]\((\S+)(?:(?:\s+)["'](\S+)["'])?\)/;
 
 export const Audio = Node.create<AudioOptions>({
 	name: 'audio',

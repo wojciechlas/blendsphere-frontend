@@ -24,7 +24,7 @@ declare module '@tiptap/core' {
 	}
 }
 
-const VIDEO_INPUT_REGEX = /!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\)/;
+const VIDEO_INPUT_REGEX = /!\[([^\]]*)\]\((\S+)(?:(?:\s+)["'](\S+)["'])?\)/;
 
 export const Video = Node.create<VideoOptions>({
 	name: 'video',

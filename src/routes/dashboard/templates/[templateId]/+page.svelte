@@ -54,9 +54,8 @@
 			// Clone all fields as well
 			if (data.fields && data.fields.length > 0) {
 				for (const field of data.fields) {
-					const { id: _id, created: _created, updated: _updated, ...fieldData } = field;
 					await fieldService.create({
-						...fieldData,
+						...field,
 						template: newTemplate.id
 					});
 				}
@@ -156,18 +155,40 @@
 	}
 
 	// Replace placeholders in layout with sample data
-	function renderLayout(layout: string, sampleData: Record<string, string>) {
+	function renderLayout(layout: string, sampleData: Record<string, string>): string {
 		let rendered = layout;
 
 		// Replace placeholders like {{fieldName}} with sample data
 		Object.entries(sampleData).forEach(([fieldName, value]) => {
-			const placeholder = new RegExp(`{{\\s*${fieldName}\\s*}}`, 'gi');
-			rendered = rendered.replace(placeholder, value);
+			// Create variations of the placeholder to handle whitespace
+			const exactPlaceholder = `{{${fieldName}}}`;
+			const spaceVariations = [
+				`{{ ${fieldName} }}`,
+				`{{ ${fieldName}}}`,
+				`{{${fieldName} }}`,
+				`{{  ${fieldName}  }}`,
+				`{{	${fieldName}	}}` // tab variations
+			];
+
+			// Replace exact match first
+			rendered = rendered.replace(exactPlaceholder, value);
+
+			// Then handle common whitespace variations
+			spaceVariations.forEach((variation) => {
+				rendered = rendered.replace(variation, value);
+			});
+
+			// Handle case-insensitive replacements for common variations
+			const lowerFieldName = fieldName.toLowerCase();
+			if (lowerFieldName !== fieldName) {
+				const lowerPlaceholder = `{{${lowerFieldName}}}`;
+				rendered = rendered.replace(lowerPlaceholder, value);
+			}
 		});
 
 		// Clean up any remaining placeholders that don't have sample data
 		rendered = rendered.replace(
-			/{{[^}]+}}/g,
+			/\{\{[^}]+\}\}/g,
 			'<span class="text-muted-foreground italic">[Field placeholder]</span>'
 		);
 

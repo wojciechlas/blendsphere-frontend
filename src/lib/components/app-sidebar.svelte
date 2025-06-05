@@ -21,7 +21,7 @@
 		navMain: [
 			{
 				title: 'Daily Review',
-				url: '/review',
+				url: '/dashboard/review',
 				icon: BrainIcon
 			},
 			{

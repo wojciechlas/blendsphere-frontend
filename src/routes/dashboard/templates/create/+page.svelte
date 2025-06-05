@@ -35,11 +35,8 @@
 			// Create fields if any exist
 			if (fields && fields.length > 0) {
 				for (const field of fields) {
-					// Prepare field data for creation (remove temp ID if exists)
-					const { id: _id, ...fieldData } = field;
-
 					await fieldService.create({
-						...fieldData,
+						...field,
 						template: newTemplate.id
 					});
 				}

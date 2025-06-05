@@ -6,13 +6,23 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 
-	// Security configurations
+	// Development and production server configuration
 	server: {
-		// Development server security
+		port: parseInt(process.env.PORT || '3000'),
+		host: process.env.HOST === 'localhost' ? 'localhost' : true,
+		strictPort: false, // If port is taken, try next available
+		// Security headers
 		headers: {
 			'X-Frame-Options': 'DENY',
 			'X-Content-Type-Options': 'nosniff'
 		}
+	},
+
+	// Preview server configuration (for production preview)
+	preview: {
+		port: parseInt(process.env.PORT || '4173'),
+		host: process.env.HOST === 'localhost' ? 'localhost' : true,
+		strictPort: false
 	},
 
 	build: {
