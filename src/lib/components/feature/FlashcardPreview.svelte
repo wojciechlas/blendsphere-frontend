@@ -40,7 +40,6 @@
 				{template}
 				{data}
 				mode="full"
-				showFieldLabels={true}
 				context={{
 					deckName,
 					templateName: template.name,
@@ -59,7 +58,6 @@
 		{template}
 		{data}
 		mode="full"
-		showFieldLabels={true}
 		context={{
 			deckName,
 			templateName: template.name,

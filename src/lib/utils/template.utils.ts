@@ -14,6 +14,7 @@ export function getFieldPlaceholder(fieldName: string): string {
 
 /**
  * Replace placeholders in template content with actual field values
+ * Data format: {field_label_key: field_value} - maps field label keys to their values
  * Handles multiple placeholder format variations and missing values
  */
 export function replacePlaceholders(
@@ -25,18 +26,18 @@ export function replacePlaceholders(
 
 	let result = content;
 
-	// Simple approach: directly replace placeholders like the working template preview
-	Object.entries(data).forEach(([fieldName, value]) => {
+	// Process each data entry (field_label_key: field_value)
+	Object.entries(data).forEach(([labelKey, value]) => {
 		const stringValue = value ? String(value) : '';
 
 		// Create variations of the placeholder to handle whitespace
-		const exactPlaceholder = `{{${fieldName}}}`;
+		const exactPlaceholder = `{{${labelKey}}}`;
 		const spaceVariations = [
-			`{{ ${fieldName} }}`,
-			`{{ ${fieldName}}}`,
-			`{{${fieldName} }}`,
-			`{{  ${fieldName}  }}`,
-			`{{	${fieldName}	}}` // tab variations
+			`{{ ${labelKey} }}`,
+			`{{ ${labelKey}}}`,
+			`{{${labelKey} }}`,
+			`{{  ${labelKey}  }}`,
+			`{{	${labelKey}	}}` // tab variations
 		];
 
 		// Replace exact match first
@@ -46,13 +47,6 @@ export function replacePlaceholders(
 		spaceVariations.forEach((variation) => {
 			result = result.split(variation).join(stringValue);
 		});
-
-		// Handle case-insensitive replacements for common variations
-		const lowerFieldName = fieldName.toLowerCase();
-		if (lowerFieldName !== fieldName) {
-			const lowerPlaceholder = `{{${lowerFieldName}}}`;
-			result = result.split(lowerPlaceholder).join(stringValue);
-		}
 	});
 
 	// Clean up any remaining placeholders that don't have data

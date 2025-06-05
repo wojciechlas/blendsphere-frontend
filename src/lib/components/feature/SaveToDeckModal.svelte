@@ -98,7 +98,11 @@
 			// Convert cell data to field label-based data (Field interface uses 'label', not 'name')
 			template.fields?.forEach((field: Field) => {
 				const fieldIdSafe = String(field.id);
-				const cell = row.cells[fieldIdSafe];
+				// Safe object access with validated key
+				const cell =
+					row.cells && Object.prototype.hasOwnProperty.call(row.cells, fieldIdSafe)
+						? row.cells[fieldIdSafe]
+						: null;
 				if (cell) {
 					data[field.label] = cell.content;
 				}
@@ -177,8 +181,6 @@
 									data={convertRowToData(card)}
 									mode="compact"
 									interactive={false}
-									showFieldLabels={false}
-									minHeight="auto"
 								/>
 							{:else}
 								<!-- Fallback display when no template -->

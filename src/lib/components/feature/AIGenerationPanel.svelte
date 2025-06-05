@@ -13,7 +13,7 @@
 	import type { Template } from '$lib/services/template.service.js';
 	import type { Field } from '$lib/services/field.service.js';
 	import { aiService } from '$lib/services/ai.service.js';
-	import type { AIGenerationItem } from '$lib/types/flashcard-creator.js';
+	import type { GenerationFieldData, GenerationFlashcard } from '$lib/types/flashcard-creator.js';
 
 	interface Props {
 		open: boolean;
@@ -27,7 +27,6 @@
 
 	// Helper function for safe object access
 	function safeGetData(data: Record<string, unknown>, key: string): unknown {
-		// eslint-disable-next-line security/detect-object-injection
 		return Object.prototype.hasOwnProperty.call(data, key) ? data[key] : undefined;
 	}
 
@@ -74,40 +73,40 @@
 
 		try {
 			// Prepare generation items for selected fields
-			const items: AIGenerationItem[] = selectedFields.map((fieldName) => {
+			const items: GenerationFieldData[] = selectedFields.map((fieldName) => {
 				const field = template.fields?.find((f: Field) => f.name === fieldName);
 				if (!field) {
 					throw new Error(`Field ${fieldName} not found in template`);
 				}
 
 				return {
-					id: fieldName, // Use field name as ID for mapping back to the form
-					instructions: prompt,
-					field_name: field.name,
-					field_type: field.type,
-					field_description: field.description || undefined,
-					current_content:
+					fieldId: fieldName, // Use field name as ID for mapping back to the form
+					value:
 						typeof fieldName === 'string'
-							? String(safeGetData(currentData, fieldName) || '')
-							: undefined,
-					overwrite: generationMode === 'overwrite' || generationMode === 'all'
+							? String(safeGetData(currentData, fieldName) || prompt || field.label || field.name)
+							: prompt || field.label || field.name
 				};
 			});
 
-			// Call the unified AI service
-			const response = await aiService.generate({
-				templateId: template.id,
-				items: items
-			});
+			// Build request using the service helper
+			const request = aiService.buildRequest(template, items, prompt);
 
+			// Call the unified AI service
+			const response = await aiService.generate(request);
+
+			if (response.error) {
+				console.error('AI generation failed:', response.error);
+				return;
+			}
 			// Map successful results back to form data
 			const newGeneratedData: Record<string, unknown> = {};
-			response.results.forEach((result) => {
-				if (result.success && result.content && typeof result.id === 'string') {
-					newGeneratedData[result.id] = result.content;
-				} else if (!result.success && result.error) {
-					console.warn(`Failed to generate content for field ${result.id}:`, result.error);
-					// Could show specific field errors to user
+			response.flashcards.forEach((flashcard: GenerationFlashcard) => {
+				if (flashcard.fields) {
+					flashcard.fields.forEach((field: GenerationFieldData) => {
+						if (field.value && typeof field.fieldId === 'string') {
+							newGeneratedData[field.fieldId] = field.value;
+						}
+					});
 				}
 			});
 

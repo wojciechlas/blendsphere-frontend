@@ -34,7 +34,6 @@
 	// Helper functions for safe object access
 	function safeSetField(fieldData: Record<string, unknown>, fieldId: string, value: unknown): void {
 		if (typeof fieldId === 'string' && fieldId.length > 0) {
-			// eslint-disable-next-line security/detect-object-injection
 			fieldData[fieldId] = value;
 		}
 	}

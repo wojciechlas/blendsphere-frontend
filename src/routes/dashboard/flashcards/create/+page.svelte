@@ -7,12 +7,6 @@
 	import type { PageData } from './$types';
 	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
 
-	interface CreatedTemplate {
-		id: string;
-		name: string;
-		// Add other template properties as needed
-	}
-
 	let { data }: { data: PageData } = $props();
 
 	// State management
@@ -21,17 +15,6 @@
 	// Navigation helpers
 	function handleGoBack() {
 		goto('/dashboard/flashcards');
-	}
-
-	// Handle successful card creation
-	function handleCardsCreated(
-		event: CustomEvent<{ cards: unknown[]; deckId: string; template: CreatedTemplate }>
-	) {
-		const { cards, deckId } = event.detail;
-		// Navigate to the flashcards page with success message
-		// TODO: Once deck detail pages are implemented, change this to:
-		// goto(`/dashboard/decks/${deckId}?created=${cards.length}`);
-		goto(`/dashboard/flashcards?created=${cards.length}&deck=${deckId}`);
 	}
 </script>
 
@@ -89,7 +72,5 @@
 		fields={data.fields}
 		availableDecks={data.decks}
 		initialTemplate={selectedTemplate || undefined}
-		on:cardsCreated={handleCardsCreated}
-		on:cancel={handleGoBack}
 	/>
 </div>

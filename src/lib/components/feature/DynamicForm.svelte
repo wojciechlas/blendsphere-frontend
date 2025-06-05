@@ -28,13 +28,11 @@
 
 	// Helper functions for safe object access
 	function safeGetFormData(data: Record<string, unknown>, key: string): unknown {
-		// eslint-disable-next-line security/detect-object-injection
 		return Object.prototype.hasOwnProperty.call(data, key) ? data[key] : undefined;
 	}
 
 	function safeSetFormData(data: Record<string, unknown>, key: string, value: unknown): void {
 		if (typeof key === 'string' && key.length > 0) {
-			// eslint-disable-next-line security/detect-object-injection
 			data[key] = value;
 		}
 	}

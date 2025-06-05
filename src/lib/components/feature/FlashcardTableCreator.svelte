@@ -20,9 +20,11 @@
 		FlashcardCreationSession,
 		FlashcardRow,
 		FlashcardCell,
-		AIGenerationItem
+		GenerationFieldData
 	} from '$lib/types/flashcard-creator.js';
-	import { aiService } from '$lib/services/ai.service.js';
+	import { aiService, AIServiceException } from '$lib/services/ai.service.js';
+	import { flashcardService } from '$lib/services/flashcard.service.js';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		template: Template;
@@ -42,7 +44,6 @@
 		cells: Record<string, FlashcardCell>,
 		fieldId: string
 	): FlashcardCell | undefined {
-		// eslint-disable-next-line security/detect-object-injection
 		return Object.prototype.hasOwnProperty.call(cells, fieldId) ? cells[fieldId] : undefined;
 	}
 
@@ -52,7 +53,6 @@
 		value: FlashcardCell
 	): void {
 		if (typeof fieldId === 'string' && fieldId.length > 0) {
-			// eslint-disable-next-line security/detect-object-injection
 			cells[fieldId] = value;
 		}
 	}
@@ -66,12 +66,37 @@
 	let flashcardRows = $state<FlashcardRow[]>(session.cards || []);
 	let isGenerating = $state(false);
 	let generationError = $state<string | null>(null);
+	let isSaving = $state(false);
+	let saveError = $state<string | null>(null);
 
 	// Initialize with empty rows if none exist
 	$effect(() => {
 		if (flashcardRows.length === 0) {
 			flashcardRows = [createEmptyRow()];
 		}
+	});
+
+	// Auto-save session every 30 seconds
+	$effect(() => {
+		const interval = setInterval(() => {
+			if (flashcardRows.length > 0) {
+				updateSession();
+			}
+		}, 30000);
+
+		return () => clearInterval(interval);
+	});
+
+	// Get ready cards (cards with all required fields filled)
+	let readyCards = $derived(() => {
+		return flashcardRows.filter((row) => {
+			// Check if all required fields have content
+			return templateFields.every((field) => {
+				const fieldIdSafe = String(field.id);
+				const cell = safeGetCell(row.cells, fieldIdSafe);
+				return cell && cell.content.trim().length > 0;
+			});
+		});
 	});
 
 	function createEmptyRow(): FlashcardRow {
@@ -116,7 +141,8 @@
 			status: 'manual',
 			metadata: {
 				createdAt: new Date(),
-				aiGenerated: false
+				aiGenerated: false,
+				saved: false
 			}
 		};
 	}
@@ -171,6 +197,258 @@
 		session.updated = new Date().toISOString();
 	}
 
+	// Save ready cards to the selected deck
+	async function saveReadyCards() {
+		if (!deck) {
+			toast.error('Please select a deck before saving');
+			return;
+		}
+
+		const cardsToSave = readyCards();
+		if (cardsToSave.length === 0) {
+			toast.error('No ready cards to save. Please complete at least one flashcard.');
+			return;
+		}
+
+		isSaving = true;
+		saveError = null;
+
+		try {
+			// Save flashcards to PocketBase using the flashcard service
+			const savedCards = await flashcardService.createFromRows(cardsToSave, deck.id, template.id);
+
+			// Mark saved cards as saved in the session
+			flashcardRows = flashcardRows.map((row) => {
+				if (cardsToSave.includes(row)) {
+					return {
+						...row,
+						status: 'saved' as const,
+						metadata: {
+							...row.metadata,
+							saved: true,
+							savedAt: new Date()
+						}
+					};
+				}
+				return row;
+			});
+
+			updateSession();
+			toast.success(`${savedCards.length} cards saved to ${deck.name}`);
+
+			// Return the saved cards for parent component handling
+			return savedCards;
+		} catch (error) {
+			console.error('Error saving flashcards:', error);
+			saveError = error instanceof Error ? error.message : 'Failed to save flashcards';
+			toast.error(saveError);
+			throw error;
+		} finally {
+			isSaving = false;
+		}
+	}
+
+	// Save draft session to local storage
+	function saveDraft() {
+		try {
+			const draftData = {
+				sessionId: session.id,
+				templateId: template.id,
+				deckId: deck?.id,
+				batchContext,
+				flashcardRows,
+				timestamp: new Date().toISOString()
+			};
+
+			localStorage.setItem(`flashcard-session-${session.id}`, JSON.stringify(draftData));
+			toast.success('Draft saved locally');
+		} catch (error) {
+			console.error('Error saving draft:', error);
+			toast.error('Failed to save draft');
+		}
+	}
+
+	// Clear all cards and reset to default state
+	function clearAll() {
+		flashcardRows = [createEmptyRow()];
+		batchContext = '';
+		updateSession();
+		toast.info('All cards cleared');
+	}
+
+	// Count eligible cards for input field generation
+	let eligibleInputCards = $derived(() => {
+		return flashcardRows.filter((row) => {
+			// Check if the row has at least one input field with content
+			const hasInputContent = templateFields.some((field) => {
+				if (!field.isInput) return false;
+				const fieldIdSafe = String(field.id);
+				const cell = safeGetCell(row.cells, fieldIdSafe);
+				return cell && cell.content.trim().length > 0;
+			});
+
+			// Check if the row has at least one non-input field that's empty
+			const hasEmptyOutputFields = templateFields.some((field) => {
+				if (field.isInput) return false;
+				const fieldIdSafe = String(field.id);
+				const cell = safeGetCell(row.cells, fieldIdSafe);
+				return !cell || !cell.content.trim();
+			});
+
+			return hasInputContent && hasEmptyOutputFields;
+		});
+	});
+
+	async function generateForInputCards() {
+		const eligibleCards = eligibleInputCards();
+
+		if (eligibleCards.length === 0) {
+			generationError =
+				'No eligible cards found. Cards need input content and empty output fields.';
+			return;
+		}
+
+		isGenerating = true;
+		generationError = null;
+
+		try {
+			// Create generation items only for empty output fields in eligible cards
+			const items: GenerationFieldData[] = [];
+
+			eligibleCards.forEach((row: FlashcardRow) => {
+				templateFields.forEach((field) => {
+					// Only generate for non-input fields that are empty
+					if (field.isInput) return;
+
+					const fieldIdSafe = String(field.id);
+					const cell = safeGetCell(row.cells, fieldIdSafe);
+
+					// Skip if field already has content
+					if (cell && cell.content.trim()) return;
+
+					// Get input field content for context
+					const inputFields = templateFields.filter((f) => f.isInput);
+					const inputContent = inputFields
+						.map((inputField) => {
+							const inputFieldId = String(inputField.id);
+							const inputCell = safeGetCell(row.cells, inputFieldId);
+							return inputCell?.content || '';
+						})
+						.join(', ');
+
+					items.push({
+						fieldId: field.id,
+						value: inputContent || field.label || field.name
+					});
+				});
+			});
+
+			if (items.length === 0) {
+				generationError =
+					'No fields to generate. All eligible cards already have complete content.';
+				return;
+			}
+
+			// Build request using the service helper
+			const request = aiService.buildRequest(template, items, batchContext.trim());
+
+			// Call the unified AI service
+			const response = await aiService.generate(request);
+
+			if (response.error) {
+				generationError = response.error;
+				return;
+			}
+
+			// Update the flashcard rows with generated content
+			// The response.flashcards array contains one flashcard per eligible row
+			// Each flashcard has a fields array with all generated fields for that row
+			let flashcardIndex = 0;
+
+			flashcardRows = flashcardRows.map((row) => {
+				// Only process eligible cards
+				if (!eligibleCards.includes(row)) {
+					return row;
+				}
+
+				const updatedCells = { ...row.cells };
+				let wasUpdated = false;
+
+				// Get the flashcard for this row
+
+				const generatedFlashcard = response.flashcards[flashcardIndex];
+				if (generatedFlashcard && generatedFlashcard.fields) {
+					// For this eligible row, process all fields that need generation
+					templateFields.forEach((field) => {
+						// Only process non-input fields that were included in the request
+						if (field.isInput) return;
+
+						const fieldIdSafe = String(field.id);
+						const cell = safeGetCell(row.cells, fieldIdSafe);
+
+						// Skip if field already has content (same logic as request building)
+						if (cell && cell.content.trim()) return;
+
+						// Find the generated field for this field ID
+						const generatedField = generatedFlashcard.fields.find((f) => f.fieldId === field.id);
+
+						if (generatedField && generatedField.value) {
+							safeSetCell(updatedCells, fieldIdSafe, {
+								fieldId: fieldIdSafe,
+								content: generatedField.value,
+								aiGenerated: true,
+								isAIGenerated: true,
+								feedback: undefined
+							});
+							wasUpdated = true;
+						}
+					});
+				}
+
+				flashcardIndex++;
+
+				if (wasUpdated) {
+					// Update front and back cells
+					const frontField = templateFields.find((f) => f.isInput) || templateFields[0];
+					const backField = templateFields.find((f) => !f.isInput) || templateFields[1];
+
+					const frontFieldId = frontField?.id ? String(frontField.id) : 'front';
+					const backFieldId = backField?.id ? String(backField.id) : 'back';
+
+					return {
+						...row,
+						cells: updatedCells,
+						front: safeGetCell(updatedCells, frontFieldId) || row.front,
+						back: safeGetCell(updatedCells, backFieldId) || row.back,
+						status: 'ai-generated' as const,
+						metadata: {
+							...row.metadata,
+							aiGenerated: true,
+							saved: row.metadata.saved || false
+						}
+					};
+				}
+
+				return row;
+			});
+
+			updateSession();
+		} catch (error) {
+			console.error('AI generation for input cards failed:', error);
+
+			if (error instanceof AIServiceException) {
+				generationError = error.error.message;
+				toast.error(error.error.message);
+			} else {
+				generationError =
+					error instanceof Error ? error.message : 'Failed to generate fields for input cards';
+				toast.error('Failed to generate fields for input cards');
+			}
+		} finally {
+			isGenerating = false;
+		}
+	}
+
 	async function generateBatchCards() {
 		if (!batchContext.trim()) {
 			generationError = 'Please provide context for AI generation';
@@ -184,7 +462,7 @@
 			const cardCount = Math.max(flashcardRows.length, 5); // Generate at least 5 cards
 
 			// Create generation items for each card we want to generate
-			const items: AIGenerationItem[] = [];
+			const items: GenerationFieldData[] = [];
 
 			for (let i = 0; i < cardCount; i++) {
 				// For each template field, create a generation item
@@ -197,45 +475,57 @@
 							: undefined;
 
 					items.push({
-						id: `card_${i}_${field.id}`, // Unique ID for mapping back results
-						instructions: `${batchContext.trim()}. Generate content for ${field.label || field.name} field for flashcard ${i + 1}.`,
-						field_name: field.name,
-						field_type: field.type,
-						field_description: field.description || undefined,
-						current_content: existingContent || undefined,
-						overwrite: true // For batch generation, we want to overwrite
+						fieldId: field.id,
+						value: existingContent || `${field.label || field.name} for card ${i + 1}`
 					});
 				});
 			}
 
+			// Build request using the service helper
+			const request = aiService.buildRequest(template, items, batchContext.trim());
+
 			// Call the unified AI service
-			const response = await aiService.generate({
-				templateId: template.id,
-				items: items
-			});
+			const response = await aiService.generate(request);
+
+			if (response.error) {
+				generationError = response.error;
+				return;
+			}
 
 			// Process the results and update flashcard rows
+			// The response.flashcards array contains one flashcard per card
+			// Each flashcard has a fields array with all generated fields for that card
 			const newRows: FlashcardRow[] = [];
 
 			for (let cardIndex = 0; cardIndex < cardCount; cardIndex++) {
 				const existingRow = flashcardRows[cardIndex];
 				const cells: Record<string, FlashcardCell> = {};
 
+				// Get the flashcard for this card
+				const generatedFlashcard = response.flashcards[cardIndex];
+
 				// Populate cells with AI-generated content
 				templateFields.forEach((field) => {
-					const resultId = `card_${cardIndex}_${field.id}`;
-					const result = response.results.find((r) => r.id === resultId);
-
+					const fieldIdSafe = String(field.id);
 					let content = '';
 					let aiGenerated = false;
-					const fieldIdSafe = String(field.id);
 
-					if (result?.success && result.content) {
-						content = result.content;
-						aiGenerated = true;
-					} else if (result?.error) {
-						console.warn(`Failed to generate content for ${field.label}:`, result.error);
-						// Keep existing content if generation failed
+					if (generatedFlashcard && generatedFlashcard.fields) {
+						// Find the generated field for this field ID
+						const generatedField = generatedFlashcard.fields.find((f) => f.fieldId === field.id);
+
+						if (generatedField && generatedField.value) {
+							content = generatedField.value;
+							aiGenerated = true;
+						} else {
+							// Keep existing content if generation failed
+							content =
+								existingRow && existingRow.cells
+									? safeGetCell(existingRow.cells, fieldIdSafe)?.content || ''
+									: '';
+						}
+					} else {
+						// Keep existing content if no flashcard generated
 						content =
 							existingRow && existingRow.cells
 								? safeGetCell(existingRow.cells, fieldIdSafe)?.content || ''
@@ -279,7 +569,8 @@
 					status: 'ai-generated' as const,
 					metadata: {
 						createdAt: new Date(),
-						aiGenerated: true
+						aiGenerated: true,
+						saved: false
 					}
 				});
 			}
@@ -298,8 +589,122 @@
 		const row = flashcardRows.find((r) => r.id === rowId);
 		if (!row) return;
 
-		// TODO: Implement single row AI regeneration
-		console.log('Regenerating row:', rowId);
+		isGenerating = true;
+		generationError = null;
+
+		try {
+			// Create generation items for non-input fields of this specific row
+			const items: GenerationFieldData[] = [];
+
+			templateFields.forEach((field) => {
+				if (field.isInput) return; // Skip input fields
+
+				const fieldIdSafe = String(field.id);
+				const cell = safeGetCell(row.cells, fieldIdSafe);
+
+				// Get input field content for context
+				const inputFields = templateFields.filter((f) => f.isInput);
+				const inputContent = inputFields
+					.map((inputField) => {
+						const inputFieldId = String(inputField.id);
+						const inputCell = safeGetCell(row.cells, inputFieldId);
+						return inputCell?.content || '';
+					})
+					.join(', ');
+
+				items.push({
+					fieldId: field.id,
+					value: inputContent || cell?.content || field.label || field.name
+				});
+			});
+
+			if (items.length === 0) {
+				toast.error('No fields to regenerate for this row');
+				return;
+			}
+
+			// Build request using the service helper
+			const request = aiService.buildRequest(template, items, batchContext.trim());
+
+			// Call AI service
+			const response = await aiService.generate(request);
+
+			if (response.error) {
+				toast.error(`Generation failed: ${response.error}`);
+				return;
+			}
+
+			// Update the specific row with regenerated content
+			flashcardRows = flashcardRows.map((r) => {
+				if (r.id === rowId) {
+					const updatedCells = { ...r.cells };
+					let wasUpdated = false;
+
+					// Get the first (and should be only) flashcard from the response
+					const generatedFlashcard = response.flashcards[0];
+
+					if (generatedFlashcard && generatedFlashcard.fields) {
+						templateFields.forEach((field) => {
+							if (field.isInput) return;
+
+							// Find the generated field for this field ID
+							const generatedField = generatedFlashcard.fields.find((f) => f.fieldId === field.id);
+
+							if (generatedField && generatedField.value) {
+								const fieldIdSafe = String(field.id);
+								safeSetCell(updatedCells, fieldIdSafe, {
+									fieldId: fieldIdSafe,
+									content: generatedField.value,
+									aiGenerated: true,
+									isAIGenerated: true,
+									feedback: undefined
+								});
+								wasUpdated = true;
+							}
+						});
+					}
+
+					if (wasUpdated) {
+						// Update front and back cells
+						const frontField = templateFields.find((f) => f.isInput) || templateFields[0];
+						const backField = templateFields.find((f) => !f.isInput) || templateFields[1];
+
+						const frontFieldId = frontField?.id ? String(frontField.id) : 'front';
+						const backFieldId = backField?.id ? String(backField.id) : 'back';
+
+						return {
+							...r,
+							cells: updatedCells,
+							front: safeGetCell(updatedCells, frontFieldId) || r.front,
+							back: safeGetCell(updatedCells, backFieldId) || r.back,
+							status: 'ai-generated' as const,
+							metadata: {
+								...r.metadata,
+								aiGenerated: true,
+								saved: r.metadata.saved || false
+							}
+						};
+					}
+				}
+				return r;
+			});
+
+			updateSession();
+			toast.success('Row content regenerated successfully');
+		} catch (error) {
+			console.error('AI regeneration failed:', error);
+
+			if (error instanceof AIServiceException) {
+				generationError = error.error.message;
+				toast.error(error.error.message);
+			} else {
+				generationError =
+					error instanceof Error ? error.message : 'Failed to regenerate row content';
+				toast.error('Failed to regenerate row content');
+			}
+		} finally {
+			isGenerating = false;
+		}
 	}
 
 	function previewCard(rowId: string) {
@@ -386,6 +791,23 @@
 						Generate Cards
 					{/if}
 				</Button>
+
+				{#if eligibleInputCards().length > 0}
+					<Button
+						variant="outline"
+						onclick={generateForInputCards}
+						disabled={isGenerating}
+						class="gap-2"
+					>
+						{#if isGenerating}
+							<RefreshIcon class="h-4 w-4 animate-spin" />
+							Generating...
+						{:else}
+							<SparklesIcon class="h-4 w-4" />
+							Generate Fields for Input Cards ({eligibleInputCards().length})
+						{/if}
+					</Button>
+				{/if}
 			</div>
 		</Card.Content>
 	</Card.Root>
@@ -393,7 +815,15 @@
 	<!-- Error Display -->
 	{#if generationError}
 		<div class="bg-destructive/10 border-destructive/20 rounded-lg border p-3">
+			<p class="text-destructive text-sm font-medium">AI Generation Error:</p>
 			<p class="text-destructive text-sm">{generationError}</p>
+		</div>
+	{/if}
+
+	{#if saveError}
+		<div class="bg-destructive/10 border-destructive/20 rounded-lg border p-3">
+			<p class="text-destructive text-sm font-medium">Save Error:</p>
+			<p class="text-destructive text-sm">{saveError}</p>
 		</div>
 	{/if}
 
@@ -408,10 +838,50 @@
 					</Card.Description>
 				</div>
 
-				<Button variant="outline" onclick={addRow} class="gap-2">
-					<PlusIcon class="h-4 w-4" />
-					Add flashcard
-				</Button>
+				<div class="flex gap-2">
+					{#if eligibleInputCards().length > 0}
+						<Button
+							variant="default"
+							onclick={generateForInputCards}
+							disabled={isGenerating}
+							class="gap-2"
+						>
+							{#if isGenerating}
+								<RefreshIcon class="h-4 w-4 animate-spin" />
+								Generating...
+							{:else}
+								<SparklesIcon class="h-4 w-4" />
+								Generate Fields ({eligibleInputCards().length})
+							{/if}
+						</Button>
+					{/if}
+
+					<Button variant="outline" onclick={addRow} class="gap-2">
+						<PlusIcon class="h-4 w-4" />
+						Add flashcard
+					</Button>
+
+					<!-- Save Actions -->
+					{#if readyCards().length > 0}
+						<Button
+							variant="default"
+							onclick={saveReadyCards}
+							disabled={isSaving || !deck}
+							class="gap-2"
+						>
+							{#if isSaving}
+								<RefreshIcon class="h-4 w-4 animate-spin" />
+								Saving...
+							{:else}
+								Save Ready Cards ({readyCards().length})
+							{/if}
+						</Button>
+					{/if}
+
+					<Button variant="outline" onclick={saveDraft} class="gap-2">Save Draft</Button>
+
+					<Button variant="outline" onclick={clearAll} class="gap-2">Clear All</Button>
+				</div>
 			</div>
 		</Card.Header>
 		<Card.Content>
@@ -430,6 +900,7 @@
 									{/if}
 								</Table.Head>
 							{/each}
+							<Table.Head class="w-24">Status</Table.Head>
 							<Table.Head class="w-32">Actions</Table.Head>
 						</Table.Row>
 					</Table.Header>
@@ -495,6 +966,24 @@
 										</div>
 									</Table.Cell>
 								{/each}
+								<Table.Cell>
+									{@const isComplete = templateFields.every((field) => {
+										const fieldIdSafe = String(field.id);
+										const cell = safeGetCell(row.cells, fieldIdSafe);
+										return cell && cell.content.trim().length > 0;
+									})}
+									{@const hasSaved = row.status === 'saved' || row.metadata?.saved}
+
+									{#if hasSaved}
+										<Badge variant="default" class="gap-1">📝 Saved</Badge>
+									{:else if isComplete}
+										<Badge variant="secondary" class="gap-1">✅ Ready</Badge>
+									{:else if row.status === 'ai-generated'}
+										<Badge variant="outline" class="gap-1">🤖 AI Generated</Badge>
+									{:else}
+										<Badge variant="outline" class="gap-1">⏳ Incomplete</Badge>
+									{/if}
+								</Table.Cell>
 								<Table.Cell>
 									<div class="flex gap-1">
 										<Button

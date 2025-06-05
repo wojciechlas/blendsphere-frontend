@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Card from '$lib/components/ui/card/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { toast } from 'svelte-sonner';
-	import { flashcardService } from '$lib/services/flashcard.service.js';
 	import FlashcardTableCreator from './FlashcardTableCreator.svelte';
 	import DeckSelector from './DeckSelector.svelte';
 	import TemplateSelector from './TemplateSelector.svelte';
@@ -28,11 +26,6 @@
 
 	let { templates, fields, initialTemplate, availableDecks }: Props = $props();
 
-	const dispatch = createEventDispatcher<{
-		cardsCreated: { cards: unknown[]; deckId: string; template: Template };
-		cancel: void;
-	}>();
-
 	// Single-step state management
 	let selectedTemplate = $state<Template | null>(initialTemplate || null);
 	let selectedDeck = $state<Deck | null>(null);
@@ -45,7 +38,6 @@
 	let showDeckSelector = $state(false);
 
 	// Loading states
-	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 
 	// Get template fields
@@ -60,7 +52,11 @@
 		return flashcardRows.filter((row) =>
 			tFields.every((field: Field) => {
 				const fieldIdSafe = String(field.id);
-				const cell = row.cells?.[fieldIdSafe];
+				// Safe object access with validated key
+				const cell =
+					row.cells && Object.prototype.hasOwnProperty.call(row.cells, fieldIdSafe)
+						? row.cells[fieldIdSafe]
+						: null;
 				return cell && cell.content.trim();
 			})
 		);
@@ -143,63 +139,12 @@
 			status: 'manual',
 			metadata: {
 				createdAt: new Date(),
-				aiGenerated: false
+				aiGenerated: false,
+				saved: false
 			}
 		};
 
 		flashcardRows = [...flashcardRows, newRow];
-	}
-
-	// Save ready cards
-	async function saveReadyCards() {
-		if (!selectedTemplate || !selectedDeck) {
-			toast.error('Please select a template and deck before saving');
-			return;
-		}
-
-		// Get cards from flashcardRows that have content
-		const completedCards = flashcardRows.filter((row) =>
-			templateFields().every((field) => {
-				const fieldIdSafe = String(field.id);
-				const cell = row.cells[fieldIdSafe];
-				return cell && cell.content.trim();
-			})
-		);
-
-		if (completedCards.length === 0) {
-			toast.error('Please complete at least one flashcard before saving');
-			return;
-		}
-
-		isLoading = true;
-		error = null;
-
-		try {
-			// Save flashcards to PocketBase using the flashcard service
-			const savedCards = await flashcardService.createFromRows(
-				completedCards,
-				selectedDeck.id,
-				selectedTemplate.id
-			);
-
-			// Dispatch success event
-			dispatch('cardsCreated', {
-				cards: savedCards,
-				deckId: selectedDeck.id,
-				template: selectedTemplate
-			});
-
-			toast.success(`${savedCards.length} cards saved to ${selectedDeck.name}`);
-
-			// Reset the form after successful save
-			flashcardRows = [];
-			addNewRow();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to save flashcards';
-			toast.error('Failed to save cards');
-		} finally {
-			isLoading = false;
-		}
 	}
 
 	// Save draft
@@ -413,18 +358,10 @@
 								{readyCards().length} of {flashcardRows.length} cards ready
 							</div>
 
-							<!-- Primary Save Action -->
-							{#if readyCards().length > 0}
-								<Button onclick={saveReadyCards} disabled={isLoading} class="gap-2">
-									<SaveIcon class="h-4 w-4" />
-									{isLoading ? 'Saving...' : `Save ${readyCards().length} Cards`}
-								</Button>
-							{:else}
-								<Button disabled class="gap-2">
-									<SaveIcon class="h-4 w-4" />
-									No Cards Ready
-								</Button>
-							{/if}
+							<!-- Info about save actions being in the table -->
+							<div class="text-muted-foreground text-xs">
+								Use "Save Ready Cards" button in the table above to save completed flashcards
+							</div>
 						</div>
 					</div>
 				</Card.Content>

@@ -1,12 +1,14 @@
 {
 	"name": "blendsphere-frontend",
 	"private": true,
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
+		"start": "NODE_ENV=production vite preview --port 8080 --host 0.0.0.0",
+		"start:prod": "NODE_ENV=production PORT=8080 HOST=0.0.0.0 vite preview",
 		"prepare": "husky",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

@@ -1,13 +1,16 @@
 import type {
-	AIBatchGenerationRequest,
-	AIBatchGenerationResponse,
-	FlashcardRow,
-	AIGenerationItem
+	FlashcardGenerationRequest,
+	FlashcardGenerationResponse,
+	GenerationFieldData,
+	GenerationFlashcard
 } from '$lib/types/flashcard-creator.js';
 import type { Template } from '$lib/services/template.service.js';
+import { pb } from '$lib/pocketbase.js';
 
 // FastAPI AI service configuration
-const AI_SERVICE_BASE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8001';
+const AI_SERVICE_BASE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8090';
+const ENABLE_MOCK_AI =
+	import.meta.env.VITE_ENABLE_MOCK_AI === 'true' || import.meta.env.NODE_ENV === 'development';
 
 export interface AIServiceError {
 	type: 'network' | 'rate-limit' | 'content-filter' | 'invalid-response' | 'server-error';
@@ -26,6 +29,71 @@ export class AIServiceException extends Error {
 }
 
 /**
+ * Mock AI service for development when FastAPI backend is not available
+ */
+const mockAIGenerate = async (
+	request: FlashcardGenerationRequest
+): Promise<FlashcardGenerationResponse> => {
+	// Simulate API delay
+	await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
+
+	// Group input fields by their pattern to determine how many flashcards we're generating
+	// The request contains fields for multiple flashcards in sequence
+	const fieldIds = [...new Set(request.inputFields.map((f) => f.fieldId))];
+	const flashcardsCount = request.inputFields.length / fieldIds.length;
+
+	const flashcards: GenerationFlashcard[] = [];
+
+	for (let cardIndex = 0; cardIndex < flashcardsCount; cardIndex++) {
+		const fields: GenerationFieldData[] = [];
+
+		for (let fieldIndex = 0; fieldIndex < fieldIds.length; fieldIndex++) {
+			const inputIndex = cardIndex * fieldIds.length + fieldIndex;
+			if (inputIndex >= 0 && inputIndex < request.inputFields.length) {
+				const inputFields = request.inputFields;
+				const inputField = inputFields.at(inputIndex);
+
+				if (inputField) {
+					// Generate mock content based on field id and value
+					let mockContent = '';
+
+					if (
+						inputField.fieldId.toLowerCase().includes('translation') ||
+						inputField.fieldId.toLowerCase().includes('back')
+					) {
+						mockContent = `Translation of: ${inputField.value || 'example'}`;
+					} else if (
+						inputField.fieldId.toLowerCase().includes('example') ||
+						inputField.fieldId.toLowerCase().includes('sentence')
+					) {
+						mockContent = `Example sentence with: ${inputField.value || 'word'}`;
+					} else if (inputField.fieldId.toLowerCase().includes('definition')) {
+						mockContent = `Definition of: ${inputField.value || 'term'}`;
+					} else {
+						mockContent = `Generated content for ${inputField.fieldId}: ${inputField.value || 'example'}`;
+					}
+
+					fields.push({
+						fieldId: inputField.fieldId,
+						value: mockContent
+					});
+				}
+			}
+		}
+
+		flashcards.push({ fields });
+	}
+
+	// Simulate occasional errors
+	const hasError = Math.random() > 0.95;
+
+	return {
+		flashcards,
+		error: hasError ? 'Mock generation error' : undefined
+	};
+};
+
+/**
  * AI Service for communicating with FastAPI AI backend
  * Handles batch generation and individual card generation
  */
@@ -33,12 +101,30 @@ export const aiService = {
 	/**
 	 * Generate content for flashcards - handles both single and multiple cards
 	 */
-	generate: async (request: AIBatchGenerationRequest): Promise<AIBatchGenerationResponse> => {
+	generate: async (request: FlashcardGenerationRequest): Promise<FlashcardGenerationResponse> => {
+		// Use mock service in development when AI service is not available
+		if (ENABLE_MOCK_AI) {
+			console.warn('Using mock AI service for development');
+			return mockAIGenerate(request);
+		}
+
 		try {
-			const response = await fetch(`${AI_SERVICE_BASE_URL}/api/ai/generate`, {
+			// Get the current user token from PocketBase
+			const token = pb.authStore.token;
+
+			if (!token) {
+				throw new AIServiceException({
+					type: 'invalid-response',
+					message: 'User authentication required for AI generation.',
+					details: 'No valid authentication token found'
+				});
+			}
+
+			const response = await fetch(`${AI_SERVICE_BASE_URL}/api/flashcards/generate`, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${token}`
 				},
 				body: JSON.stringify(request)
 			});
@@ -48,9 +134,16 @@ export const aiService = {
 			}
 
 			const data = await response.json();
-			return data as AIBatchGenerationResponse;
+			return data as FlashcardGenerationResponse;
 		} catch (error) {
 			console.error('AI generation error:', error);
+
+			// Fallback to mock service if real service is unavailable
+			if (import.meta.env.NODE_ENV === 'development') {
+				console.warn('AI service unavailable, falling back to mock service');
+				return mockAIGenerate(request);
+			}
+
 			if (error instanceof AIServiceException) {
 				throw error;
 			}
@@ -78,6 +171,20 @@ export const aiService = {
 		let error: AIServiceError;
 
 		switch (status) {
+			case 401:
+				error = {
+					type: 'invalid-response',
+					message: 'Authentication failed. Please login again.',
+					details: errorData
+				};
+				break;
+			case 403:
+				error = {
+					type: 'invalid-response',
+					message: 'You do not have permission to access AI generation.',
+					details: errorData
+				};
+				break;
 			case 429:
 				error = {
 					type: 'rate-limit',
@@ -125,56 +232,13 @@ export const aiService = {
 	 */
 	buildRequest: (
 		template: Template,
-		items: AIGenerationItem[],
+		inputFields: GenerationFieldData[],
 		batchContext?: string
-	): AIBatchGenerationRequest => {
+	): FlashcardGenerationRequest => {
 		return {
 			templateId: template.id,
 			batchContext: batchContext || template.description,
-			items: items
-		};
-	},
-
-	/**
-	 * Build generation request from table data (legacy method for backward compatibility)
-	 */
-	buildBatchRequest: (
-		template: Template,
-		rows: FlashcardRow[],
-		batchContext: string
-	): AIBatchGenerationRequest => {
-		// Filter rows that are eligible for AI generation (have input data)
-		const eligibleRows = rows.filter((row) => {
-			// Check if row has input fields with content
-			return Object.values(row.cells).some(
-				(cell) => cell.content && cell.content.trim().length > 0
-			);
-		});
-
-		// Convert to AIGenerationItem format
-		const items: AIGenerationItem[] = [];
-
-		eligibleRows.forEach((row, rowIndex) => {
-			// For each field in the row, create a generation item
-			Object.entries(row.cells).forEach(([fieldId, cell]) => {
-				if (cell.content && cell.content.trim().length > 0) {
-					items.push({
-						id: `${row.id || `row_${rowIndex}`}_${fieldId}`,
-						instructions: batchContext,
-						field_name: fieldId,
-						field_type: 'text', // Default to text, could be enhanced to detect type
-						field_description: undefined,
-						current_content: cell.content,
-						overwrite: true
-					});
-				}
-			});
-		});
-
-		return {
-			templateId: template.id,
-			batchContext,
-			items
+			inputFields: inputFields
 		};
 	},
 

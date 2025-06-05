@@ -5,19 +5,32 @@
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import RefreshIcon from '@tabler/icons-svelte/icons/refresh';
 	import type { Template } from '$lib/services/template.service.js';
+	import type { Field } from '$lib/services/field.service.js';
 	import { replacePlaceholders } from '$lib/utils/template.utils.js';
 
 	interface Props {
-		template: Template;
+		template: Template & { fields?: Field[] };
 		data: Record<string, unknown>;
+		/**
+		 * Fields array - if not provided, will try to get from template.fields
+		 */
+		fields?: Field[];
+		/**
+		 * Data format type - helps the renderer understand how to process the data
+		 * - 'field-ids': data uses field IDs as keys (from database)
+		 * - 'field-labels': data uses field labels as keys (for previews)
+		 * - 'auto': automatically detect format (default)
+		 */
+		dataFormat?: 'field-ids' | 'field-labels' | 'auto';
 		/**
 		 * Display mode for the flashcard
 		 * - 'full': Complete interactive card with flip animation
-		 * - 'preview': Non-interactive preview (for table rows, modals)
+		 * - 'preview': Non-interactive preview (for template previews)
+		 * - 'review': Optimized for review sessions
 		 * - 'compact': Minimal display for lists
 		 * - 'side-by-side': Front and back displayed simultaneously
 		 */
-		mode?: 'full' | 'preview' | 'compact' | 'side-by-side';
+		mode?: 'full' | 'preview' | 'review' | 'compact' | 'side-by-side';
 		/**
 		 * Which side to show initially or exclusively
 		 */
@@ -39,14 +52,6 @@
 		 */
 		class?: string;
 		/**
-		 * Minimum height for the card container
-		 */
-		minHeight?: string;
-		/**
-		 * Whether to show field labels
-		 */
-		showFieldLabels?: boolean;
-		/**
 		 * Loading state
 		 */
 		isLoading?: boolean;
@@ -54,39 +59,114 @@
 		 * Error state
 		 */
 		error?: string;
+		/**
+		 * External flip state control - when provided, overrides internal flip state
+		 */
+		externalFlipState?: boolean;
+		/**
+		 * External flip handler - called when flip is triggered
+		 */
+		onFlip?: () => void;
 	}
 
 	let {
 		template,
 		data,
+		fields,
+		dataFormat = 'auto',
 		mode = 'full',
 		initialSide = 'front',
 		interactive = true,
 		context,
 		class: className,
-		minHeight = '300px',
 		isLoading = false,
-		error
+		error,
+		externalFlipState,
+		onFlip
 	}: Props = $props();
 
 	let isFlipped = $state(initialSide === 'back');
 	let currentSide = $state<'front' | 'back'>(initialSide);
 
-	// Get fields from template
-	let templateFields = $derived(template.fields || []);
+	// Use external flip state when provided, otherwise use internal state
+	$effect(() => {
+		if (externalFlipState !== undefined) {
+			isFlipped = externalFlipState;
+			currentSide = externalFlipState ? 'back' : 'front';
+		}
+	});
 
-	// Render the template layouts with actual data
-	let frontContent = $derived(
-		template.frontLayout
-			? replacePlaceholders(template.frontLayout, data, templateFields)
-			: '<p class="text-muted-foreground">No front layout defined</p>'
-	);
+	// Get fields from multiple sources with fallback
+	let templateFields = $derived(() => {
+		// Priority: explicit fields prop > template.fields > empty array
+		if (fields && fields.length > 0) return fields;
+		if (template.fields && template.fields.length > 0) return template.fields;
+		return [];
+	});
 
-	let backContent = $derived(
-		template.backLayout
-			? replacePlaceholders(template.backLayout, data, templateFields)
-			: '<p class="text-muted-foreground">No back layout defined</p>'
-	);
+	// Smart data processing based on format detection
+	let processedData = $derived(() => {
+		const availableFields = templateFields();
+		if (!availableFields.length) {
+			return data;
+		}
+
+		// Auto-detect data format if needed
+		let detectedFormat = dataFormat;
+		if (dataFormat === 'auto') {
+			const dataKeys = Object.keys(data);
+			const fieldIds = availableFields.map((f) => f.id);
+			const fieldLabels = availableFields.map((f) => f.label.toLowerCase().replace(/\s+/g, '_'));
+
+			// Check if data keys match field IDs more than field labels
+			const idMatches = dataKeys.filter((key) => fieldIds.includes(key)).length;
+			const labelMatches = dataKeys.filter((key) => fieldLabels.includes(key)).length;
+
+			detectedFormat = idMatches > labelMatches ? 'field-ids' : 'field-labels';
+		}
+
+		// Process data based on detected format
+		if (detectedFormat === 'field-ids') {
+			// Convert field IDs to field labels for template rendering
+			const convertedData: Record<string, unknown> = {};
+			Object.entries(data).forEach(([key, value]) => {
+				const field = availableFields.find((f) => f.id === key);
+				if (field) {
+					const labelKey = field.label.toLowerCase().replace(/\s+/g, '_');
+					// Safe object assignment with validated key
+					if (labelKey && typeof labelKey === 'string') {
+						convertedData[labelKey] = value;
+					}
+				} else {
+					// Keep original key if no field found
+					if (key && typeof key === 'string') {
+						convertedData[key] = value;
+					}
+				}
+			});
+			return convertedData;
+		}
+
+		// For 'field-labels' format, data is already in the right format
+		return data;
+	});
+
+	// Render the template layouts with processed data
+	let frontContent = $derived.by(() => {
+		if (!template.frontLayout)
+			return '<p class="text-muted-foreground">No front layout defined</p>';
+
+		// For replacement, we use processedData which should have label-based keys
+		const content = replacePlaceholders(template.frontLayout, processedData(), templateFields());
+		return content;
+	});
+
+	let backContent = $derived.by(() => {
+		if (!template.backLayout) return '<p class="text-muted-foreground">No back layout defined</p>';
+
+		const content = replacePlaceholders(template.backLayout, processedData(), templateFields());
+		return content;
+	});
 
 	// Check if there's content to display
 	let hasFrontContent = $derived(template.frontLayout && template.frontLayout.trim() !== '');
@@ -95,8 +175,15 @@
 
 	const handleFlip = () => {
 		if (!interactive || mode === 'preview' || mode === 'compact') return;
-		isFlipped = !isFlipped;
-		currentSide = isFlipped ? 'back' : 'front';
+
+		if (onFlip) {
+			// Use external flip handler when provided
+			onFlip();
+		} else {
+			// Use internal flip state
+			isFlipped = !isFlipped;
+			currentSide = isFlipped ? 'back' : 'front';
+		}
 	};
 
 	// Reset flip state when mode changes
@@ -114,10 +201,7 @@
 		<div class="text-destructive/80 text-sm">{error}</div>
 	</div>
 {:else if isLoading}
-	<div
-		class="flex items-center justify-center rounded-lg border p-8"
-		style="min-height: {minHeight}"
-	>
+	<div class="flex h-full items-center justify-center rounded-lg border">
 		<div class="text-muted-foreground text-center">
 			<div class="text-sm">Loading flashcard...</div>
 		</div>
@@ -224,10 +308,8 @@
 
 		<!-- Flashcard Display -->
 		<div
-			class={cn('relative')}
-			style="min-height: {minHeight}; {interactive && mode === 'full'
-				? 'perspective: 1000px;'
-				: ''}"
+			class={cn('relative h-full w-full')}
+			style={interactive && mode === 'full' ? 'perspective: 1000px;' : ''}
 		>
 			{#if interactive && mode === 'full'}
 				<!-- Interactive flip card -->
@@ -247,14 +329,16 @@
 						<Card.Header class="pb-3">
 							<Card.Title class="text-center text-lg">Front</Card.Title>
 						</Card.Header>
-						<Card.Content class="space-y-3">
+						<Card.Content class="flex-1 space-y-3 overflow-hidden p-6">
 							{#if hasFrontContent}
-								<div class="flashcard-content">
+								<div class="flashcard-content flex h-full max-w-full items-center justify-center">
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 									{@html frontContent}
 								</div>
 							{:else}
-								<div class="text-muted-foreground py-8 text-center">
+								<div
+									class="text-muted-foreground flex h-full items-center justify-center text-center"
+								>
 									<p>No front layout defined</p>
 								</div>
 							{/if}
@@ -271,9 +355,9 @@
 						<Card.Header class="pb-3">
 							<Card.Title class="text-center text-lg">Back</Card.Title>
 						</Card.Header>
-						<Card.Content class="space-y-3">
+						<Card.Content class="space-y-3 overflow-hidden">
 							{#if hasBackContent}
-								<div class="flashcard-content">
+								<div class="flashcard-content max-w-full">
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 									{@html backContent}
 								</div>
@@ -287,7 +371,7 @@
 				</div>
 			{:else}
 				<!-- Static display for preview mode -->
-				<Card.Root class="h-full">
+				<Card.Root class="h-full w-full">
 					<Card.Header class="pb-3">
 						<div class="flex items-center justify-between">
 							<Card.Title class="text-lg">
@@ -295,11 +379,11 @@
 							</Card.Title>
 						</div>
 					</Card.Header>
-					<Card.Content class="space-y-3">
+					<Card.Content class="space-y-3 overflow-hidden">
 						{@const contentToShow = currentSide === 'front' ? frontContent : backContent}
 						{@const hasContent = currentSide === 'front' ? hasFrontContent : hasBackContent}
 						{#if hasContent}
-							<div class="flashcard-content">
+							<div class="flashcard-content max-w-full">
 								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 								{@html contentToShow}
 							</div>
@@ -336,15 +420,51 @@
 	.flashcard-content {
 		word-wrap: break-word;
 		overflow-wrap: break-word;
+		max-width: 100%;
+		overflow: hidden;
+		hyphens: auto;
+	}
+
+	:global(.flashcard-content *) {
+		max-width: 100% !important;
+		word-break: break-word;
+		overflow-wrap: break-word;
 	}
 
 	:global(.flashcard-content img) {
-		max-width: 100%;
+		max-width: 100% !important;
 		height: auto;
 		border-radius: 0.375rem;
+		object-fit: contain;
 	}
 
 	:global(.flashcard-content audio) {
 		width: 100%;
+		max-width: 100%;
+	}
+
+	:global(.flashcard-content video) {
+		width: 100%;
+		max-width: 100%;
+		height: auto;
+	}
+
+	:global(.flashcard-content pre) {
+		white-space: pre-wrap;
+		overflow-wrap: break-word;
+		max-width: 100%;
+		overflow-x: auto;
+	}
+
+	:global(.flashcard-content table) {
+		max-width: 100%;
+		overflow-x: auto;
+		display: block;
+		white-space: nowrap;
+	}
+
+	:global(.flashcard-content p, .flashcard-content div, .flashcard-content span) {
+		word-wrap: break-word;
+		overflow-wrap: break-word;
 	}
 </style>

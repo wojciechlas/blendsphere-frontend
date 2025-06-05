@@ -113,20 +113,16 @@ export function validateUrl(url: string, allowedDomains?: string[]): boolean {
  * SQL injection prevention for dynamic queries
  */
 export function escapeForSQL(input: string): string {
-	return (
-		input
-			.replace(/'/g, "''")
-			.replace(/"/g, '""')
-			.replace(/\\/g, '\\\\')
-			// eslint-disable-next-line security/detect-non-literal-regexp
-			.replace(new RegExp(String.fromCharCode(0), 'g'), '\\0')
-			.replace(/\n/g, '\\n')
-			.replace(/\r/g, '\\r')
-			// eslint-disable-next-line security/detect-non-literal-regexp
-			.replace(new RegExp(String.fromCharCode(26), 'g'), '\\Z')
-			.replace(/;/g, '\\;')
-			.replace(/--/g, '\\-\\-')
-	);
+	return input
+		.replace(/'/g, "''")
+		.replace(/"/g, '""')
+		.replace(/\\/g, '\\\\')
+		.replace(new RegExp(String.fromCharCode(0), 'g'), '\\0')
+		.replace(/\n/g, '\\n')
+		.replace(/\r/g, '\\r')
+		.replace(new RegExp(String.fromCharCode(26), 'g'), '\\Z')
+		.replace(/;/g, '\\;')
+		.replace(/--/g, '\\-\\-');
 }
 
 /**

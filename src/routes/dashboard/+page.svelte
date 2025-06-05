@@ -14,6 +14,8 @@
 	import PlusIcon from '@tabler/icons-svelte/icons/plus';
 	import TemplateIcon from '@tabler/icons-svelte/icons/template';
 	import EyeIcon from '@tabler/icons-svelte/icons/eye';
+	import BrainIcon from '@tabler/icons-svelte/icons/brain';
+	import ClockIcon from '@tabler/icons-svelte/icons/clock';
 
 	function handleCreateTemplate() {
 		goto('/dashboard/templates/create');
@@ -21,6 +23,10 @@
 
 	function handleViewTemplates() {
 		goto('/dashboard/templates');
+	}
+
+	function handleStartReview() {
+		goto('/dashboard/review');
 	}
 </script>
 
@@ -63,6 +69,33 @@
 							Great to see you back! You're logged in and ready to continue your language learning
 							journey with BlendSphere's AI-powered flashcard system.
 						</p>
+					</CardContent>
+				</Card>
+
+				<!-- Review Card -->
+				<Card>
+					<CardHeader>
+						<CardTitle class="flex items-center gap-2">
+							<BrainIcon class="h-5 w-5" />
+							Review Session
+						</CardTitle>
+						<CardDescription>Practice with your flashcards using spaced repetition</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div class="space-y-3">
+							<div class="flex items-center justify-between text-sm">
+								<span class="text-muted-foreground">Cards due today:</span>
+								<span class="font-medium">15</span>
+							</div>
+							<div class="flex items-center justify-between text-sm">
+								<span class="text-muted-foreground">Learning streak:</span>
+								<span class="font-medium">7 days</span>
+							</div>
+							<Button class="w-full" onclick={handleStartReview}>
+								<ClockIcon class="mr-2 h-4 w-4" />
+								Start Review Session
+							</Button>
+						</div>
 					</CardContent>
 				</Card>
 
@@ -116,6 +149,10 @@
 						<CardDescription>Get started with your learning journey</CardDescription>
 					</CardHeader>
 					<CardContent class="space-y-3">
+						<Button class="w-full justify-start" onclick={handleStartReview}>
+							<BrainIcon class="mr-2 h-4 w-4" />
+							Start Review Session
+						</Button>
 						<Button class="w-full justify-start" variant="outline" onclick={handleCreateTemplate}>
 							<PlusIcon class="mr-2 h-4 w-4" />
 							Create Template

@@ -349,7 +349,7 @@ const previewContent = $derived(() => {
 
 ```typescript
 // AI batch generation service integration (within FlashcardTableCreator.svelte)
-interface AIBatchGenerationRequest {
+interface FlashcardGenerationRequest {
   templateId: string;
   batchContext?: string;
   items: Array<{
@@ -360,7 +360,7 @@ interface AIBatchGenerationRequest {
   // ... other context like language, level from template
 }
 
-interface AIBatchGenerationResponse {
+interface FlashcardGenerationResponse {
   results: Array<{
     rowId: string;
     success: boolean;
@@ -371,7 +371,7 @@ interface AIBatchGenerationResponse {
 }
 
 class AIService {
-  async generateBatchFlashcardContent(request: AIBatchGenerationRequest): Promise<AIBatchGenerationResponse> {
+  async generateBatchFlashcardContent(request: FlashcardGenerationRequest): Promise<FlashcardGenerationResponse> {
     // ... call FastAPI backend ...
   }
 }
@@ -386,7 +386,7 @@ let batchGenerationState = $state<{
 
 async function triggerBatchAIGeneration(rowsToProcess: FlashcardRow[]) {
   // 1. Set batchGenerationState.isGenerating = true, reset progress/error
-  // 2. Prepare AIBatchGenerationRequest payload from rowsToProcess and batchContext
+  // 2. Prepare FlashcardGenerationRequest payload from rowsToProcess and batchContext
   // 3. Call aiService.generateBatchFlashcardContent(payload)
   //    - Update progress based on streaming or polling if possible, or estimate
   // 4. On response, update flashcardRows with generated content or errors

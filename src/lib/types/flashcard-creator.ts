@@ -4,17 +4,6 @@ import type { Template } from '$lib/services/template.service.js';
 import type { Field } from '$lib/services/field.service.js';
 import type { Flashcard } from '$lib/services/flashcard.service.js';
 
-// AI Generation types
-export interface AIGenerationItem {
-	id: string;
-	instructions: string;
-	field_name: string;
-	field_type: string;
-	field_description?: string;
-	current_content?: string;
-	overwrite?: boolean;
-}
-
 export interface FlashcardCreationSession {
 	id: string; // Session ID
 	templateId: string | null;
@@ -40,10 +29,11 @@ export interface FlashcardRow {
 	back: FlashcardCell;
 	cells: Record<string, FlashcardCell>; // fieldId -> FlashcardCell mapping
 	isSelected: boolean;
-	status: 'manual' | 'ai-generated' | 'edited'; // Track how the card was created
+	status: 'manual' | 'ai-generated' | 'edited' | 'ready' | 'saved' | 'incomplete'; // Track how the card was created
 	metadata: {
 		createdAt: Date;
 		aiGenerated: boolean;
+		saved: boolean;
 	};
 }
 
@@ -61,20 +51,25 @@ export interface AIGeneratedCellFeedback {
 	timestamp: string;
 }
 
-export interface AIBatchGenerationRequest {
-	templateId: string;
-	batchContext?: string;
-	items: AIGenerationItem[];
+// AI Generation types
+export interface GenerationFieldData {
+	fieldId: string; // ID of field from fields collection
+	value: string; // Generated content for this field
 }
 
-export interface AIBatchGenerationResponse {
-	results: Array<{
-		id: string; // Matches the ID from the request item
-		success: boolean;
-		content?: string; // Generated content for the field
-		error?: string;
-	}>;
-	batchError?: string;
+export interface GenerationFlashcard {
+	fields: GenerationFieldData[]; // All fields in a single generated flashcard
+}
+
+export interface FlashcardGenerationRequest {
+	templateId: string;
+	batchContext?: string;
+	inputFields: GenerationFieldData[]; // Input data for generation
+}
+
+export interface FlashcardGenerationResponse {
+	flashcards: GenerationFlashcard[]; // Array of generated flashcards, each with multiple fields
+	error?: string;
 }
 
 export interface TemplateField {

@@ -419,7 +419,7 @@ interface FlashcardRow { // Represents a single row in the creation table
   // Potentially other row-specific metadata, e.g., isMarkedForDeletion
 }
 
-interface AIBatchGenerationRequest {
+interface FlashcardGenerationRequest {
   templateId: string;
   batchContext?: string;
   items: Array<{
@@ -435,7 +435,7 @@ interface AIBatchGenerationRequest {
   };
 }
 
-interface AIBatchGenerationResponse {
+interface FlashcardGenerationResponse {
   results: Array<{
     rowId:string;
     success: boolean;
