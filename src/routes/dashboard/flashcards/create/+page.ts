@@ -20,8 +20,29 @@ export const load: PageLoad = async ({ url }) => {
 
 		// Load templates and decks in parallel
 		const [templatesResult, decksResult] = await Promise.all([
-			templateService.list(1, 100, { user: user.id }),
-			deckService.listByUser(user.id, 1, 100)
+			// Try to load both user's templates and public templates
+			Promise.all([
+				templateService
+					.list(1, 50, { user: user.id })
+					.catch(() => ({ items: [], totalItems: 0, totalPages: 0 })),
+				templateService
+					.list(1, 50, { isPublic: true })
+					.catch(() => ({ items: [], totalItems: 0, totalPages: 0 }))
+			]).then(([userTemplates, publicTemplates]) => {
+				// Combine and deduplicate templates
+				const allTemplates = [...userTemplates.items, ...publicTemplates.items];
+				const uniqueTemplates = allTemplates.filter(
+					(template, index, arr) => arr.findIndex((t) => t.id === template.id) === index
+				);
+				return {
+					items: uniqueTemplates,
+					totalItems: uniqueTemplates.length,
+					totalPages: Math.ceil(uniqueTemplates.length / 50)
+				};
+			}),
+			deckService
+				.listByUser(user.id, 1, 100)
+				.catch(() => ({ items: [], totalItems: 0, totalPages: 0 }))
 		]);
 
 		// Load fields for all templates in parallel to avoid auto-cancellation
@@ -61,12 +82,25 @@ export const load: PageLoad = async ({ url }) => {
 	} catch (error) {
 		console.error('Error loading flashcard creator:', error);
 
-		return {
-			templates: [],
-			decks: [],
-			fields: [],
-			selectedTemplate: null,
-			title: 'Create Flashcard - BlendSphere'
-		};
+		// Try to load at least public templates if user templates fail
+		try {
+			const publicTemplatesResult = await templateService.list(1, 50, { isPublic: true });
+			return {
+				templates: publicTemplatesResult.items,
+				decks: [],
+				fields: [],
+				selectedTemplate: null,
+				title: 'Create Flashcard - BlendSphere'
+			};
+		} catch (fallbackError) {
+			console.error('Failed to load even public templates:', fallbackError);
+			return {
+				templates: [],
+				decks: [],
+				fields: [],
+				selectedTemplate: null,
+				title: 'Create Flashcard - BlendSphere'
+			};
+		}
 	}
 };

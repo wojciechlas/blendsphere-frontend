@@ -75,12 +75,9 @@
 		return newFormData;
 	});
 
-	// Use state for mutable form data that needs to be updated
-	let mutableFormData = $state<Record<string, unknown>>({});
-
-	// Initialize mutable form data
-	$effect(() => {
-		mutableFormData = { ...formData };
+	// Use writable derived for mutable form data that needs to be updated
+	let mutableFormData = $derived.by(() => {
+		return { ...formData };
 	});
 
 	// Derived values for performance
