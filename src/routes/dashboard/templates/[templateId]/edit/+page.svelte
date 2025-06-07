@@ -94,8 +94,11 @@
 					});
 				} else {
 					// Create new field (either no ID or temp ID)
+					// Remove id property for new fields to let PocketBase auto-generate it
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					const { id, ...fieldWithoutId } = field;
 					await fieldService.create({
-						...field,
+						...fieldWithoutId,
 						template: templateId
 					});
 				}

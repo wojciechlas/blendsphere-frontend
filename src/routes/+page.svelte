@@ -23,20 +23,7 @@
 	<section class="relative px-4 py-20">
 		<div class="container mx-auto text-center">
 			<div class="mb-6 flex items-center justify-center">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="text-primary h-16 w-16"
-				>
-					<path d="M12 2L2 7l10 5 10-5-10-5z" />
-					<path d="M2 17l10 5 10-5" />
-					<path d="M2 12l10 5 10-5" />
-				</svg>
+				<img src="/blendsphere-logo.svg" alt="BlendSphere Logo" class="h-16 w-auto" />
 			</div>
 
 			<h1 class="mb-6 text-4xl font-bold tracking-tight md:text-6xl">

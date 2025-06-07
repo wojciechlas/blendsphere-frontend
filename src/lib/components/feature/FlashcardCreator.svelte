@@ -306,7 +306,7 @@
 						metadata: {
 							...row.metadata,
 							saved: true,
-							savedAt: new Date()
+							savedAt: new Date().toISOString()
 						}
 					};
 				}

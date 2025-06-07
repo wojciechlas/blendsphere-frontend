@@ -220,7 +220,11 @@
 		<div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
 			<Card class="w-full">
 				<CardHeader class="space-y-1 text-center">
-					<img src="/logo-color.svg" alt="BlendSphere Logo" class="mx-auto mb-4 h-16 w-auto" />
+					<img
+						src="/blendsphere-logo.svg"
+						alt="BlendSphere Logo"
+						class="mx-auto mb-4 h-16 w-auto"
+					/>
 					<CardTitle class="text-2xl">Create an Account</CardTitle>
 					<CardDescription>Enter your details below to get started</CardDescription>
 				</CardHeader>

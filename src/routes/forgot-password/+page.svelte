@@ -172,21 +172,7 @@
 	<div class="bg-muted relative hidden h-full flex-col p-10 text-white lg:flex dark:border-l">
 		<div class="from-primary to-primary/80 absolute inset-0 bg-gradient-to-br"></div>
 		<div class="relative z-20 flex items-center text-lg font-medium">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="mr-2 h-6 w-6"
-			>
-				<path d="M12 2L2 7l10 5 10-5-10-5z" />
-				<path d="M2 17l10 5 10-5" />
-				<path d="M2 12l10 5 10-5" />
-			</svg>
-			BlendSphere
+			<img src="/blendsphere-logo-h.svg" alt="BlendSphere Logo" class="h-8 w-auto" />
 		</div>
 		<div class="relative z-20 mt-auto">
 			<blockquote class="space-y-2">

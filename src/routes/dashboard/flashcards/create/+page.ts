@@ -2,6 +2,7 @@ import { requireAuth } from '$lib/utils/auth-guards';
 import { templateService } from '$lib/services/template.service';
 import { deckService } from '$lib/services/deck.service';
 import { fieldService, type Field } from '$lib/services/field.service';
+import { flashcardService } from '$lib/services/flashcard.service';
 import { currentUser } from '$lib/pocketbase';
 import { get } from 'svelte/store';
 import type { PageLoad } from './$types';
@@ -45,21 +46,46 @@ export const load: PageLoad = async ({ url }) => {
 				.catch(() => ({ items: [], totalItems: 0, totalPages: 0 }))
 		]);
 
-		// Load fields for all templates in parallel to avoid auto-cancellation
+		// Load fields for all templates and associate them with templates
 		const allFields: Field[] = [];
 		if (templatesResult.items.length > 0) {
 			const fieldPromises = templatesResult.items.map((template) =>
 				fieldService
 					.listByTemplate(template.id)
-					.then((result) => result.items)
+					.then((result) => {
+						// Associate fields with the template
+						template.fields = result.items;
+						return result.items;
+					})
 					.catch((error) => {
 						console.warn(`Failed to load fields for template ${template.id}:`, error);
+						// Set empty fields array for this template
+						template.fields = [];
 						return [];
 					})
 			);
 
 			const fieldsResults = await Promise.all(fieldPromises);
 			fieldsResults.forEach((fields) => allFields.push(...fields));
+		}
+
+		// Load card counts for all decks
+		if (decksResult.items.length > 0) {
+			const cardCountPromises = decksResult.items.map((deck) =>
+				flashcardService
+					.listByDeck(deck.id, 1, 1) // Only need count, so fetch minimal data
+					.then((result) => {
+						deck.cardCount = result.totalItems;
+						return result.totalItems;
+					})
+					.catch((error) => {
+						console.warn(`Failed to load cards count for deck ${deck.id}:`, error);
+						deck.cardCount = 0;
+						return 0;
+					})
+			);
+
+			await Promise.all(cardCountPromises);
 		}
 
 		// Load selected template if provided

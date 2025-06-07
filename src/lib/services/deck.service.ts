@@ -6,6 +6,7 @@ export interface Deck extends RecordModel {
 	description?: string;
 	user: string;
 	isPublic: boolean;
+	cardCount?: number; // Computed property: number of cards in this deck
 }
 
 export const deckService = {

@@ -12,6 +12,8 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { goto } from '$app/navigation';
+	import { currentUser } from '$lib/pocketbase.js';
+	import { deckService } from '$lib/services/deck.service.js';
 	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
 	import type { PageData } from './$types';
 
@@ -26,18 +28,34 @@
 	async function handleSubmit(event: SubmitEvent): Promise<void> {
 		event.preventDefault();
 
-		// This is a placeholder for the actual deck creation logic
-		// Will be implemented in the future
+		if (!$currentUser) {
+			error = 'You must be logged in to create a deck';
+			return;
+		}
+
+		if (!name.trim()) {
+			error = 'Deck name is required';
+			return;
+		}
+
 		isSubmitting = true;
 		error = null;
 
 		try {
-			// Simulate API call
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			// Create deck using PocketBase service
+			const deckData = {
+				name: name.trim(),
+				description: description.trim() || '',
+				user: $currentUser.id,
+				isPublic: false
+			};
+
+			await deckService.create(deckData);
 
 			// Navigate back to decks page
 			goto('/dashboard/decks');
 		} catch (err) {
+			console.error('Error creating deck:', err);
 			error = err instanceof Error ? err.message : 'Failed to create deck';
 		} finally {
 			isSubmitting = false;
@@ -83,16 +101,9 @@
 					</div>
 				{/if}
 
-				<form
-					id="deck-form"
-					onsubmit={(e) => {
-						e.preventDefault();
-						handleSubmit(e);
-					}}
-					class="space-y-4"
-				>
+				<form id="deck-form" onsubmit={handleSubmit} class="space-y-4">
 					<div class="space-y-2">
-						<Label for="name">Deck Name</Label>
+						<Label for="name">Deck Name *</Label>
 						<Input
 							id="name"
 							name="name"
@@ -100,6 +111,7 @@
 							required
 							placeholder="e.g., Spanish Vocabulary"
 							disabled={isSubmitting}
+							maxlength={100}
 						/>
 					</div>
 
@@ -112,6 +124,7 @@
 							placeholder="Brief description of this deck's content and purpose"
 							rows={4}
 							disabled={isSubmitting}
+							maxlength={500}
 						/>
 					</div>
 				</form>
