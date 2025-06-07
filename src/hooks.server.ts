@@ -47,6 +47,56 @@ const securityHeaders: Handle = async ({ event, resolve }) => {
 };
 
 /**
+ * Chrome DevTools middleware - handles Chrome-specific requests
+ */
+const chromeDevToolsMiddleware: Handle = async ({ event, resolve }) => {
+	const { pathname } = event.url;
+
+	// Handle Chrome DevTools specific requests
+	if (pathname === '/.well-known/appspecific/com.chrome.devtools.json') {
+		return new Response(JSON.stringify({}), {
+			status: 200,
+			headers: {
+				'Content-Type': 'application/json',
+				'Access-Control-Allow-Origin': '*'
+			}
+		});
+	}
+
+	// Handle other common browser requests that might cause 404s
+	if (pathname === '/robots.txt') {
+		return new Response('User-agent: *\nDisallow:', {
+			status: 200,
+			headers: {
+				'Content-Type': 'text/plain'
+			}
+		});
+	}
+
+	if (pathname === '/manifest.json' || pathname === '/site.webmanifest') {
+		return new Response(
+			JSON.stringify({
+				name: 'BlendSphere',
+				short_name: 'BlendSphere',
+				description: 'AI-powered language learning with spaced repetition',
+				start_url: '/',
+				display: 'standalone',
+				background_color: '#ffffff',
+				theme_color: '#000000'
+			}),
+			{
+				status: 200,
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}
+		);
+	}
+
+	return resolve(event);
+};
+
+/**
  * Rate limiting middleware for sensitive endpoints
  */
 const rateLimitMiddleware: Handle = async ({ event, resolve }) => {
@@ -92,4 +142,9 @@ const requestLogger: Handle = async ({ event, resolve }) => {
 };
 
 // Combine all middleware
-export const handle = sequence(securityHeaders, rateLimitMiddleware, requestLogger);
+export const handle = sequence(
+	chromeDevToolsMiddleware,
+	securityHeaders,
+	rateLimitMiddleware,
+	requestLogger
+);

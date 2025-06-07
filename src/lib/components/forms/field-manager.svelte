@@ -220,18 +220,15 @@
 				}
 			} else {
 				// Create new field
-				const newFieldData = {
-					...$formData,
-					id: templateId ? undefined : crypto.randomUUID() // Generate temp ID for new templates
-				};
-
 				if (templateId) {
-					const newField = await fieldService.create(newFieldData);
+					// Let PocketBase generate the ID automatically
+					const newField = await fieldService.create($formData);
 					fields = [...fields, newField as FieldData];
 					dispatch('fieldAdded', newField as FieldData);
 				} else {
-					// Add to local state for new templates
-					const tempField = { ...newFieldData, id: crypto.randomUUID() } as FieldData;
+					// Add to local state for new templates (generate a short temporary ID)
+					const tempId = `temp_${Date.now().toString(36)}`;
+					const tempField = { ...$formData, id: tempId } as FieldData;
 					fields = [...fields, tempField];
 					dispatch('fieldAdded', tempField);
 				}

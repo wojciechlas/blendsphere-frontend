@@ -1,8 +1,7 @@
 import type {
 	FlashcardGenerationRequest,
 	FlashcardGenerationResponse,
-	GenerationFieldData,
-	GenerationFlashcard
+	GenerationFieldData
 } from '$lib/types/flashcard-creator.js';
 import type { Template } from '$lib/services/template.service.js';
 import { pb } from '$lib/pocketbase.js';
@@ -30,67 +29,90 @@ export class AIServiceException extends Error {
 
 /**
  * Mock AI service for development when FastAPI backend is not available
+ * Now expects input fields and generates output fields based on template
  */
 const mockAIGenerate = async (
 	request: FlashcardGenerationRequest
 ): Promise<FlashcardGenerationResponse> => {
+	console.log('🤖 Mock AI Generate - Request received:', request);
+
 	// Simulate API delay
 	await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
 
-	// Group input fields by their pattern to determine how many flashcards we're generating
-	// The request contains fields for multiple flashcards in sequence
-	const fieldIds = [...new Set(request.inputFields.map((f) => f.fieldId))];
-	const flashcardsCount = request.inputFields.length / fieldIds.length;
+	const fields: GenerationFieldData[] = [];
 
-	const flashcards: GenerationFlashcard[] = [];
-
-	for (let cardIndex = 0; cardIndex < flashcardsCount; cardIndex++) {
-		const fields: GenerationFieldData[] = [];
-
-		for (let fieldIndex = 0; fieldIndex < fieldIds.length; fieldIndex++) {
-			const inputIndex = cardIndex * fieldIds.length + fieldIndex;
-			if (inputIndex >= 0 && inputIndex < request.inputFields.length) {
-				const inputFields = request.inputFields;
-				const inputField = inputFields.at(inputIndex);
-
-				if (inputField) {
-					// Generate mock content based on field id and value
-					let mockContent = '';
-
-					if (
-						inputField.fieldId.toLowerCase().includes('translation') ||
-						inputField.fieldId.toLowerCase().includes('back')
-					) {
-						mockContent = `Translation of: ${inputField.value || 'example'}`;
-					} else if (
-						inputField.fieldId.toLowerCase().includes('example') ||
-						inputField.fieldId.toLowerCase().includes('sentence')
-					) {
-						mockContent = `Example sentence with: ${inputField.value || 'word'}`;
-					} else if (inputField.fieldId.toLowerCase().includes('definition')) {
-						mockContent = `Definition of: ${inputField.value || 'term'}`;
-					} else {
-						mockContent = `Generated content for ${inputField.fieldId}: ${inputField.value || 'example'}`;
-					}
-
-					fields.push({
-						fieldId: inputField.fieldId,
-						value: mockContent
-					});
-				}
-			}
+	// Group input fields by flashcardId to process each flashcard
+	const flashcardMap = new Map<number, GenerationFieldData[]>();
+	request.inputFields.forEach((inputField) => {
+		const flashcardId = inputField.flashcardId;
+		if (flashcardId === undefined) {
+			console.warn('Input field missing flashcardId:', inputField);
+			return;
 		}
+		if (!flashcardMap.has(flashcardId)) {
+			flashcardMap.set(flashcardId, []);
+		}
+		flashcardMap.get(flashcardId)!.push(inputField);
+	});
 
-		flashcards.push({ fields });
-	}
+	console.log(`🤖 Processing ${flashcardMap.size} flashcards:`, Array.from(flashcardMap.keys()));
+
+	// For each flashcard, generate output fields based on input fields
+	flashcardMap.forEach((inputFields, flashcardId) => {
+		console.log(`🤖 Processing flashcard ${flashcardId} with input fields:`, inputFields);
+
+		// Combine all input content for context
+		const inputContext = inputFields.map((f) => f.value).join(', ');
+		console.log(`🤖 Input context for flashcard ${flashcardId}:`, inputContext);
+
+		// Mock output field IDs - in real implementation, these would come from template configuration
+		// For now, we'll generate common output field types
+		const mockOutputFields = [
+			{ fieldId: 'z8xm8cbf131oq6n', type: 'translation' }, // Translation field
+			{ fieldId: '608wcu31y4o842b', type: 'example' } // Example field
+		];
+
+		mockOutputFields.forEach((outputField) => {
+			let mockContent = '';
+
+			// Generate different content based on field type
+			switch (outputField.type) {
+				case 'translation':
+					mockContent = `Translation of: ${inputContext}`;
+					break;
+				case 'example':
+					mockContent = `Example sentence with: ${inputContext}`;
+					break;
+				case 'definition':
+					mockContent = `Definition of: ${inputContext}`;
+					break;
+				default:
+					mockContent = `Generated content for ${outputField.fieldId}: ${inputContext}`;
+			}
+
+			console.log(
+				`🤖 Generated for flashcard ${flashcardId}, field ${outputField.fieldId}:`,
+				mockContent
+			);
+
+			fields.push({
+				fieldId: outputField.fieldId,
+				flashcardId: flashcardId,
+				value: mockContent
+			});
+		});
+	});
 
 	// Simulate occasional errors
 	const hasError = Math.random() > 0.95;
 
-	return {
-		flashcards,
+	const response = {
+		fields,
 		error: hasError ? 'Mock generation error' : undefined
 	};
+
+	console.log('🤖 Mock AI Generate - Response:', response);
+	return response;
 };
 
 /**

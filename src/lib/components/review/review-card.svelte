@@ -5,7 +5,6 @@
 	import type { Flashcard } from '$lib/services/flashcard.service.js';
 	import type { Template } from '$lib/services/template.service.js';
 	import type { Field } from '$lib/services/field.service.js';
-	import ArrowDownIcon from '@tabler/icons-svelte/icons/arrow-down';
 	import { onMount } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
@@ -109,13 +108,7 @@
 			{/if}
 		</div>
 
-		<!-- Bounce arrow indicator for front side -->
-		{#if !isFlipped && interactive}
-			<div
-				class="text-muted-foreground pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 animate-bounce"
-			>
-				<ArrowDownIcon class="h-6 w-6" />
-			</div>
-		{/if}
+		<!-- Bounce arrow indicator for front side - REMOVED -->
+		<!-- The animated down arrow has been removed per user request -->
 	</div>
 </div>

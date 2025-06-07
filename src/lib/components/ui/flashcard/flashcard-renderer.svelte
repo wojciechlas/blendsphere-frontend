@@ -157,14 +157,30 @@
 			return '<p class="text-muted-foreground">No front layout defined</p>';
 
 		// For replacement, we use processedData which should have label-based keys
-		const content = replacePlaceholders(template.frontLayout, processedData(), templateFields());
+		const processed = processedData();
+		const fields = templateFields();
+
+		console.log('FlashcardRenderer - frontContent generation:');
+		console.log('Template frontLayout:', template.frontLayout);
+		console.log('Processed data:', processed);
+		console.log('Template fields:', fields);
+
+		const content = replacePlaceholders(template.frontLayout, processed, fields);
+		console.log('Generated front content:', content);
 		return content;
 	});
 
 	let backContent = $derived.by(() => {
 		if (!template.backLayout) return '<p class="text-muted-foreground">No back layout defined</p>';
 
-		const content = replacePlaceholders(template.backLayout, processedData(), templateFields());
+		console.log('FlashcardRenderer - backContent generation:');
+		console.log('Template backLayout:', template.backLayout);
+		const processed = processedData();
+		const fields = templateFields();
+		console.log('Processed data:', processed);
+
+		const content = replacePlaceholders(template.backLayout, processed, fields);
+		console.log('Generated back content:', content);
 		return content;
 	});
 

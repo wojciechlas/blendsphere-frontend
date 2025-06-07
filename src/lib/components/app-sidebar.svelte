@@ -91,11 +91,10 @@
 	<Sidebar.Header>
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
-				<Sidebar.MenuButton class="data-[slot=sidebar-menu-button]:!p-1.5">
+				<Sidebar.MenuButton class="data-[slot=sidebar-menu-button]:!p-1.5 [&_svg]:!size-auto">
 					{#snippet child({ props })}
 						<a href="/" {...props}>
-							<BrainIcon class="!size-5" />
-							<span class="text-base font-semibold">BlendSphere</span>
+							<img src="/blendsphere-logo-h.svg" alt="BlendSphere Logo" width="128" height="32" />
 						</a>
 					{/snippet}
 				</Sidebar.MenuButton>

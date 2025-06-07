@@ -1,7 +1,6 @@
 // Types for the new three-step flashcard creation process
 
 import type { Template } from '$lib/services/template.service.js';
-import type { Field } from '$lib/services/field.service.js';
 import type { Flashcard } from '$lib/services/flashcard.service.js';
 
 export interface FlashcardCreationSession {
@@ -54,11 +53,8 @@ export interface AIGeneratedCellFeedback {
 // AI Generation types
 export interface GenerationFieldData {
 	fieldId: string; // ID of field from fields collection
+	flashcardId?: number; // Optional ID/index of the row this flashcard belongs to (for batch generation)
 	value: string; // Generated content for this field
-}
-
-export interface GenerationFlashcard {
-	fields: GenerationFieldData[]; // All fields in a single generated flashcard
 }
 
 export interface FlashcardGenerationRequest {
@@ -68,8 +64,8 @@ export interface FlashcardGenerationRequest {
 }
 
 export interface FlashcardGenerationResponse {
-	flashcards: GenerationFlashcard[]; // Array of generated flashcards, each with multiple fields
-	error?: string;
+	fields: GenerationFieldData[]; // Array of generated flashcards, each with multiple fields
+	error?: string; // Optional error message
 }
 
 export interface TemplateField {
@@ -86,13 +82,6 @@ export interface Deck {
 	description: string;
 	cards: Flashcard[];
 	metadata: Record<string, unknown>;
-}
-
-export interface FlashcardTableCreatorProps {
-	template: Template;
-	fields: Field[];
-	deck?: Deck;
-	session: FlashcardCreationSession;
 }
 
 export interface SaveToDeckModalProps {

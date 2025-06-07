@@ -1,21 +1,11 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { Badge } from '$lib/components/ui/badge/index.js';
-	import { Separator } from '$lib/components/ui/separator/index.js';
 	import FlashcardCreator from '$lib/components/feature/FlashcardCreator.svelte';
 	import type { PageData } from './$types';
-	import ArrowLeftIcon from '@tabler/icons-svelte/icons/arrow-left';
 
 	let { data }: { data: PageData } = $props();
 
 	// State management
 	let selectedTemplate = $state(data.selectedTemplate);
-
-	// Navigation helpers
-	function handleGoBack() {
-		goto('/dashboard/flashcards');
-	}
 </script>
 
 <svelte:head>
@@ -35,35 +25,7 @@
 		</nav>
 
 		<!-- Header with actions -->
-		<div class="flex items-center justify-between">
-			<div class="flex items-center gap-4">
-				<Button variant="ghost" size="sm" onclick={handleGoBack} class="gap-2">
-					<ArrowLeftIcon class="h-4 w-4" />
-					Back to Flashcards
-				</Button>
-
-				<Separator orientation="vertical" class="h-6" />
-				<div>
-					<h1 class="text-3xl font-bold tracking-tight">Create Flashcards</h1>
-					<p class="text-muted-foreground">
-						{#if selectedTemplate}
-							Using template: <span class="font-medium">{selectedTemplate.name}</span>
-						{:else}
-							Select a template to get started
-						{/if}
-					</p>
-				</div>
-			</div>
-		</div>
-
-		<!-- Status Indicators -->
-		{#if selectedTemplate}
-			<div class="flex items-center gap-2">
-				<Badge variant="outline" class="gap-1">
-					🎴 {selectedTemplate.name}
-				</Badge>
-			</div>
-		{/if}
+		<h1 class="text-3xl font-bold tracking-tight">Create Flashcards</h1>
 	</div>
 
 	<!-- Main Content -->

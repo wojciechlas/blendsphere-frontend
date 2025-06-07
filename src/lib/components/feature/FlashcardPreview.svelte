@@ -15,20 +15,18 @@
 	let { template, data, deckName, open = $bindable(), onClose }: Props = $props();
 
 	const handleClose = () => {
+		open = false;
 		if (onClose) {
 			onClose();
-		}
-		if (open !== undefined) {
-			open = false;
 		}
 	};
 </script>
 
-{#if open !== undefined}
+{#if open}
 	<!-- Modal Version -->
 	<Dialog.Root bind:open>
-		<Dialog.Content class="max-w-4xl">
-			<Dialog.Header>
+		<Dialog.Content class="flex  w-auto max-w-4xl flex-col">
+			<Dialog.Header class="flex-shrink-0">
 				<Dialog.Title>Flashcard Preview</Dialog.Title>
 				<Dialog.Description>
 					Preview how your flashcard will look and test the flip functionality.
@@ -36,32 +34,23 @@
 			</Dialog.Header>
 
 			<!-- Flashcard Display -->
-			<FlashcardRenderer
-				{template}
-				{data}
-				mode="full"
-				context={{
-					deckName,
-					templateName: template.name,
-					showBadges: true
-				}}
-			/>
+			<div class="flex min-h-0 flex-1 items-center justify-center p-4">
+				<FlashcardRenderer
+					class="h-full w-full max-w-2xl"
+					{template}
+					{data}
+					mode="full"
+					context={{
+						deckName,
+						templateName: template.name,
+						showBadges: true
+					}}
+				/>
+			</div>
 
-			<Dialog.Footer>
+			<Dialog.Footer class="flex-shrink-0 py-4">
 				<Button variant="ghost" onclick={handleClose}>Close</Button>
 			</Dialog.Footer>
 		</Dialog.Content>
 	</Dialog.Root>
-{:else}
-	<!-- Flashcard Display -->
-	<FlashcardRenderer
-		{template}
-		{data}
-		mode="full"
-		context={{
-			deckName,
-			templateName: template.name,
-			showBadges: true
-		}}
-	/>
 {/if}

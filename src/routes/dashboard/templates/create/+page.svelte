@@ -30,13 +30,15 @@
 			};
 
 			// Create the template first
-			const newTemplate = await templateService.create(templateCreateData);
-
-			// Create fields if any exist
+			const newTemplate = await templateService.create(templateCreateData); // Create fields if any exist
 			if (fields && fields.length > 0) {
 				for (const field of fields) {
+					console.log('Creating field:', field);
+					// Remove id property for new fields to let PocketBase auto-generate it
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					const { id, ...fieldWithoutId } = field;
 					await fieldService.create({
-						...field,
+						...fieldWithoutId,
 						template: newTemplate.id
 					});
 				}

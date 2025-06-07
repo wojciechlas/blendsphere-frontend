@@ -2,6 +2,7 @@ import { pb } from '../pocketbase';
 import type { RecordModel } from 'pocketbase';
 import { Language, LanguageLevel } from '$lib/components/schemas';
 import type { TemplateStyles } from '$lib/schemas/template.schemas';
+import type { Field } from './field.service';
 
 export interface Template extends RecordModel {
 	name: string;
@@ -16,6 +17,7 @@ export interface Template extends RecordModel {
 	styles: TemplateStyles;
 	user: string;
 	isPublic: boolean;
+	fields?: Field[]; // Computed property: fields associated with this template
 }
 
 export const templateService = {

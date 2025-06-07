@@ -177,19 +177,119 @@ export const flashcardService = {
 	},
 
 	/**
-	 * Create multiple flashcards in batch
+	 * Create multiple flashcards using PocketBase batch API
 	 */
 	createBatch: async (
 		flashcardsData: Omit<Flashcard, 'id' | 'created' | 'updated'>[]
 	): Promise<Flashcard[]> => {
 		try {
-			const promises = flashcardsData.map((flashcard) =>
-				pb.collection('flashcards').create(flashcard)
-			);
-			const results = await Promise.all(promises);
-			return results as unknown as Flashcard[];
+			const maxBatchSize = 50;
+			const results: Flashcard[] = [];
+
+			// Process in chunks of maxBatchSize to respect PocketBase limits
+			for (let i = 0; i < flashcardsData.length; i += maxBatchSize) {
+				const chunk = flashcardsData.slice(i, i + maxBatchSize);
+
+				// Create batch request
+				const batch = pb.createBatch();
+
+				// Add all flashcards in this chunk to the batch
+				chunk.forEach((flashcardData) => {
+					batch.collection('flashcards').create(flashcardData);
+				});
+
+				// Send batch request
+				const batchResult = await batch.send();
+
+				// Extract created flashcards from batch result
+				const batchFlashcards = batchResult.map((result) => result as unknown as Flashcard);
+				results.push(...batchFlashcards);
+
+				// Small delay between batches to be respectful to the server
+				if (i + maxBatchSize < flashcardsData.length) {
+					await new Promise((resolve) => setTimeout(resolve, 100));
+				}
+			}
+
+			return results;
 		} catch (error) {
 			console.error('Error creating flashcards batch:', error);
+			throw error;
+		}
+	},
+
+	/**
+	 * Create multiple flashcards in smaller batches with retry logic using PocketBase batch API
+	 */
+	createBatchWithRetry: async (
+		flashcardsData: Omit<Flashcard, 'id' | 'created' | 'updated'>[],
+		options: {
+			batchSize?: number;
+			retryAttempts?: number;
+			delayBetweenBatches?: number;
+			onProgress?: (completed: number, total: number) => void;
+		} = {}
+	): Promise<Flashcard[]> => {
+		const { batchSize = 20, retryAttempts = 3, delayBetweenBatches = 100, onProgress } = options;
+
+		try {
+			const results: Flashcard[] = [];
+
+			// Split into smaller chunks
+			for (let i = 0; i < flashcardsData.length; i += batchSize) {
+				const chunk = flashcardsData.slice(i, i + batchSize);
+
+				// Try to create this chunk with retry logic
+				let attempt = 0;
+				let chunkResults: Flashcard[] = [];
+
+				while (attempt < retryAttempts) {
+					try {
+						// Create batch request for this chunk
+						const batch = pb.createBatch();
+
+						// Add all flashcards in this chunk to the batch
+						chunk.forEach((flashcardData) => {
+							batch.collection('flashcards').create(flashcardData);
+						});
+
+						// Send batch request
+						const batchResult = await batch.send();
+
+						// Extract created flashcards from batch result
+						chunkResults = batchResult.map((result) => result as unknown as Flashcard);
+
+						break; // Success, exit retry loop
+					} catch (error) {
+						attempt++;
+						console.warn(`Batch creation attempt ${attempt} failed:`, error);
+
+						if (attempt < retryAttempts) {
+							// Wait longer before retry
+							await new Promise((resolve) => setTimeout(resolve, delayBetweenBatches * attempt));
+							chunkResults = []; // Reset results for retry
+						} else {
+							throw error; // Final attempt failed
+						}
+					}
+				}
+
+				results.push(...chunkResults);
+
+				// Report progress if callback provided
+				if (onProgress) {
+					onProgress(results.length, flashcardsData.length);
+				}
+
+				// Delay between batches to avoid rate limiting
+				if (i + batchSize < flashcardsData.length) {
+					await new Promise((resolve) => setTimeout(resolve, delayBetweenBatches));
+				}
+			}
+
+			return results;
+		} catch (error) {
+			console.error('Error creating flashcards batch with retry:', error);
 			throw error;
 		}
 	},
@@ -223,14 +323,22 @@ export const flashcardService = {
 	},
 
 	/**
-	 * Create flashcards from FlashcardRows
+	 * Create flashcards from FlashcardRows with progress tracking
 	 */
 	createFromRows: async (
 		rows: FlashcardRow[],
 		deckId: string,
-		templateId: string
+		templateId: string,
+		onProgress?: (completed: number, total: number) => void
 	): Promise<Flashcard[]> => {
 		const flashcardsData = flashcardService.convertRowsToFlashcards(rows, deckId, templateId);
-		return flashcardService.createBatch(flashcardsData);
+
+		// Use batch creation with retry for better reliability
+		return flashcardService.createBatchWithRetry(flashcardsData, {
+			batchSize: 20,
+			retryAttempts: 3,
+			delayBetweenBatches: 100,
+			onProgress
+		});
 	}
 };
