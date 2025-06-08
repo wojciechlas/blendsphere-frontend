@@ -27,7 +27,14 @@
 			<CircleCheck class="text-success h-6 w-6" />
 			All caught up! 🎉
 		</Card.Title>
-		<Card.Description>You have no cards due for review right now.</Card.Description>
+		<Card.Description>
+			You have no cards due for review right now.
+			{#if nextDueCards.tomorrow > 0}
+				{nextDueCards.tomorrow} cards scheduled for tomorrow.
+			{:else if nextDueCards.inHours === 0 && nextDueCards.tomorrow === 0}
+				No cards scheduled for the near future.
+			{/if}
+		</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="space-y-6">

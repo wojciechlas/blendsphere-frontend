@@ -16,6 +16,8 @@
 	import { reviewSessionStore, reviewSessionActions } from '$lib/stores/review-session.store.js';
 	import { templateService, type Template } from '$lib/services/template.service.js';
 	import { fieldService } from '$lib/services/field.service.js';
+	import { srsAlgorithmService } from '$lib/services/srs-algorithm.service.js';
+	import { currentUser } from '$lib/pocketbase.js';
 
 	// Session summary type definition
 	interface SessionSummary {
@@ -84,9 +86,20 @@
 		return $reviewSessionStore.error === 'No cards due for review';
 	});
 
+	let isSessionComplete = $derived(() => {
+		return $reviewSessionStore.session?.isComplete || false;
+	});
+
 	let nextDueCardsInfo = $state({
-		inHours: 5,
-		tomorrow: 12
+		inHours: 0,
+		tomorrow: 0
+	});
+
+	// Watch for when no cards are due and fetch next due cards info
+	$effect(() => {
+		if (noCardsError() && !isLoading) {
+			fetchNextDueCardsInfo();
+		}
 	});
 
 	// Initialize review session
@@ -103,6 +116,9 @@
 
 				// Start timer
 				startTimer();
+			} else {
+				// If no cards are due, fetch next due cards info
+				await fetchNextDueCardsInfo();
 			}
 
 			isLoading = false;
@@ -157,11 +173,22 @@
 
 	// Handle card rating
 	async function handleRate(rating: RecallRatingEnum) {
+		console.log('🟡 HANDLE RATE CALLED:', rating);
 		await reviewSessionActions.rateCard(rating);
+		console.log('🟡 RATE CARD COMPLETED');
 		saveProgress();
 
-		// Check if session is complete
-		if ($reviewSessionStore.currentCardIndex >= $reviewSessionStore.cards.length) {
+		// Debug session state
+		console.log('🔍 DEBUG SESSION STATE:');
+		console.log('  - session.isComplete:', $reviewSessionStore.session?.isComplete);
+		console.log('  - isSessionComplete() derived:', isSessionComplete());
+		console.log('  - cards.length:', $reviewSessionStore.cards.length);
+		console.log('  - cardsLeft:', $reviewSessionStore.cardsLeft);
+		console.log('  - currentCardIndex:', $reviewSessionStore.currentCardIndex);
+
+		// Check if session is complete using derived state for better reactivity
+		if (isSessionComplete()) {
+			console.log('🟡 SESSION IS COMPLETE, FINISHING...');
 			await finishSession();
 		}
 	}
@@ -181,10 +208,7 @@
 		sessionSummaryData = await getSessionSummary();
 		showSessionSummary = true;
 
-		// Auto-navigate to dashboard after showing summary for 3 seconds
-		setTimeout(() => {
-			goto('/dashboard');
-		}, 3000);
+		// No automatic redirect - user can manually navigate via summary buttons
 	}
 
 	// Handle review ahead (when no due cards)
@@ -192,6 +216,74 @@
 		// Implementation of review ahead functionality
 		// This would typically involve fetching cards that are due soon
 		alert('Review ahead functionality is not implemented yet');
+	}
+
+	// Fetch next due cards information
+	async function fetchNextDueCardsInfo() {
+		const userId = $currentUser?.id;
+		if (!userId) return;
+
+		try {
+			// Use the forecast API for more efficient counting
+			const forecast = await srsAlgorithmService.getReviewForecast(userId, 2);
+
+			// Get today and tomorrow dates as strings
+			const today = new Date();
+			const tomorrow = new Date(today);
+			tomorrow.setDate(tomorrow.getDate() + 1);
+
+			const todayStr = today.toISOString().split('T')[0];
+			const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+			// Count cards due later today (treat as "in hours")
+			const inHours = forecast[todayStr] || 0;
+
+			// Count cards due tomorrow
+			const tomorrowCards = forecast[tomorrowStr] || 0;
+
+			nextDueCardsInfo = {
+				inHours,
+				tomorrow: tomorrowCards
+			};
+		} catch (error) {
+			console.error('Error fetching next due cards forecast:', error);
+			// Fallback to the previous approach if forecast API fails
+			try {
+				const upcomingCards = await srsAlgorithmService.getUpcomingDueCards(
+					userId,
+					1,
+					deckId || undefined
+				);
+
+				const now = new Date();
+				const laterToday = new Date(now);
+				laterToday.setHours(23, 59, 59, 999);
+
+				const tomorrow = new Date(now);
+				tomorrow.setDate(tomorrow.getDate() + 1);
+				tomorrow.setHours(23, 59, 59, 999);
+
+				const inHours = upcomingCards.filter((card) => {
+					if (!card.nextReview) return false;
+					const nextReview = new Date(card.nextReview);
+					return nextReview > now && nextReview <= laterToday;
+				}).length;
+
+				const tomorrowCards = upcomingCards.filter((card) => {
+					if (!card.nextReview) return false;
+					const nextReview = new Date(card.nextReview);
+					return nextReview > laterToday && nextReview <= tomorrow;
+				}).length;
+
+				nextDueCardsInfo = {
+					inHours,
+					tomorrow: tomorrowCards
+				};
+			} catch (fallbackError) {
+				console.error('Error with fallback approach:', fallbackError);
+				// Keep the default values (0, 0)
+			}
+		}
 	}
 
 	// Handle returning to dashboard (simplified - just save and go)
@@ -210,13 +302,23 @@
 			timerInterval = undefined;
 		}
 
-		// Mark as complete if there are reviewed cards
-		const store = $reviewSessionStore;
-		if (store.session && store.session.completedCards > 0) {
-			store.session.endTime = new Date();
-			store.session.isComplete = true;
+		// Save current session state to localStorage
+		if ($reviewSessionStore.session) {
+			const progressData = {
+				session: $reviewSessionStore.session,
+				cards: $reviewSessionStore.cards,
+				currentCardIndex: $reviewSessionStore.currentCardIndex,
+				timestamp: Date.now()
+			};
+
+			try {
+				localStorage.setItem('review-progress', JSON.stringify(progressData));
+			} catch (error) {
+				console.error('Failed to save progress to localStorage:', error);
+			}
 		}
 
+		// Note: isComplete status is managed by the store, not here
 		autoSaveCompleted = true;
 	}
 
@@ -347,6 +449,7 @@
 						completedCards={sessionStats().completedCards}
 						correctCards={sessionStats().correctCards}
 						elapsedTime={sessionStats().elapsedTime}
+						cardsLeft={$reviewSessionStore.cardsLeft}
 					/>
 
 					<!-- Review Card -->

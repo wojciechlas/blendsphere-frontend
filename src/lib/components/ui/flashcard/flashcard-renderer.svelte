@@ -160,13 +160,7 @@
 		const processed = processedData();
 		const fields = templateFields();
 
-		console.log('FlashcardRenderer - frontContent generation:');
-		console.log('Template frontLayout:', template.frontLayout);
-		console.log('Processed data:', processed);
-		console.log('Template fields:', fields);
-
 		const content = replacePlaceholders(template.frontLayout, processed, fields);
-		console.log('Generated front content:', content);
 		return content;
 	});
 

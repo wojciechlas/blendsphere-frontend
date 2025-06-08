@@ -11,6 +11,7 @@
 		completedCards,
 		correctCards,
 		elapsedTime,
+		cardsLeft,
 		class: className,
 		...restProps
 	}: {
@@ -18,15 +19,16 @@
 		completedCards: number;
 		correctCards: number;
 		elapsedTime: number; // in seconds
+		cardsLeft: number;
 		class?: string;
 	} & HTMLAttributes<HTMLDivElement> = $props();
 
-	// Calculate progress percentage
+	// Calculate progress percentage based on completed cards
 	let progressPercentage = $derived(
 		totalCards > 0 ? Math.round((completedCards / totalCards) * 100) : 0
 	);
 
-	// Calculate accuracy percentage
+	// Calculate accuracy percentage based on completed cards
 	let accuracyPercentage = $derived(
 		completedCards > 0 ? Math.round((correctCards / completedCards) * 100) : 0
 	);
@@ -38,10 +40,10 @@
 		return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
 	});
 
-	// Calculate cards remaining
-	let remainingCards = $derived(totalCards - completedCards);
+	// Calculate cards remaining (should show actual cards left in session)
+	let remainingCards = $derived(cardsLeft);
 
-	// Calculate average time per card
+	// Calculate average time per card based on completed cards
 	let averageTimePerCard = $derived(
 		completedCards > 0 ? Math.round(elapsedTime / completedCards) : 0
 	);

@@ -130,10 +130,24 @@ export const flashcardService = {
 	 */
 	update: async (id: string, flashcardData: Partial<Flashcard>): Promise<Flashcard> => {
 		try {
+			console.log('🔄 DEBUG - Updating flashcard:', id);
+			console.log('🔄 DEBUG - Update data:', flashcardData);
+
+			// First check if the flashcard exists before trying to update
+			const exists = await pb
+				.collection('flashcards')
+				.getOne(id, { fields: 'id' })
+				.catch(() => null);
+			if (!exists) {
+				console.error('❌ DEBUG - Flashcard does not exist in PocketBase:', id);
+				throw new Error(`Flashcard with ID ${id} does not exist`);
+			}
+
 			const flashcard = await pb.collection('flashcards').update(id, flashcardData);
+			console.log('✅ DEBUG - Flashcard updated successfully:', id);
 			return flashcard as unknown as Flashcard;
 		} catch (error) {
-			console.error('Error updating flashcard:', error);
+			console.error('❌ DEBUG - Error updating flashcard:', id, error);
 			throw error;
 		}
 	},
