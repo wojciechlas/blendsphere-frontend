@@ -9,13 +9,13 @@ BlendSphere leverages artificial intelligence to enhance the language learning e
 
 ## AI Integration Diagram
 
-![AI Integration](images/AI%20Integration.png)
+![AI Integration](../diagrams/images/AI%20Integration.png)
 
 ## AI-Assisted Flashcard Creation
 
 One of the key AI features is the automatic generation of flashcards from various inputs.
 
-![AI-Assisted Flashcard Creation](images/AI-Assisted%20Flashcard%20Creation.png)
+![AI-Assisted Flashcard Creation](../diagrams/images/AI-Assisted%20Flashcard%20Creation.png)
 
 ## AI Components
 

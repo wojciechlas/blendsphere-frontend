@@ -9,7 +9,7 @@ The data structure of BlendSphere defines how information is organized, stored, 
 
 ## Data Structure Diagram
 
-![Data Structure Diagram](images/BlendSphere%20Data%20Structure%20-%20PocketBase%20Compatible.png)
+![Data Structure Diagram](../diagrams/images/BlendSphere%20Data%20Structure%20-%20PocketBase%20Compatible.png)
 
 ## Key Entities
 

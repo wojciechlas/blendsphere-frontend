@@ -9,7 +9,7 @@ The flashcard data flow describes how flashcard data is created, stored, retriev
 
 ## Flashcard Data Flow Diagram
 
-![Flashcard Data Flow](images/Flashcard%20Data%20Flow.png)
+![Flashcard Data Flow](../diagrams/images/Flashcard%20Data%20Flow.png)
 
 _Note: This diagram may need updates to reflect the batch creation process described below._
 

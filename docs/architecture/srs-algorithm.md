@@ -9,15 +9,15 @@ The Spaced Repetition System (SRS) is at the core of BlendSphere's learning meth
 
 ## SRS Algorithm Structure
 
-![SRS Algorithm Structure](images/SRS%20Algorithm%20-%20Class%20Structure.png)
+![SRS Algorithm Structure](../diagrams/images/SRS%20Algorithm%20-%20Class%20Structure.png)
 
 ## SRS Algorithm Flashcard Lifecycle
 
-![SRS Algorithm Flashcard Lifecycle](images/SRS%20Algorithm%20-%20Flashcard%20Lifecycle.png)
+![SRS Algorithm Flashcard Lifecycle](../diagrams/images/SRS%20Algorithm%20-%20Flashcard%20Lifecycle.png)
 
 ## SRS Algorithm Simplified
 
-![SRS Algorithm Simple](images/SRS%20Algorithm%20Simple.png)
+![SRS Algorithm Simple](../diagrams/images/SRS%20Algorithm%20Simple.png)
 
 ## How It Works
 

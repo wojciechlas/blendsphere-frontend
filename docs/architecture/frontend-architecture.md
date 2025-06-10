@@ -9,7 +9,7 @@ The BlendSphere frontend is built with a modular, component-based architecture u
 
 ## Architecture Diagram
 
-![Frontend Architecture](images/Frontend%20Architecture.png)
+![Frontend Architecture](../diagrams/images/Frontend%20Architecture.png)
 
 ## Key Components
 

@@ -11,7 +11,7 @@ User journeys in BlendSphere illustrate the typical paths that different user ty
 
 This journey shows how a teacher sets up their account, creates classes, and prepares learning materials.
 
-![Teacher Onboarding Journey](images/Teacher%20Onboarding%20Journey.png)
+![Teacher Onboarding Journey](../diagrams/images/Teacher%20Onboarding%20Journey.png)
 
 ### Key Steps:
 
@@ -27,7 +27,7 @@ This journey shows how a teacher sets up their account, creates classes, and pre
 
 This journey illustrates how students join classes, access learning materials, and participate in learning activities.
 
-![Student Participation Journey](images/Student%20Participation%20Journey.png)
+![Student Participation Journey](../diagrams/images/Student%20Participation%20Journey.png)
 
 ### Key Steps:
 
@@ -43,7 +43,7 @@ This journey illustrates how students join classes, access learning materials, a
 
 This journey shows the daily review process that is central to the spaced repetition learning method.
 
-![Daily Repetition Journey](images/Daily%20Repetition%20Journey.png)
+![Daily Repetition Journey](../diagrams/images/Daily%20Repetition%20Journey.png)
 
 ### Key Steps:
 
