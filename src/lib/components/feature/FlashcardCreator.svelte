@@ -40,9 +40,10 @@
 		fields: Field[];
 		initialTemplate?: Template;
 		availableDecks: Deck[];
+		onDataRefreshNeeded?: () => Promise<void>;
 	}
 
-	let { templates, fields, initialTemplate, availableDecks }: Props = $props();
+	let { templates, fields, initialTemplate, availableDecks, onDataRefreshNeeded }: Props = $props();
 
 	// Single-step state management
 	let selectedTemplate = $state<Template | null>(initialTemplate || null);
@@ -100,10 +101,21 @@
 
 	// Get template fields
 	function templateFields(): Field[] {
-		if (!selectedTemplate) return [];
-		return fields
+		if (!selectedTemplate) {
+			console.log('🔍 templateFields: No selectedTemplate');
+			return [];
+		}
+
+		console.log('🔍 templateFields: selectedTemplate.id =', selectedTemplate.id);
+		console.log('🔍 templateFields: fields.length =', fields.length);
+		console.log('🔍 templateFields: fields =', fields);
+
+		const filteredFields = fields
 			.filter((field) => field.template === selectedTemplate!.id)
 			.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+		console.log('🔍 templateFields: filteredFields =', filteredFields);
+		return filteredFields;
 	}
 
 	// Count ready cards
@@ -160,6 +172,10 @@
 
 	function handleChangeTemplate() {
 		showTemplateSelector = true;
+		// Refresh data when opening template selector in case new templates were created
+		if (onDataRefreshNeeded) {
+			onDataRefreshNeeded();
+		}
 	}
 
 	// Deck selection handlers

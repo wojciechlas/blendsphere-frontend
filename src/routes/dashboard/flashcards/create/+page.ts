@@ -49,24 +49,23 @@ export const load: PageLoad = async ({ url }) => {
 		// Load fields for all templates and associate them with templates
 		const allFields: Field[] = [];
 		if (templatesResult.items.length > 0) {
-			const fieldPromises = templatesResult.items.map((template) =>
-				fieldService
-					.listByTemplate(template.id)
-					.then((result) => {
-						// Associate fields with the template
-						template.fields = result.items;
-						return result.items;
-					})
-					.catch((error) => {
-						console.warn(`Failed to load fields for template ${template.id}:`, error);
-						// Set empty fields array for this template
-						template.fields = [];
-						return [];
-					})
-			);
+			// Process templates sequentially to avoid overwhelming PocketBase
+			console.log(`Loading fields for ${templatesResult.items.length} templates...`);
 
-			const fieldsResults = await Promise.all(fieldPromises);
-			fieldsResults.forEach((fields) => allFields.push(...fields));
+			for (let i = 0; i < templatesResult.items.length; i++) {
+				const template = templatesResult.items[i];
+				try {
+					const result = await fieldService.listByTemplate(template.id);
+					// Associate fields with the template
+					template.fields = result.items;
+					allFields.push(...result.items);
+					console.log(`Loaded ${result.items.length} fields for template ${template.name}`);
+				} catch (error) {
+					console.warn(`Failed to load fields for template ${template.id}:`, error);
+					// Set empty fields array for this template
+					template.fields = [];
+				}
+			}
 		}
 
 		// Load card counts for all decks
